@@ -1,7 +1,8 @@
 import React, { useRef, useMemo, useEffect, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useLoader } from '@react-three/fiber';
 import { OrbitControls, TransformControls, Grid, Environment, ContactShadows, useGLTF, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
+import { SVGLoader } from 'three-stdlib';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { SceneNode } from '../types';
 
@@ -36,6 +37,106 @@ const Model = ({ url, color }: { url: string; color: string }) => {
   }, [scene, color]);
   
   return <primitive object={clonedScene} />;
+};
+
+const SVGNode = ({ url, color, thickness }: { url: string; color: string; thickness: number }) => {
+  const svgData = useLoader(SVGLoader, url);
+  
+  const { shapes, boundingBox } = useMemo(() => {
+    const allShapes: { shape: THREE.Shape; color: THREE.Color; index: number }[] = [];
+    const box = new THREE.Box3();
+
+    svgData.paths.forEach((path, i) => {
+      // SVGLoader.createShapes handles complex paths with holes correctly
+      const pathShapes = SVGLoader.createShapes(path);
+      pathShapes.forEach((shape) => {
+        allShapes.push({
+          shape,
+          color: path.color,
+          index: i
+        });
+        
+        // Update bounding box to center the SVG later
+        const points = shape.getPoints();
+        if (points.length > 0) {
+          points.forEach(p => box.expandByPoint(new THREE.Vector3(p.x, p.y, 0)));
+        }
+        
+        shape.holes.forEach(hole => {
+          const holePoints = hole.getPoints();
+          if (holePoints.length > 0) {
+            holePoints.forEach(p => box.expandByPoint(new THREE.Vector3(p.x, p.y, 0)));
+          }
+        });
+      });
+    });
+
+    return { shapes: allShapes, boundingBox: box };
+  }, [svgData]);
+
+  const depth = thickness || 0.1;
+  const isDefaultColor = color.toLowerCase() === '#ffffff';
+
+  const center = new THREE.Vector3();
+  boundingBox.getCenter(center);
+
+  return (
+    <group 
+      rotation={[Math.PI, 0, 0]} 
+      scale={0.01} 
+      position={[-center.x * 0.01, center.y * 0.01, 0]} // Centering the SVG
+    >
+      {shapes.map((item, index) => (
+        <mesh key={index} castShadow receiveShadow>
+          {thickness > 0 ? (
+            <extrudeGeometry
+              args={[
+                item.shape,
+                { 
+                  depth: thickness * 100, 
+                  bevelEnabled: false,
+                  curveSegments: 32
+                }
+              ]}
+            />
+          ) : (
+            <shapeGeometry args={[item.shape, 32]} />
+          )}
+          <meshStandardMaterial 
+            color={isDefaultColor ? item.color : color} 
+            side={thickness > 0 ? THREE.FrontSide : THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+};
+
+const PointLightNode = ({ node, isSelected }: { node: SceneNode; isSelected: boolean }) => {
+  const { intensity = 1, decay = 2, distance = 10 } = node.parameters;
+  
+  return (
+    <group>
+      <pointLight 
+        color={node.color} 
+        intensity={intensity} 
+        decay={decay} 
+        distance={distance} 
+        castShadow 
+      />
+      {/* Visual helper for the light source */}
+      <mesh>
+        <sphereGeometry args={[0.06, 16, 16]} />
+        <meshBasicMaterial color={node.color} />
+      </mesh>
+      {isSelected && (
+        <mesh scale={[1.2, 1.2, 1.2]}>
+          <sphereGeometry args={[0.06, 16, 16]} />
+          <meshBasicMaterial color="#ffffff" wireframe />
+        </mesh>
+      )}
+    </group>
+  );
 };
 
 const Material = ({ node }: { node: SceneNode }) => {
@@ -255,6 +356,10 @@ const Node = ({
       >
         {node.type === 'model' && node.url ? (
           <Model url={node.url} color={node.color} />
+        ) : node.type === 'svg' && node.url ? (
+          <SVGNode url={node.url} color={node.color} thickness={node.parameters.thickness || 0.1} />
+        ) : node.type === 'pointLight' ? (
+          <PointLightNode node={node} isSelected={isSelected} />
         ) : node.type !== 'group' ? (
           <mesh geometry={geometry} name={node.id}>
             {node.type === 'csg' && geometry.groups && geometry.groups.length > 0 ? (

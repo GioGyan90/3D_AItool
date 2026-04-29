@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { SceneNode } from '../types';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Zap, Image as ImageIcon, Link, Link2Off, ChevronDown, ChevronRight } from 'lucide-react';
+import { Zap, Image as ImageIcon, Link, Link2Off, ChevronDown, ChevronRight, Lightbulb } from 'lucide-react';
 
 interface PropertiesPanelProps {
   selectedShape: SceneNode | null;
@@ -14,6 +14,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
     transform: true,
     geometry: true,
     material: true,
+    lighting: true,
   });
 
   const toggleSection = (section: string) => {
@@ -21,6 +22,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
   };
 
   const isLocked = selectedShape?.locked;
+  const isLight = selectedShape?.type === 'pointLight';
 
   const handleTextureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (isLocked) return;
@@ -139,49 +141,137 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[12px] text-[#888888]">Scale</span>
-                      <button 
-                        onClick={() => onUpdateShape(selectedShape.id, { uniformScale: !selectedShape.uniformScale })}
-                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] transition-colors ${selectedShape.uniformScale ? 'bg-[#4a90e2]/20 text-[#4a90e2]' : 'bg-white/5 text-[#666666] hover:text-[#888888]'}`}
-                        title={selectedShape.uniformScale ? "Unlock Proportions" : "Lock Proportions"}
-                      >
-                        {selectedShape.uniformScale ? <Link className="w-2.5 h-2.5" /> : <Link2Off className="w-2.5 h-2.5" />}
-                        等比
-                      </button>
+                  {!isLight && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[12px] text-[#888888]">Scale</span>
+                        <button 
+                          onClick={() => onUpdateShape(selectedShape.id, { uniformScale: !selectedShape.uniformScale })}
+                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] transition-colors ${selectedShape.uniformScale ? 'bg-[#4a90e2]/20 text-[#4a90e2]' : 'bg-white/5 text-[#666666] hover:text-[#888888]'}`}
+                          title={selectedShape.uniformScale ? "Unlock Proportions" : "Lock Proportions"}
+                        >
+                          {selectedShape.uniformScale ? <Link className="w-2.5 h-2.5" /> : <Link2Off className="w-2.5 h-2.5" />}
+                          等比
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1">
+                        {selectedShape.scale.map((val, i) => (
+                          <input
+                            key={i}
+                            type="number"
+                            step="0.1"
+                            value={Number(val.toFixed(2))}
+                            onChange={(e) => {
+                              const newValue = parseFloat(e.target.value) || 0;
+                              let newScale = [...selectedShape.scale] as [number, number, number];
+                              
+                              if (selectedShape.uniformScale) {
+                                newScale = [newValue, newValue, newValue];
+                              } else {
+                                newScale[i] = newValue;
+                              }
+                              
+                              onUpdateShape(selectedShape.id, { scale: newScale });
+                            }}
+                            className="bg-[#181818] border border-[#2e2e2e] rounded px-1.5 py-1 text-[11px] font-mono text-[#e0e0e0] w-full focus:outline-none focus:border-[#4a90e2]"
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-1">
-                      {selectedShape.scale.map((val, i) => (
-                        <input
-                          key={i}
-                          type="number"
-                          step="0.1"
-                          value={Number(val.toFixed(2))}
-                          onChange={(e) => {
-                            const newValue = parseFloat(e.target.value) || 0;
-                            let newScale = [...selectedShape.scale] as [number, number, number];
-                            
-                            if (selectedShape.uniformScale) {
-                              newScale = [newValue, newValue, newValue];
-                            } else {
-                              newScale[i] = newValue;
-                            }
-                            
-                            onUpdateShape(selectedShape.id, { scale: newScale });
-                          }}
-                          className="bg-[#181818] border border-[#2e2e2e] rounded px-1.5 py-1 text-[11px] font-mono text-[#e0e0e0] w-full focus:outline-none focus:border-[#4a90e2]"
-                        />
-                      ))}
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
+          {/* Lighting Group */}
+          {isLight && (
+            <div className="border-b border-[#2e2e2e] bg-yellow-400/[0.02]">
+              <button 
+                onClick={() => toggleSection('lighting')}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors group"
+              >
+                <div className="flex items-center gap-2 text-yellow-400/70 group-hover:text-yellow-400">
+                  <Lightbulb className="w-3 h-3" />
+                  <h3 className="font-semibold text-[11px] uppercase tracking-widest">Light Settings</h3>
+                </div>
+                {expandedSections.lighting ? <ChevronDown className="w-3 h-3 text-yellow-400/50" /> : <ChevronRight className="w-3 h-3 text-yellow-400/50" />}
+              </button>
+              
+              {expandedSections.lighting && (
+                <div className="px-4 pb-4 space-y-4">
+                  <div className="grid grid-cols-[1fr,2fr] items-center gap-2">
+                    <span className="text-[12px] text-[#888888]">Intensity</span>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[selectedShape.parameters.intensity || 1]}
+                        min={0}
+                        max={10}
+                        step={0.1}
+                        onValueChange={(val) => {
+                          const value = Array.isArray(val) ? val[0] : val;
+                          onUpdateShape(selectedShape.id, { 
+                            parameters: { ...selectedShape.parameters, intensity: value } 
+                          });
+                        }}
+                        className="flex-1"
+                      />
+                      <span className="text-[11px] font-mono text-[#888888] w-8">
+                        {(selectedShape.parameters.intensity || 1).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-[1fr,2fr] items-center gap-2">
+                    <span className="text-[12px] text-[#888888]">Distance</span>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[selectedShape.parameters.distance || 10]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(val) => {
+                          const value = Array.isArray(val) ? val[0] : val;
+                          onUpdateShape(selectedShape.id, { 
+                            parameters: { ...selectedShape.parameters, distance: value } 
+                          });
+                        }}
+                        className="flex-1"
+                      />
+                      <span className="text-[11px] font-mono text-[#888888] w-8 text-right">
+                        {(selectedShape.parameters.distance || 10).toFixed(0)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-[1fr,2fr] items-center gap-2">
+                    <span className="text-[12px] text-[#888888]">Decay</span>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[selectedShape.parameters.decay || 2]}
+                        min={0}
+                        max={10}
+                        step={0.1}
+                        onValueChange={(val) => {
+                          const value = Array.isArray(val) ? val[0] : val;
+                          onUpdateShape(selectedShape.id, { 
+                            parameters: { ...selectedShape.parameters, decay: value } 
+                          });
+                        }}
+                        className="flex-1"
+                      />
+                      <span className="text-[11px] font-mono text-[#888888] w-8">
+                        {(selectedShape.parameters.decay || 2).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Geometry Group */}
-          {['box', 'extruded', 'circle', 'rect', 'triangle', 'plane'].includes(selectedShape.type) && (
+          {['box', 'extruded', 'circle', 'rect', 'triangle', 'plane', 'svg'].includes(selectedShape.type) && (
             <div className="border-b border-[#2e2e2e] bg-[#4a90e2]/[0.02]">
               <button 
                 onClick={() => toggleSection('geometry')}
@@ -193,7 +283,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
               
               {expandedSections.geometry && (
                 <div className="px-4 pb-4 space-y-4">
-                  {['extruded', 'circle', 'rect', 'triangle', 'plane'].includes(selectedShape.type) && (
+                  {['extruded', 'circle', 'rect', 'triangle', 'plane', 'svg'].includes(selectedShape.type) && (
                     <div className="grid grid-cols-[1fr,2fr] items-center gap-2">
                       <span className="text-[12px] text-[#888888]">Thickness</span>
                       <div className="flex items-center gap-2">

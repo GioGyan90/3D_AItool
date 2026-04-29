@@ -1,4 +1,4 @@
-export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'model' | 'csg';
+export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'model' | 'csg' | 'svg' | 'pointLight';
 
 export interface SceneNode {
   id: string;
@@ -24,6 +24,9 @@ export interface SceneNode {
     bevelRadius?: number;
     bevelSegments?: number;
     bend?: number; // 0 to 1, where 1 is a full circle bend
+    intensity?: number;
+    decay?: number;
+    distance?: number;
   };
   material?: {
     metalness?: number;

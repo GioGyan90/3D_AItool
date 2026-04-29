@@ -13,7 +13,8 @@ import {
   Square,
   Layers as ExtrudeIcon,
   Triangle,
-  ChevronDown
+  ChevronDown,
+  Lightbulb
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -87,6 +88,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onAddShape('plane')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
             <Square className="w-3.5 h-3.5" /> Plane (Infinite)
+          </DropdownMenuItem>
+
+          <div className="h-px bg-[#2e2e2e] my-1" />
+          <div className="px-2 py-1.5 text-[10px] font-bold text-[#555] uppercase tracking-wider">Lighting</div>
+          <DropdownMenuItem onClick={() => onAddShape('pointLight')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
+            <Lightbulb className="w-3.5 h-3.5 text-yellow-400/70" /> Point Light
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

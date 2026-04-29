@@ -4,6 +4,7 @@ import { Canvas3D } from './components/Canvas3D';
 import { Toolbar } from './components/Toolbar';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { LayersPanel } from './components/LayersPanel';
+import { AIChat } from './components/AIChat';
 import { SceneNode, NodeType } from './types';
 import { 
   Box, 
@@ -310,25 +311,29 @@ export default function App() {
 
     const url = URL.createObjectURL(file);
     const newId = crypto.randomUUID();
+    const isSvg = file.name.toLowerCase().endsWith('.svg');
+
     const newNode: SceneNode = {
       id: newId,
       name: file.name,
-      type: 'model',
+      type: isSvg ? 'svg' : 'model',
       parentId: null,
       url: url,
-      position: [0, 0, 0],
+      position: [0, 0.5, 0],
       rotation: [0, 0, 0],
       scale: [1, 1, 1],
       color: '#ffffff',
-      parameters: {},
+      parameters: isSvg ? { thickness: 0 } : {},
       visible: true
     };
-    setNodes(prev => [...prev, newNode]);
+    const updatedNodes = [...nodes, newNode];
+    setNodes(updatedNodes);
     setSelectedIds([newId]);
+    pushHistory(updatedNodes, [newId]);
     
     // Reset input
     event.target.value = '';
-  }, []);
+  }, [nodes, pushHistory]);
 
   const handleAddNode = useCallback((type: NodeType, properties?: Partial<SceneNode>) => {
     const newId = properties?.id || crypto.randomUUID();
@@ -341,8 +346,9 @@ export default function App() {
       position: properties?.position || [0, 0.5, 0],
       rotation: properties?.rotation || [0, 0, 0],
       scale: properties?.scale || [1, 1, 1],
-      color: properties?.color || '#4a90e2',
-      parameters: type === 'extruded' ? { thickness: 0.2 } : {},
+      color: properties?.color || (type === 'pointLight' ? '#ffffff' : '#4a90e2'),
+      parameters: type === 'extruded' ? { thickness: 0.2 } : 
+                  type === 'pointLight' ? { intensity: 1, decay: 2, distance: 10 } : {},
       visible: true,
       ...properties
     };
@@ -475,6 +481,12 @@ export default function App() {
     setSelectedIds([]);
     pushHistory(nextNodes, []);
   }, [selectedIds, nodes, pushHistory]);
+
+  const clearScene = useCallback(() => {
+    setNodes([]);
+    setSelectedIds([]);
+    pushHistory([], []);
+  }, [pushHistory]);
 
   const handleDuplicate = useCallback(() => {
     if (selectedIds.length === 0) return;
@@ -685,7 +697,7 @@ export default function App() {
             <label className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1.5">
               <Upload className="w-3 h-3" />
               IMPORT
-              <input type="file" accept=".glb,.gltf" className="hidden" onChange={handleImport} />
+              <input type="file" accept=".glb,.gltf,.svg" className="hidden" onChange={handleImport} />
             </label>
 
             <DropdownMenu>
@@ -755,7 +767,18 @@ export default function App() {
                 </div>
               </div>
             )}
+
           </main>
+          
+          <AIChat 
+            nodes={nodes}
+            selectedIds={selectedIds}
+            onAddNode={handleAddNode}
+            onUpdateNode={handleUpdateNode}
+            onDeleteNode={handleDeleteNode}
+            onSelectNodes={setSelectedIds}
+            clearScene={clearScene}
+          />
 
           {/* Right Sidebar: Properties */}
           <PropertiesPanel 

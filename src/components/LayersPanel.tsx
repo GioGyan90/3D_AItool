@@ -19,7 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { SceneNode } from '../types';
 import { cn } from '@/lib/utils';
-import { Box, Circle, Cylinder, Torus, Square, Layers as ExtrudeIcon, Folder, Eye, EyeOff, Triangle, Lock, Unlock } from 'lucide-react';
+import { Box, Circle, Cylinder, Torus, Square, Layers as ExtrudeIcon, Folder, Eye, EyeOff, Triangle, Lock, Unlock, Image, Lightbulb } from 'lucide-react';
 
 interface LayersPanelProps {
   nodes: SceneNode[];
@@ -44,6 +44,8 @@ const NodeIcon = ({ type }: { type: SceneNode['type'] }) => {
     case 'triangle': return <Triangle className="w-3.5 h-3.5" />;
     case 'extruded': return <ExtrudeIcon className="w-3.5 h-3.5" />;
     case 'model': return <Box className="w-3.5 h-3.5 text-[#4a90e2]" />;
+    case 'svg': return <Image className="w-3.5 h-3.5 text-[#4a90e2]" />;
+    case 'pointLight': return <Lightbulb className="w-3.5 h-3.5 text-yellow-400/70" />;
     case 'group': return <Folder className="w-3.5 h-3.5 text-[#4a90e2]" />;
     default: return <Box className="w-3.5 h-3.5" />;
   }
