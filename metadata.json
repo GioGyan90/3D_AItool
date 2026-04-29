@@ -1,0 +1,6 @@
+{
+  "name": "Shape3D Studio",
+  "description": "A web-based 3D modeling tool inspired by Spline, allowing users to create, manipulate, and extrude 3D shapes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
