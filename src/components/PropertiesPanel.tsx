@@ -122,7 +122,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                     <div className="grid grid-cols-[1fr,2fr] items-center gap-2">
                       <span className="text-[12px] text-[#888888]">Position</span>
                       <div className="grid grid-cols-3 gap-1">
-                        {effectiveShape.position.map((val, i) => (
+                        {Array.isArray(effectiveShape.position) && effectiveShape.position.map((val, i) => (
                           <input
                             key={i}
                             type="number"
@@ -142,7 +142,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                     <div className="grid grid-cols-[1fr,2fr] items-center gap-2">
                       <span className="text-[12px] text-[#888888]">Rotation</span>
                       <div className="grid grid-cols-3 gap-1">
-                        {effectiveShape.rotation.map((val, i) => (
+                        {Array.isArray(effectiveShape.rotation) && effectiveShape.rotation.map((val, i) => (
                           <input
                             key={i}
                             type="number"
@@ -173,7 +173,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                           </button>
                         </div>
                         <div className="grid grid-cols-3 gap-1">
-                          {effectiveShape.scale.map((val, i) => (
+                          {Array.isArray(effectiveShape.scale) && effectiveShape.scale.map((val, i) => (
                             <input
                               key={i}
                               type="number"
@@ -223,20 +223,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                     <span className="text-[12px] text-[#888888]">Intensity</span>
                     <div className="flex items-center gap-2">
                       <Slider
-                        value={[effectiveShape.parameters.intensity || 1]}
+                        value={[effectiveShape.parameters?.intensity || 1]}
                         min={0}
                         max={10}
                         step={0.1}
                         onValueChange={(val) => {
                           const value = Array.isArray(val) ? val[0] : val;
                           onUpdateShape(effectiveShape.id, { 
-                            parameters: { ...effectiveShape.parameters, intensity: value } 
+                            parameters: { ...(effectiveShape.parameters || {}), intensity: value } 
                           });
                         }}
                         className="flex-1"
                       />
                       <span className="text-[11px] font-mono text-[#888888] w-8">
-                        {(effectiveShape.parameters.intensity || 1).toFixed(1)}
+                        {(effectiveShape.parameters?.intensity || 1).toFixed(1)}
                       </span>
                     </div>
                   </div>
@@ -247,20 +247,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                         <span className="text-[12px] text-[#888888]">Distance</span>
                         <div className="flex items-center gap-2">
                           <Slider
-                            value={[effectiveShape.parameters.distance || 10]}
+                            value={[effectiveShape.parameters?.distance || 10]}
                             min={0}
                             max={100}
                             step={1}
                             onValueChange={(val) => {
                               const value = Array.isArray(val) ? val[0] : val;
                               onUpdateShape(effectiveShape.id, { 
-                                parameters: { ...effectiveShape.parameters, distance: value } 
+                                parameters: { ...(effectiveShape.parameters || {}), distance: value } 
                               });
                             }}
                             className="flex-1"
                           />
                           <span className="text-[11px] font-mono text-[#888888] w-8 text-right">
-                            {(effectiveShape.parameters.distance || 10).toFixed(0)}
+                            {(effectiveShape.parameters?.distance || 10).toFixed(0)}
                           </span>
                         </div>
                       </div>
@@ -269,20 +269,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                         <span className="text-[12px] text-[#888888]">Decay</span>
                         <div className="flex items-center gap-2">
                           <Slider
-                            value={[effectiveShape.parameters.decay || 2]}
+                            value={[effectiveShape.parameters?.decay || 2]}
                             min={0}
                             max={10}
                             step={0.1}
                             onValueChange={(val) => {
                               const value = Array.isArray(val) ? val[0] : val;
                               onUpdateShape(effectiveShape.id, { 
-                                parameters: { ...effectiveShape.parameters, decay: value } 
+                                parameters: { ...(effectiveShape.parameters || {}), decay: value } 
                               });
                             }}
                             className="flex-1"
                           />
                           <span className="text-[11px] font-mono text-[#888888] w-8">
-                            {(effectiveShape.parameters.decay || 2).toFixed(1)}
+                            {(effectiveShape.parameters?.decay || 2).toFixed(1)}
                           </span>
                         </div>
                       </div>
@@ -330,8 +330,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                         <span className="text-[12px] text-[#888888]">Content</span>
                         <input
                           type="text"
-                          value={effectiveShape.parameters.text || ''}
-                          onChange={(e) => onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, text: e.target.value } })}
+                          value={effectiveShape.parameters?.text || ''}
+                          onChange={(e) => onUpdateShape(effectiveShape.id, { parameters: { ...(effectiveShape.parameters || {}), text: e.target.value } })}
                           className="bg-[#181818] border border-[#2e2e2e] rounded px-1.5 py-1 text-[11px] text-[#e0e0e0] w-full focus:outline-none focus:border-[#4a90e2]"
                         />
                       </div>
@@ -339,14 +339,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                         <span className="text-[12px] text-[#888888]">Size</span>
                         <div className="flex items-center gap-2">
                           <Slider
-                            value={[effectiveShape.parameters.size || 0.5]}
+                            value={[effectiveShape.parameters?.size || 0.5]}
                             min={0.1}
                             max={5}
                             step={0.1}
-                            onValueChange={(val) => onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, size: val[0] } })}
+                            onValueChange={(val) => onUpdateShape(effectiveShape.id, { parameters: { ...(effectiveShape.parameters || {}), size: val[0] } })}
                             className="flex-1"
                           />
-                          <span className="text-[11px] font-mono text-[#888888] w-8">{(effectiveShape.parameters.size || 0.5).toFixed(1)}</span>
+                          <span className="text-[11px] font-mono text-[#888888] w-8">{(effectiveShape.parameters?.size || 0.5).toFixed(1)}</span>
                         </div>
                       </div>
                     </div>
@@ -357,20 +357,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                       <span className="text-[12px] text-[#888888]">Thickness</span>
                       <div className="flex items-center gap-2">
                         <Slider
-                          value={[effectiveShape.parameters.thickness || 0]}
+                          value={[effectiveShape.parameters?.thickness || 0]}
                           min={0}
                           max={2}
                           step={0.01}
                           onValueChange={(val) => {
                             const value = Array.isArray(val) ? val[0] : val;
                             onUpdateShape(effectiveShape.id, { 
-                              parameters: { ...effectiveShape.parameters, thickness: value } 
+                              parameters: { ...(effectiveShape.parameters || {}), thickness: value } 
                             });
                           }}
                           className="flex-1"
                         />
                         <span className="text-[11px] font-mono text-[#888888] w-8">
-                          {(effectiveShape.parameters.thickness || 0).toFixed(2)}
+                          {(effectiveShape.parameters?.thickness || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -380,20 +380,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                     <span className="text-[12px] text-[#888888]">Corner Radius</span>
                     <div className="flex items-center gap-2">
                       <Slider
-                        value={[effectiveShape.parameters.bevelRadius || 0]}
+                        value={[effectiveShape.parameters?.bevelRadius || 0]}
                         min={0}
                         max={0.5}
                         step={0.01}
                         onValueChange={(val) => {
                           const value = Array.isArray(val) ? val[0] : val;
                           onUpdateShape(effectiveShape.id, { 
-                            parameters: { ...effectiveShape.parameters, bevelRadius: value } 
+                            parameters: { ...(effectiveShape.parameters || {}), bevelRadius: value } 
                           });
                         }}
                         className="flex-1"
                       />
                       <span className="text-[11px] font-mono text-[#888888] w-8">
-                        {(effectiveShape.parameters.bevelRadius || 0).toFixed(2)}
+                        {(effectiveShape.parameters?.bevelRadius || 0).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -402,20 +402,20 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedShape,
                     <span className="text-[12px] text-[#888888]">Bend</span>
                     <div className="flex items-center gap-2">
                       <Slider
-                        value={[effectiveShape.parameters.bend || 0]}
+                        value={[effectiveShape.parameters?.bend || 0]}
                         min={0}
                         max={1}
                         step={0.01}
                         onValueChange={(val) => {
                           const value = Array.isArray(val) ? val[0] : val;
                           onUpdateShape(effectiveShape.id, { 
-                            parameters: { ...effectiveShape.parameters, bend: value } 
+                            parameters: { ...(effectiveShape.parameters || {}), bend: value } 
                           });
                         }}
                         className="flex-1"
                       />
                       <span className="text-[11px] font-mono text-[#888888] w-8">
-                        {(effectiveShape.parameters.bend || 0).toFixed(2)}
+                        {(effectiveShape.parameters?.bend || 0).toFixed(2)}
                       </span>
                     </div>
                   </div>

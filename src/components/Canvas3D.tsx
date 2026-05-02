@@ -113,7 +113,7 @@ const SVGNode = ({ url, color, thickness }: { url: string; color: string; thickn
 };
 
 const Text3DNode = ({ node }: { node: SceneNode }) => {
-  const { text = "Text", thickness = 0.2, size = 0.5 } = node.parameters;
+  const { text = "Text", thickness = 0.2, size = 0.5 } = node.parameters || {};
   // Standard helvetiker font from three.js examples
   const fontUrl = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/helvetiker_bold.typeface.json";
 
@@ -138,7 +138,7 @@ const Text3DNode = ({ node }: { node: SceneNode }) => {
 };
 
 const PointLightNode = ({ node, isSelected }: { node: SceneNode; isSelected: boolean }) => {
-  const { intensity = 1, decay = 2, distance = 10 } = node.parameters;
+  const { intensity = 1, decay = 2, distance = 10 } = node.parameters || {};
   
   return (
     <group>
@@ -165,7 +165,7 @@ const PointLightNode = ({ node, isSelected }: { node: SceneNode; isSelected: boo
 };
 
 const AmbientLightNode = ({ node }: { node: SceneNode }) => {
-  const { intensity = 0.5 } = node.parameters;
+  const { intensity = 0.5 } = node.parameters || {};
   // Hemisphere light provides a more natural sky/ground gradient
   // Use node.color as sky color and a slightly darker version or gray as ground color
   return (
@@ -212,7 +212,8 @@ const Node = ({
   const initialPositions = useRef<{[key: string]: THREE.Vector3}>({});
 
   const geometry = useMemo(() => {
-    const { type, parameters } = node;
+    const { type } = node;
+    const parameters = node.parameters || {};
     const thickness = parameters.thickness || 0;
     const bevelRadius = parameters.bevelRadius || 0;
     const bevelSegments = parameters.bevelSegments || 4;
@@ -395,7 +396,7 @@ const Node = ({
         {node.type === 'model' && node.url ? (
           <Model url={node.url} color={node.color} />
         ) : node.type === 'svg' && node.url ? (
-          <SVGNode url={node.url} color={node.color} thickness={node.parameters.thickness || 0.1} />
+          <SVGNode url={node.url} color={node.color} thickness={node.parameters?.thickness || 0.1} />
         ) : node.type === 'text' ? (
           <Text3DNode node={node} />
         ) : node.type === 'pointLight' ? (
@@ -404,7 +405,7 @@ const Node = ({
           <AmbientLightNode node={node} />
         ) : node.type !== 'group' ? (
           <mesh geometry={geometry} name={node.id}>
-            {node.type === 'csg' && geometry.groups && geometry.groups.length > 0 ? (
+            {node.type === 'csg' && Array.isArray(geometry.groups) && geometry.groups.length > 0 ? (
               geometry.groups.map((_, index) => (
                 <Material key={index} node={node} />
               ))

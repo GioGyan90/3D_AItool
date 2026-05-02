@@ -49,10 +49,15 @@ export const generateSceneNodes = async (prompt: string): Promise<Partial<SceneN
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Generate a list of 3D primitive nodes to form the following: ${prompt}. 
-      Return only a JSON array of nodes. Use basic primitives to construct complex shapes.
-      You can use the 'text' type for words or letters, specifying 'text' and 'thickness' in parameters.
-      Keep the scale reasonable (around 1 unit). Place them centrally.`,
+      contents: [{ 
+        role: 'user', 
+        parts: [{ 
+          text: `Generate a list of 3D primitive nodes to form the following: ${prompt}. 
+          Return only a JSON array of nodes. Use basic primitives to construct complex shapes.
+          You can use the 'text' type for words or letters, specifying 'text' and 'thickness' in parameters.
+          Keep the scale reasonable (around 1 unit). Place them centrally.` 
+        }] 
+      }],
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -62,6 +67,10 @@ export const generateSceneNodes = async (prompt: string): Promise<Partial<SceneN
         systemInstruction: "You are a 3D modeling assistant that generates scene structures using basic primitives. You output only valid JSON matching the provided schema."
       },
     });
+
+    if (!response || !response.text) {
+      throw new Error("Invalid or empty response from AI");
+    }
 
     const result = JSON.parse(response.text);
     return result;

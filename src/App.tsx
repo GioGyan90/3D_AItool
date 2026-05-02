@@ -373,6 +373,7 @@ export default function App() {
   }, [nodes, pushHistory]);
 
   const handleAiAddNodes = useCallback((newNodesData: Partial<SceneNode>[]) => {
+    if (!Array.isArray(newNodesData)) return;
     const nodesToAdd: SceneNode[] = newNodesData.map((data, index) => ({
       id: crypto.randomUUID(),
       name: data.name || `AI Shape ${nodes.length + index + 1}`,

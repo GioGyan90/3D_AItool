@@ -171,13 +171,21 @@ export function AICommander({
       }];
 
       const modelName = "gemini-3-flash-preview";
-      const result = await genAI.models.generateContent({
+      const response = await (genAI as any).models.generateContent({
         model: modelName,
         contents: [{ role: 'user', parts: [{ text: userMessage.content }] }],
-        config: { systemInstruction, tools }
+        config: { 
+          systemInstruction, 
+          tools: tools as any 
+        }
       });
-      const text = result.text || "";
-      const calls = result.functionCalls;
+      
+      if (!response) {
+        throw new Error("No response from AI");
+      }
+
+      const text = response.text || "";
+      const calls = response.functionCalls;
 
       if (calls && calls.length > 0) {
         const plans = calls.filter(c => c.name === 'propose_plan');
@@ -237,7 +245,7 @@ export function AICommander({
             animate={{ opacity: 1, scale: 1, y: 0 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-2 bg-[#222222] border-b border-[#2e2e2e]">
+            <div className="flex items-center justify-center px-4 py-2 bg-[#222222] border-b border-[#2e2e2e]">
               <div className="flex bg-[#121212] p-1 rounded-lg border border-[#2e2e2e]">
                 <button
                   onClick={() => setActiveTab('chat')}
@@ -258,9 +266,6 @@ export function AICommander({
                   <Hammer className="w-3 h-3" /> Build
                 </button>
               </div>
-              <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-white/5" onClick={() => setIsMinimized(true)}>
-                <Minimize2 className="w-3.5 h-3.5" />
-              </Button>
             </div>
 
             {/* Content */}
@@ -276,7 +281,7 @@ export function AICommander({
                         <div className={cn("rounded-xl px-3 py-2 text-[12px] leading-relaxed", msg.role === 'user' ? "bg-indigo-600 text-white" : "bg-[#222222] text-[#e0e0e0] border border-[#2e2e2e]")}>
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
-                        {msg.plan && (
+                        {Array.isArray(msg.plan) && (
                           <div className="bg-[#1a1a1a] p-2 rounded-lg border border-indigo-500/20 space-y-1">
                             {msg.plan.map((step, si) => (
                               <div key={si} className="flex items-center gap-2 p-1.5 bg-white/5 rounded border border-white/5">
@@ -330,14 +335,19 @@ export function AICommander({
                   autoFocus
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); activeTab === 'chat' ? handleSendChat() : handleBuild(); } }}
                 />
-                <Button 
-                  size="icon" 
-                  onClick={activeTab === 'chat' ? handleSendChat : handleBuild}
-                  disabled={isLoading || !(activeTab === 'chat' ? chatInput : buildInput).trim()}
-                  className="absolute right-2 bottom-2 w-7 h-7 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-20"
-                >
-                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                </Button>
+                <div className="absolute right-2 bottom-2 flex gap-1">
+                  <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-white/10 text-[#888888] hover:text-[#e0e0e0]" onClick={() => setIsMinimized(true)}>
+                    <Minimize2 className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button 
+                    size="icon" 
+                    onClick={activeTab === 'chat' ? handleSendChat : handleBuild}
+                    disabled={isLoading || !(activeTab === 'chat' ? chatInput : buildInput).trim()}
+                    className="w-7 h-7 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-20"
+                  >
+                    {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  </Button>
+                </div>
               </div>
             </div>
 
