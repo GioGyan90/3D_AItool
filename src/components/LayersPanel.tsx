@@ -46,6 +46,7 @@ const NodeIcon = ({ type }: { type: SceneNode['type'] }) => {
     case 'model': return <Box className="w-3.5 h-3.5 text-[#4a90e2]" />;
     case 'svg': return <Image className="w-3.5 h-3.5 text-[#4a90e2]" />;
     case 'pointLight': return <Lightbulb className="w-3.5 h-3.5 text-yellow-400/70" />;
+    case 'ambientLight': return <Lightbulb className="w-3.5 h-3.5 text-white/50" />;
     case 'group': return <Folder className="w-3.5 h-3.5 text-[#4a90e2]" />;
     default: return <Box className="w-3.5 h-3.5" />;
   }
@@ -327,13 +328,14 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
     }
   };
 
-  const rootNodes = nodes.filter(n => !n.parentId);
+  const displayNodes = nodes.filter(n => n.type !== 'ambientLight');
+  const rootNodes = displayNodes.filter(n => !n.parentId);
 
   return (
     <aside className="w-60 bg-[#1c1c1c] border-r border-[#2e2e2e] flex flex-col">
       <div className="px-4 py-3 border-b border-[#2e2e2e] flex items-center justify-between">
         <h2 className="text-[#888888] font-semibold text-[11px] uppercase tracking-widest">Layers</h2>
-        <span className="text-[10px] text-[#888888] opacity-50">{nodes.length}</span>
+        <span className="text-[10px] text-[#888888] opacity-50">{displayNodes.length}</span>
       </div>
       
       <div className="flex-1 overflow-y-auto py-2">

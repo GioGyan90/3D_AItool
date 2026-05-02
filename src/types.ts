@@ -1,4 +1,4 @@
-export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'model' | 'csg' | 'svg' | 'pointLight';
+export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text';
 
 export interface SceneNode {
   id: string;
@@ -27,6 +27,9 @@ export interface SceneNode {
     intensity?: number;
     decay?: number;
     distance?: number;
+    text?: string;
+    size?: number;
+    font?: string;
   };
   material?: {
     metalness?: number;

@@ -4,7 +4,7 @@ import { Canvas3D } from './components/Canvas3D';
 import { Toolbar } from './components/Toolbar';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { LayersPanel } from './components/LayersPanel';
-import { AIChat } from './components/AIChat';
+import { AICommander } from './components/AICommander';
 import { SceneNode, NodeType } from './types';
 import { 
   Box, 
@@ -35,6 +35,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const INITIAL_NODES: SceneNode[] = [
+  {
+    id: 'ambient-light',
+    name: 'Ambient Light',
+    type: 'ambientLight',
+    parentId: null,
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    color: '#ffffff',
+    parameters: { intensity: 0.4 },
+    visible: true,
+    locked: true
+  },
   {
     id: '1',
     name: 'Initial Cube',
@@ -348,6 +361,7 @@ export default function App() {
       scale: properties?.scale || [1, 1, 1],
       color: properties?.color || (type === 'pointLight' ? '#ffffff' : '#4a90e2'),
       parameters: type === 'extruded' ? { thickness: 0.2 } : 
+                  type === 'text' ? { text: 'Text', thickness: 0.2, size: 0.5 } :
                   type === 'pointLight' ? { intensity: 1, decay: 2, distance: 10 } : {},
       visible: true,
       ...properties
@@ -358,11 +372,33 @@ export default function App() {
     pushHistory(nextNodes, [newId]);
   }, [nodes, pushHistory]);
 
+  const handleAiAddNodes = useCallback((newNodesData: Partial<SceneNode>[]) => {
+    const nodesToAdd: SceneNode[] = newNodesData.map((data, index) => ({
+      id: crypto.randomUUID(),
+      name: data.name || `AI Shape ${nodes.length + index + 1}`,
+      type: data.type || 'box',
+      parentId: null,
+      position: data.position || [0, 0.5, 0],
+      rotation: data.rotation || [0, 0, 0],
+      scale: data.scale || [1, 1, 1],
+      color: data.color || '#4a90e2',
+      parameters: data.parameters || {},
+      visible: true,
+      ...data
+    } as SceneNode));
+
+    const updatedNodes = [...nodes, ...nodesToAdd];
+    setNodes(updatedNodes);
+    setSelectedIds(nodesToAdd.map(n => n.id));
+    pushHistory(updatedNodes, nodesToAdd.map(n => n.id));
+  }, [nodes, pushHistory]);
+
   const handleUpdateNode = useCallback((id: string, updates: Partial<SceneNode>) => {
     const nextNodes = nodes.map(n => {
       if (n.id === id) {
-        // Allow updating the 'locked' property itself, but block others if locked
-        if (n.locked && Object.keys(updates).some(k => k !== 'locked' && k !== 'visible')) {
+        // Allow updating safe properties even if locked (especially for system lights)
+        const safeProperties = ['locked', 'visible', 'color', 'parameters', 'name'];
+        if (n.locked && Object.keys(updates).some(k => !safeProperties.includes(k))) {
           return n;
         }
         const updated = { ...n, ...updates };
@@ -378,6 +414,10 @@ export default function App() {
   }, [nodes, selectedIds, pushHistory]);
 
   const handleDeleteNode = useCallback((id: string) => {
+    // Prevent deletion of locked nodes
+    const rootNode = nodes.find(n => n.id === id);
+    if (rootNode?.locked) return;
+
     const toDelete = new Set<string>([id]);
     let changed = true;
     while (changed) {
@@ -767,25 +807,26 @@ export default function App() {
                 </div>
               </div>
             )}
-
           </main>
           
-          <AIChat 
-            nodes={nodes}
-            selectedIds={selectedIds}
-            onAddNode={handleAddNode}
-            onUpdateNode={handleUpdateNode}
-            onDeleteNode={handleDeleteNode}
-            onSelectNodes={setSelectedIds}
-            clearScene={clearScene}
-          />
-
           {/* Right Sidebar: Properties */}
           <PropertiesPanel 
             selectedShape={selectedNode} 
+            nodes={nodes}
             onUpdateShape={handleUpdateNode} 
           />
         </div>
+
+        <AICommander 
+          nodes={nodes}
+          selectedIds={selectedIds}
+          onAddNode={handleAddNode}
+          onAddNodes={handleAiAddNodes}
+          onUpdateNode={handleUpdateNode}
+          onDeleteNode={handleDeleteNode}
+          onSelectNodes={setSelectedIds}
+          clearScene={clearScene}
+        />
       </div>
     </TooltipProvider>
   );

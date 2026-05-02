@@ -14,7 +14,8 @@ import {
   Layers as ExtrudeIcon,
   Triangle,
   ChevronDown,
-  Lightbulb
+  Lightbulb,
+  Type
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -70,6 +71,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onAddShape('torus')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
             <Torus className="w-3.5 h-3.5" /> Torus
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAddShape('text')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
+            <Type className="w-3.5 h-3.5" /> 3D Text
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onAddShape('extruded')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
             <ExtrudeIcon className="w-3.5 h-3.5" /> Path (Extrude)

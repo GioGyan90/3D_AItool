@@ -1,8 +1,8 @@
 import React, { useRef, useMemo, useEffect, Suspense } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, TransformControls, Grid, Environment, ContactShadows, useGLTF, useTexture } from '@react-three/drei';
+import { OrbitControls, TransformControls, Grid, ContactShadows, useGLTF, useTexture, Text3D, Center } from '@react-three/drei';
 import * as THREE from 'three';
-import { SVGLoader } from 'three-stdlib';
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { SceneNode } from '../types';
 
@@ -112,6 +112,31 @@ const SVGNode = ({ url, color, thickness }: { url: string; color: string; thickn
   );
 };
 
+const Text3DNode = ({ node }: { node: SceneNode }) => {
+  const { text = "Text", thickness = 0.2, size = 0.5 } = node.parameters;
+  // Standard helvetiker font from three.js examples
+  const fontUrl = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/helvetiker_bold.typeface.json";
+
+  return (
+    <Center top>
+      <Text3D
+        font={fontUrl}
+        size={size}
+        height={thickness}
+        curveSegments={12}
+        bevelEnabled
+        bevelThickness={0.02}
+        bevelSize={0.02}
+        bevelOffset={0}
+        bevelSegments={5}
+      >
+        {text}
+        <Material node={node} />
+      </Text3D>
+    </Center>
+  );
+};
+
 const PointLightNode = ({ node, isSelected }: { node: SceneNode; isSelected: boolean }) => {
   const { intensity = 1, decay = 2, distance = 10 } = node.parameters;
   
@@ -136,6 +161,19 @@ const PointLightNode = ({ node, isSelected }: { node: SceneNode; isSelected: boo
         </mesh>
       )}
     </group>
+  );
+};
+
+const AmbientLightNode = ({ node }: { node: SceneNode }) => {
+  const { intensity = 0.5 } = node.parameters;
+  // Hemisphere light provides a more natural sky/ground gradient
+  // Use node.color as sky color and a slightly darker version or gray as ground color
+  return (
+    <hemisphereLight 
+      color={node.color} 
+      groundColor="#444444" 
+      intensity={intensity} 
+    />
   );
 };
 
@@ -358,8 +396,12 @@ const Node = ({
           <Model url={node.url} color={node.color} />
         ) : node.type === 'svg' && node.url ? (
           <SVGNode url={node.url} color={node.color} thickness={node.parameters.thickness || 0.1} />
+        ) : node.type === 'text' ? (
+          <Text3DNode node={node} />
         ) : node.type === 'pointLight' ? (
           <PointLightNode node={node} isSelected={isSelected} />
+        ) : node.type === 'ambientLight' ? (
+          <AmbientLightNode node={node} />
         ) : node.type !== 'group' ? (
           <mesh geometry={geometry} name={node.id}>
             {node.type === 'csg' && geometry.groups && geometry.groups.length > 0 ? (
@@ -477,7 +519,6 @@ export const Canvas3D: React.FC<Canvas3DProps> = ({
         frameloop="always"
       >
         <Suspense fallback={null}>
-          <ambientLight intensity={0.4} />
           <pointLight position={[10, 10, 10]} intensity={0.8} castShadow />
           <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={0.8} castShadow />
           
@@ -511,9 +552,9 @@ export const Canvas3D: React.FC<Canvas3DProps> = ({
             minPolarAngle={0} 
             maxPolarAngle={Math.PI / 1.75} 
           />
-          <Environment preset="city" />
           <ContactShadows position={[0, -0.01, 0]} opacity={0.3} scale={20} blur={2.5} far={4.5} />
         </Suspense>
+        <color attach="background" args={["#0e0e0e"]} />
       </Canvas>
     </div>
   );
