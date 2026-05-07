@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useEffect, Suspense } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, TransformControls, Grid, ContactShadows, useGLTF, useTexture, Text3D, Center } from '@react-three/drei';
+import { OrbitControls, TransformControls, Grid, ContactShadows, useGLTF, useTexture, Text3D, Center, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
@@ -21,25 +21,45 @@ interface Canvas3DProps {
   showGrid?: boolean;
 }
 
-const Model = ({ url, color }: { url: string; color: string }) => {
+const Model = ({ node }: { node: SceneNode }) => {
+  const url = node.url || '';
+  const color = node.color;
   const { scene } = useGLTF(url);
+  
+  const isTransparent = (node.material?.opacity ?? 1) < 1 || (node.material?.transmission ?? 0) > 0;
+  
   // Clone the scene to avoid issues with multiple instances
   const clonedScene = useMemo(() => {
     const clone = scene.clone();
     clone.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         // Create a new material to avoid affecting other instances if they share materials
-        child.material = child.material.clone();
-        child.material.color.set(color);
+        const oldMat = child.material;
+        const newMat = new THREE.MeshPhysicalMaterial();
+        THREE.MeshStandardMaterial.prototype.copy.call(newMat, oldMat);
+        
+        newMat.color.set(color);
+        newMat.opacity = node.material?.opacity ?? 1;
+        newMat.transparent = isTransparent;
+        newMat.metalness = node.material?.metalness ?? (oldMat.metalness || 0);
+        newMat.roughness = node.material?.roughness ?? (oldMat.roughness || 0.5);
+        newMat.transmission = node.material?.transmission ?? 0;
+        newMat.thickness = node.material?.thickness ?? 0.5;
+        newMat.ior = node.material?.ior ?? 1.5;
+        
+        child.material = newMat;
       }
     });
     return clone;
-  }, [scene, color]);
+  }, [scene, color, node.material, isTransparent]);
   
   return <primitive object={clonedScene} />;
 };
 
-const SVGNode = ({ url, color, thickness }: { url: string; color: string; thickness: number }) => {
+const SVGNode = ({ node }: { node: SceneNode }) => {
+  const url = node.url || '';
+  const color = node.color;
+  const thickness = node.parameters?.thickness || 0.1;
   const svgData = useLoader(SVGLoader, url);
   
   const { shapes, boundingBox } = useMemo(() => {
@@ -102,9 +122,9 @@ const SVGNode = ({ url, color, thickness }: { url: string; color: string; thickn
           ) : (
             <shapeGeometry args={[item.shape, 32]} />
           )}
-          <meshStandardMaterial 
-            color={isDefaultColor ? item.color : color} 
-            side={thickness > 0 ? THREE.FrontSide : THREE.DoubleSide}
+          <Material 
+            node={node} 
+            overrideColor={isDefaultColor ? `#${item.color.getHexString()}` : color} 
           />
         </mesh>
       ))}
@@ -177,17 +197,60 @@ const AmbientLightNode = ({ node }: { node: SceneNode }) => {
   );
 };
 
-const Material = ({ node }: { node: SceneNode }) => {
+const Material = ({ node, overrideColor }: { node: SceneNode; overrideColor?: string }) => {
   const texture = node.material?.map ? useTexture(node.material.map) : null;
+  const isTransparent = (node.material?.opacity ?? 1) < 1 || (node.material?.transmission ?? 0) > 0;
+  const color = overrideColor || node.color;
   
   return (
-    <meshStandardMaterial 
-      color={node.color} 
+    <meshPhysicalMaterial 
+      key={isTransparent ? 'transparent' : 'opaque'}
+      color={color} 
       metalness={node.material?.metalness ?? 0}
       roughness={node.material?.roughness ?? 0.5}
       map={texture}
+      transmission={node.material?.transmission ?? 0}
+      thickness={node.material?.thickness ?? (node.parameters?.thickness || 0.5)}
+      opacity={node.material?.opacity ?? 1}
+      transparent={isTransparent}
+      ior={node.material?.ior ?? 1.5}
+      envMapIntensity={2.0}
+      attenuationDistance={node.material?.attenuationDistance ?? 5}
+      attenuationColor={new THREE.Color(node.material?.attenuationColor ?? node.color)}
     />
   );
+};
+
+const JSObjectNode = ({ node }: { node: SceneNode }) => {
+  const object = useMemo(() => {
+    if (!node.script) return null;
+    try {
+      // Create a function that has THREE in its scope.
+      // We append logic to automatically call createScene if it was defined 
+      // but not explicitly called/returned by the user's script.
+      const wrappedScript = `
+        ${node.script}
+        if (typeof createScene === 'function') {
+          return createScene(THREE);
+        }
+      `;
+      const scriptFunc = new Function('THREE', wrappedScript);
+      const result = scriptFunc(THREE);
+      
+      if (result instanceof THREE.Object3D) {
+        return result;
+      }
+      console.warn('JS Object script must return a THREE.Object3D instance');
+      return null;
+    } catch (e) {
+      console.error('JS Object execution failed:', e);
+      return null;
+    }
+  }, [node.script]);
+
+  if (!object) return null;
+
+  return <primitive object={object} />;
 };
 
 const Node = ({ 
@@ -394,11 +457,13 @@ const Node = ({
         }}
       >
         {node.type === 'model' && node.url ? (
-          <Model url={node.url} color={node.color} />
+          <Model node={node} />
         ) : node.type === 'svg' && node.url ? (
-          <SVGNode url={node.url} color={node.color} thickness={node.parameters?.thickness || 0.1} />
+          <SVGNode node={node} />
         ) : node.type === 'text' ? (
           <Text3DNode node={node} />
+        ) : node.type === 'js_object' ? (
+          <JSObjectNode node={node} />
         ) : node.type === 'pointLight' ? (
           <PointLightNode node={node} isSelected={isSelected} />
         ) : node.type === 'ambientLight' ? (
@@ -503,6 +568,9 @@ export const Canvas3D: React.FC<Canvas3DProps> = ({
   showGrid = true
 }) => {
   const rootNodes = useMemo(() => nodes.filter(n => !n.parentId), [nodes]);
+  const ambientNode = useMemo(() => nodes.find(n => n.type === 'ambientLight'), [nodes]);
+  const envValue = ambientNode?.parameters?.environment || 'city';
+  const isPreset = ['city', 'studio', 'apartment', 'lobby', 'night', 'warehouse', 'sunset', 'dawn', 'park', 'forest'].includes(envValue);
 
   return (
     <div className="w-full h-full bg-[#0e0e0e]">
@@ -523,6 +591,11 @@ export const Canvas3D: React.FC<Canvas3DProps> = ({
           <pointLight position={[10, 10, 10]} intensity={0.8} castShadow />
           <spotLight position={[-10, 10, 10]} angle={0.15} penumbra={1} intensity={0.8} castShadow />
           
+          {isPreset ? (
+            <Environment preset={envValue as any} />
+          ) : (
+            <Environment files={envValue} />
+          )}
           <Grid 
             infiniteGrid 
             fadeDistance={30} 

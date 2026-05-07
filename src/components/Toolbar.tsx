@@ -15,7 +15,8 @@ import {
   Triangle,
   ChevronDown,
   Lightbulb,
-  Type
+  Type,
+  Code
 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -98,6 +99,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           <div className="px-2 py-1.5 text-[10px] font-bold text-[#555] uppercase tracking-wider">Lighting</div>
           <DropdownMenuItem onClick={() => onAddShape('pointLight')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
             <Lightbulb className="w-3.5 h-3.5 text-yellow-400/70" /> Point Light
+          </DropdownMenuItem>
+
+          <div className="h-px bg-[#2e2e2e] my-1" />
+          <div className="px-2 py-1.5 text-[10px] font-bold text-[#555] uppercase tracking-wider">Advanced</div>
+          <DropdownMenuItem onClick={() => onAddShape('js_object')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
+            <Code className="w-3.5 h-3.5 text-indigo-400" /> JS Object
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

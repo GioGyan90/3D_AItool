@@ -1,6 +1,6 @@
 {
   "name": "Shape3D Studio",
-  "description": "A web-based 3D modeling tool inspired by Spline, allowing users to create, manipulate, and extrude 3D shapes.",
+  "description": "A web-based 3D modeling tool inspired by Spline, featuring advanced material presets like glass with refraction and real-time parameter editing.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

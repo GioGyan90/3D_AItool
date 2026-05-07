@@ -1,4 +1,4 @@
-export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text';
+export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text' | 'js_object';
 
 export interface SceneNode {
   id: string;
@@ -10,9 +10,12 @@ export interface SceneNode {
   scale: [number, number, number];
   color: string;
   url?: string; // For imported models
+  script?: string; // For JS Object code
   geometryData?: any; // For storing serialized CSG geometry or custom mesh data
   parameters: {
     radius?: number;
+    radiusTop?: number;
+    radiusBottom?: number;
     width?: number;
     height?: number;
     depth?: number;
@@ -30,18 +33,48 @@ export interface SceneNode {
     text?: string;
     size?: number;
     font?: string;
+    environment?: string; // Preset name or URL
   };
   material?: {
     metalness?: number;
     roughness?: number;
+    opacity?: number;
+    transmission?: number;
+    ior?: number;
+    thickness?: number; // Volume thickness for refraction
     map?: string; // URL to texture
+    preset?: 'metal' | 'plastic' | 'matte' | 'glass' | 'custom';
+    attenuationDistance?: number;
+    attenuationColor?: string;
   };
   uniformScale?: boolean;
   visible: boolean;
   locked?: boolean;
 }
 
+export interface Keyframe {
+  id: string;
+  time: number; // in seconds
+  value: number | [number, number, number];
+  easing: 'linear' | 'easeIn' | 'easeOut' | 'easeInOut';
+}
+
+export interface PropertyTrack {
+  nodeId: string;
+  property: 'position' | 'rotation' | 'scale' | 'color' | 'intensity';
+  keyframes: Keyframe[];
+}
+
+export interface AnimationData {
+  tracks: PropertyTrack[];
+  duration: number; // in seconds
+  loopStart: number;
+  loopEnd: number;
+}
+
 export interface EditorState {
   nodes: SceneNode[];
   selectedIds: string[];
+  animation: AnimationData;
+  currentTime: number;
 }

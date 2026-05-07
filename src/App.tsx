@@ -1,11 +1,14 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Canvas3D } from './components/Canvas3D';
 import { Toolbar } from './components/Toolbar';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { LayersPanel } from './components/LayersPanel';
 import { AICommander } from './components/AICommander';
-import { SceneNode, NodeType } from './types';
+import { SceneNode, NodeType, PropertyTrack, AnimationData, Keyframe } from './types';
+import { Timeline } from './components/Timeline';
+import { CodeEditor } from './components/CodeEditor';
 import { 
   Box, 
   Circle, 
@@ -22,7 +25,10 @@ import {
   Combine,
   Scissors,
   BoxSelect,
-  Loader2
+  Loader2,
+  Eye,
+  Sparkles,
+  ArrowLeft
 } from 'lucide-react';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
@@ -67,6 +73,194 @@ export default function App() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showGrid, setShowGrid] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [gifProgress, setGifProgress] = useState<number | null>(null);
+  const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const [isLayersCollapsed, setIsLayersCollapsed] = useState(false);
+  const [isPropertiesCollapsed, setIsPropertiesCollapsed] = useState(false);
+  
+  // Animation state
+  const [animation, setAnimation] = useState<AnimationData>({
+    tracks: [],
+    duration: 60,
+    loopStart: 0,
+    loopEnd: 3
+  });
+  const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const lastTimeRef = useRef<number>(performance.now());
+
+  // Playback loop
+  useEffect(() => {
+    let frameId: number;
+    
+    const tick = (now: number) => {
+      if (isPlaying) {
+        const delta = (now - lastTimeRef.current) / 1000;
+        setCurrentTime(prev => {
+          let next = prev + delta;
+          if (next >= animation.loopEnd) {
+            return animation.loopStart;
+          }
+          if (next < animation.loopStart) {
+            return animation.loopStart;
+          }
+          return next;
+        });
+      }
+      lastTimeRef.current = now;
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [isPlaying, animation.loopStart, animation.loopEnd]);
+
+  // Interpolation helper
+  const interpolate = (val1: any, val2: any, ratio: number) => {
+    if (isNaN(ratio) || !isFinite(ratio)) return val1;
+    if (Array.isArray(val1) && Array.isArray(val2)) {
+      return val1.map((v, i) => {
+        const res = v + (val2[i] - v) * ratio;
+        return isNaN(res) ? v : res;
+      });
+    }
+    if (typeof val1 === 'string' && val1.startsWith('#')) {
+      // Color interpolation
+      try {
+        const c1 = new THREE.Color(val1);
+        const c2 = new THREE.Color(val2);
+        return `#${c1.lerp(c2, ratio).getHexString()}`;
+      } catch (e) {
+        return val1;
+      }
+    }
+    const res = val1 + (val2 - val1) * ratio;
+    return isNaN(res) ? val1 : res;
+  };
+
+  const getAnimatedValue = useCallback((nodeId: string, property: string, baseValue: any) => {
+    const track = animation.tracks.find(t => t.nodeId === nodeId && t.property === property);
+    if (!track || track.keyframes.length === 0) return baseValue;
+
+    const sortedKF = [...track.keyframes].sort((a, b) => a.time - b.time);
+    
+    if (currentTime <= sortedKF[0].time) return sortedKF[0].value;
+    if (currentTime >= sortedKF[sortedKF.length - 1].time) return sortedKF[sortedKF.length - 1].value;
+
+    for (let i = 0; i < sortedKF.length - 1; i++) {
+      const kf1 = sortedKF[i];
+      const kf2 = sortedKF[i + 1];
+      if (currentTime >= kf1.time && currentTime <= kf2.time) {
+        const ratio = (currentTime - kf1.time) / (kf2.time - kf1.time);
+        return interpolate(kf1.value, kf2.value, ratio);
+      }
+    }
+    return baseValue;
+  }, [animation, currentTime]);
+
+  const animatedNodes = useMemo(() => {
+    return nodes.map(node => ({
+      ...node,
+      position: getAnimatedValue(node.id, 'position', node.position),
+      rotation: getAnimatedValue(node.id, 'rotation', node.rotation),
+      scale: getAnimatedValue(node.id, 'scale', node.scale),
+      color: getAnimatedValue(node.id, 'color', node.color),
+      parameters: {
+        ...node.parameters,
+        intensity: getAnimatedValue(node.id, 'intensity', node.parameters?.intensity)
+      }
+    }));
+  }, [nodes, getAnimatedValue]);
+
+  const handleAddKeyframe = useCallback((nodeId: string, property: PropertyTrack['property']) => {
+    const node = nodesRef.current.find(n => n.id === nodeId);
+    if (!node) return;
+
+    let value: any;
+    if (property === 'position') value = [...node.position];
+    else if (property === 'rotation') value = [...node.rotation];
+    else if (property === 'scale') value = [...node.scale];
+    else if (property === 'color') value = node.color;
+    else if (property === 'intensity') value = node.parameters.intensity || 1;
+
+    setAnimation(prev => {
+      const nextTracks = [...prev.tracks];
+      let trackIndex = nextTracks.findIndex(t => t.nodeId === nodeId && t.property === property);
+      
+      if (trackIndex === -1) {
+        nextTracks.push({ nodeId, property, keyframes: [] });
+        trackIndex = nextTracks.length - 1;
+      }
+
+      const track = { ...nextTracks[trackIndex] };
+      const nextKeyframes = [...track.keyframes];
+      
+      const time = currentTimeRef.current;
+      // Update existing keyframe at this time or add new one
+      const existingKFIndex = nextKeyframes.findIndex(kf => Math.abs(kf.time - time) < 0.05);
+      const newKF: Keyframe = {
+        id: crypto.randomUUID(),
+        time,
+        value,
+        easing: 'linear'
+      };
+
+      if (existingKFIndex !== -1) {
+        nextKeyframes[existingKFIndex] = newKF;
+      } else {
+        nextKeyframes.push(newKF);
+      }
+      
+      track.keyframes = nextKeyframes.sort((a, b) => a.time - b.time);
+      nextTracks[trackIndex] = track;
+      
+      return { ...prev, tracks: nextTracks };
+    });
+  }, []);
+
+  const handleRemoveKeyframe = useCallback((trackIndex: number, kfId: string) => {
+    setAnimation(prev => {
+      const nextTracks = [...prev.tracks];
+      const track = { ...nextTracks[trackIndex] };
+      const nextKeyframes = track.keyframes.filter(kf => kf.id !== kfId);
+      
+      if (nextKeyframes.length === 0) {
+        nextTracks.splice(trackIndex, 1);
+      } else {
+        track.keyframes = nextKeyframes;
+        nextTracks[trackIndex] = track;
+      }
+      
+      return { ...prev, tracks: nextTracks };
+    });
+  }, []);
+
+  const handleUpdateKeyframe = useCallback((trackIndex: number, kfId: string, newTime: number) => {
+    setAnimation(prev => {
+      const nextTracks = [...prev.tracks];
+      const track = { ...nextTracks[trackIndex] };
+      const nextKeyframes = track.keyframes.map(kf => 
+        kf.id === kfId ? { ...kf, time: newTime } : kf
+      );
+      
+      // Re-sort
+      track.keyframes = nextKeyframes.sort((a, b) => a.time - b.time);
+      nextTracks[trackIndex] = track;
+      
+      return { ...prev, tracks: nextTracks };
+    });
+  }, []);
+
+  const handleDeleteTrack = useCallback((trackIndex: number) => {
+    setAnimation(prev => {
+      const nextTracks = [...prev.tracks];
+      nextTracks.splice(trackIndex, 1);
+      return { ...prev, tracks: nextTracks };
+    });
+  }, []);
   
   // History management using refs for stability and to avoid stale closures
   const historyRef = useRef<{ nodes: SceneNode[]; selectedIds: string[] }[]>([
@@ -83,6 +277,16 @@ export default function App() {
       orbitControlsRef.current.reset();
     }
   }, []);
+
+  const nodesRef = useRef(nodes);
+  const animationRef = useRef(animation);
+  const currentTimeRef = useRef(currentTime);
+  const selectedIdsRef = useRef(selectedIds);
+
+  useEffect(() => { nodesRef.current = nodes; }, [nodes]);
+  useEffect(() => { animationRef.current = animation; }, [animation]);
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+  useEffect(() => { selectedIdsRef.current = selectedIds; }, [selectedIds]);
 
   const pushHistory = useCallback((newNodes: SceneNode[], newSelectedIds: string[]) => {
     const sliced = historyRef.current.slice(0, historyIndexRef.current + 1);
@@ -157,17 +361,10 @@ export default function App() {
     const height = canvas?.clientHeight || window.innerHeight;
     renderer.setSize(width, height);
     
-    // 1. Create a temporary scene
     const tempScene = new THREE.Scene();
-    // SVGRenderer doesn't support scene.background directly in the output file, 
-    // we'll handle background manually if needed or let it be transparent.
-    
-    // 2. Enhanced Lighting for better vector shading
-    // Ambient light for base color
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     tempScene.add(ambientLight);
     
-    // Directional light is best for SVGRenderer to calculate face normals
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
     dirLight.position.set(5, 10, 7);
     tempScene.add(dirLight);
@@ -176,18 +373,15 @@ export default function App() {
     pointLight.position.set(-10, 5, -10);
     tempScene.add(pointLight);
 
-    // 3. Add a vector GridHelper
     if (showGrid) {
       const gridHelper = new THREE.GridHelper(100, 100, 0x333333, 0x222222);
       tempScene.add(gridHelper);
     }
     
-    // 4. Clone and prepare nodes
     const clone = sceneRef.current.clone();
     clone.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         const oldMat = child.material as THREE.MeshStandardMaterial;
-        // MeshPhongMaterial provides better highlights in SVGRenderer
         child.material = new THREE.MeshPhongMaterial({
           color: oldMat.color,
           opacity: oldMat.opacity,
@@ -196,19 +390,14 @@ export default function App() {
           shininess: 30,
           specular: new THREE.Color(0x222222)
         });
-        // Ensure geometry has normals for shading
         child.geometry.computeVertexNormals();
       }
     });
     tempScene.add(clone);
     
-    // 5. Use the current camera
     const currentCamera = orbitControlsRef.current.object;
-    
-    // 6. Render
     renderer.render(tempScene, currentCamera);
     
-    // 7. Post-process SVG to add a background rect (optional but helps visibility)
     let svgString = renderer.domElement.outerHTML;
     const bgRect = `<rect width="100%" height="100%" fill="#0e0e0e"/>`;
     svgString = svgString.replace(/<svg([^>]*)>/, `<svg$1>${bgRect}`);
@@ -221,6 +410,218 @@ export default function App() {
     link.click();
     URL.revokeObjectURL(url);
   }, [showGrid]);
+
+  const handleExportAnimationJS = useCallback(() => {
+    const animationCode = `
+// Prism3D Animation Export
+const animationData = ${JSON.stringify({ ...animation, duration: animation.loopEnd - animation.loopStart }, null, 2)};
+const nodesData = ${JSON.stringify(nodes, null, 2)};
+const loopOffset = ${animation.loopStart};
+
+function interpolate(val1, val2, ratio) {
+  if (Array.isArray(val1) && Array.isArray(val2)) {
+    return val1.map((v, i) => v + (val2[i] - v) * ratio);
+  }
+  if (typeof val1 === 'string' && val1.startsWith('#')) {
+    // Simple hex color interpolation
+    const r1 = parseInt(val1.slice(1, 3), 16);
+    const g1 = parseInt(val1.slice(3, 5), 16);
+    const b1 = parseInt(val1.slice(5, 7), 16);
+    const r2 = parseInt(val2.slice(1, 3), 16);
+    const g2 = parseInt(val2.slice(3, 5), 16);
+    const b2 = parseInt(val2.slice(5, 7), 16);
+    const r = Math.round(r1 + (r2 - r1) * ratio).toString(16).padStart(2, '0');
+    const g = Math.round(g1 + (g2 - g1) * ratio).toString(16).padStart(2, '0');
+    const b = Math.round(b1 + (b2 - b1) * ratio).toString(16).padStart(2, '0');
+    return \`#\${r}\${g}\${b}\`;
+  }
+  return val1 + (val2 - val1) * ratio;
+}
+
+function getAnimatedValue(nodeId, property, baseValue, time) {
+  const actualTime = time + loopOffset;
+  const track = animationData.tracks.find(t => t.nodeId === nodeId && t.property === property);
+  if (!track || track.keyframes.length === 0) return baseValue;
+
+  const sortedKF = [...track.keyframes].sort((a, b) => a.time - b.time);
+  
+  if (actualTime <= sortedKF[0].time) return sortedKF[0].value;
+  if (actualTime >= sortedKF[sortedKF.length - 1].time) return sortedKF[sortedKF.length - 1].value;
+
+  for (let i = 0; i < sortedKF.length - 1; i++) {
+    const kf1 = sortedKF[i];
+    const kf2 = sortedKF[i + 1];
+    if (actualTime >= kf1.time && actualTime <= kf2.time) {
+      const ratio = (actualTime - kf1.time) / (kf2.time - kf1.time);
+      return interpolate(kf1.value, kf2.value, ratio);
+    }
+  }
+  return baseValue;
+}
+
+// Global animation state
+let currentTime = 0;
+const duration = animationData.duration;
+
+function animate(time) {
+  currentTime = (time / 1000) % duration;
+  
+  // Here you would update your Three.js objects
+  nodesData.forEach(node => {
+    const pos = getAnimatedValue(node.id, 'position', node.position, currentTime);
+    const rot = getAnimatedValue(node.id, 'rotation', node.rotation, currentTime);
+    const scale = getAnimatedValue(node.id, 'scale', node.scale, currentTime);
+    // console.log(\`Node \${node.name} at time \${currentTime}: \`, pos);
+  });
+  
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
+`;
+    const blob = new Blob([animationCode], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'animation.js';
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [animation, nodes]);
+  
+  const handleExportGIF = useCallback(async () => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return;
+
+    // @ts-ignore
+    const GIF = (await import('gif.js')).default;
+    
+    // Stop playing if it is
+    setIsPlaying(false);
+
+    // Fetch worker script to avoid CORS issues with cross-origin workers
+    const workerResponse = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
+    const workerBlob = await workerResponse.blob();
+    const workerUrl = URL.createObjectURL(workerBlob);
+    
+    const gif = new GIF({
+      workers: 2,
+      quality: 10,
+      width: canvas.width,
+      height: canvas.height,
+      workerScript: workerUrl
+    });
+
+    const fps = 20;
+    const loopDuration = animation.loopEnd - animation.loopStart;
+    const frameCount = Math.ceil(loopDuration * fps);
+    const step = 1 / fps;
+
+    const originalTime = currentTime;
+
+    for (let i = 0; i < frameCount; i++) {
+      const time = animation.loopStart + i * step;
+      setCurrentTime(time);
+      
+      // Wait for render
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      
+      gif.addFrame(canvas, { copy: true, delay: (1 / fps) * 1000 });
+      setGifProgress(Math.round(((i + 1) / frameCount) * 50));
+    }
+
+    // Reset time
+    setCurrentTime(originalTime);
+
+    gif.on('progress', (p: number) => {
+      setGifProgress(Math.round(50 + p * 50));
+    });
+
+    gif.on('finished', (blob: Blob) => {
+      setGifProgress(null);
+      URL.revokeObjectURL(workerUrl);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'animation.gif';
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    gif.render();
+  }, [animation.duration, currentTime]);
+
+  const handleExportJSModel = useCallback(() => {
+    let code = `// Prism3D Scene Export - Three.js Code
+// Generated on ${new Date().toLocaleString()}
+
+function createScene(THREE) {
+  const group = new THREE.Group();
+
+`;
+
+    nodes.forEach(node => {
+      if (node.type === 'pointLight' || node.type === 'ambientLight') return;
+
+      code += `  // ${node.name} (${node.type})\n`;
+      
+      let geometryCode = '';
+      let materialCode = `  const material_${node.id.replace(/-/g, '_')} = new THREE.MeshStandardMaterial({ color: '${node.color}' });\n`;
+
+      switch (node.type) {
+        case 'box':
+          geometryCode = `new THREE.BoxGeometry(${node.parameters?.width || 1}, ${node.parameters?.height || 1}, ${node.parameters?.depth || 1})`;
+          break;
+        case 'sphere':
+          geometryCode = `new THREE.SphereGeometry(${node.parameters?.radius || 0.5}, 32, 32)`;
+          break;
+        case 'cylinder':
+          geometryCode = `new THREE.CylinderGeometry(${node.parameters?.radiusTop || 0.5}, ${node.parameters?.radiusBottom || 0.5}, ${node.parameters?.height || 1}, 32)`;
+          break;
+        case 'torus':
+          geometryCode = `new THREE.TorusGeometry(${node.parameters?.radius || 0.5}, ${node.parameters?.tube || 0.2}, 16, 100)`;
+          break;
+        case 'plane':
+          geometryCode = `new THREE.PlaneGeometry(${node.parameters?.width || 1}, ${node.parameters?.height || 1})`;
+          break;
+        case 'circle':
+          geometryCode = `new THREE.CircleGeometry(${node.parameters?.radius || 0.5}, 32)`;
+          break;
+        case 'js_object':
+          code += `  const mesh_${node.id.replace(/-/g, '_')} = (() => {\n${node.script?.split('\n').map(l => '    ' + l).join('\n')}\n  })();\n`;
+          break;
+        case 'text':
+          geometryCode = `new THREE.BoxGeometry(${node.parameters?.size || 0.5}, ${node.parameters?.size || 0.5}, ${node.parameters?.thickness || 0.2})`; // Fallback for text since loaders are async
+          break;
+        default:
+          geometryCode = `new THREE.BoxGeometry(1, 1, 1)`;
+      }
+
+      if (node.type !== 'js_object') {
+        const id = node.id.replace(/-/g, '_');
+        code += materialCode;
+        code += `  const geometry_${id} = ${geometryCode};\n`;
+        code += `  const mesh_${id} = new THREE.Mesh(geometry_${id}, material_${id});\n`;
+      }
+
+      const id = node.id.replace(/-/g, '_');
+      code += `  if (mesh_${id}) {\n`;
+      code += `    mesh_${id}.position.set(${node.position.join(', ')});\n`;
+      code += `    mesh_${id}.rotation.set(${node.rotation.join(', ')});\n`;
+      code += `    mesh_${id}.scale.set(${node.scale.join(', ')});\n`;
+      code += `    group.add(mesh_${id});\n`;
+      code += `  }\n\n`;
+    });
+
+    code += `  return group;\n}\n\n// Usage:\n// const myScene = createScene(THREE);\n// scene.add(myScene);\n`;
+
+    const blob = new Blob([code], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'scene_models.js';
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [nodes]);
 
   const handleBooleanOperation = useCallback(async (operationType: 'union' | 'subtract' | 'intersect' | 'xor') => {
     if (selectedIds.length !== 2 || !sceneRef.current || isProcessing) return;
@@ -356,10 +757,15 @@ export default function App() {
       name: properties?.name || `${typeLabel} ${nodes.length + 1}`,
       type: type || 'box',
       parentId: null,
-      position: properties?.position || [0, 0.5, 0],
+      position: properties?.position || (type === 'js_object' ? [0, 0, 0] : [0, 0.5, 0]),
       rotation: properties?.rotation || [0, 0, 0],
       scale: properties?.scale || [1, 1, 1],
       color: properties?.color || (type === 'pointLight' ? '#ffffff' : '#4a90e2'),
+      script: type === 'js_object' ? `// Example: Torus Knot
+const geometry = new THREE.TorusKnotGeometry(0.4, 0.1, 100, 16);
+const material = new THREE.MeshStandardMaterial({ color: 0x4a90e2 });
+const mesh = new THREE.Mesh(geometry, material);
+return mesh;` : undefined,
       parameters: type === 'extruded' ? { thickness: 0.2 } : 
                   type === 'text' ? { text: 'Text', thickness: 0.2, size: 0.5 } :
                   type === 'pointLight' ? { intensity: 1, decay: 2, distance: 10 } : {},
@@ -394,25 +800,51 @@ export default function App() {
     pushHistory(updatedNodes, nodesToAdd.map(n => n.id));
   }, [nodes, pushHistory]);
 
-  const handleUpdateNode = useCallback((id: string, updates: Partial<SceneNode>) => {
-    const nextNodes = nodes.map(n => {
-      if (n.id === id) {
-        // Allow updating safe properties even if locked (especially for system lights)
-        const safeProperties = ['locked', 'visible', 'color', 'parameters', 'name'];
-        if (n.locked && Object.keys(updates).some(k => !safeProperties.includes(k))) {
-          return n;
+  const handleUpdateNode = useCallback((id: string, updates: Partial<SceneNode>, skipHistory = false) => {
+    let nextNodesResult: SceneNode[] = [];
+    setNodes(prev => {
+      nextNodesResult = prev.map(n => {
+        if (n.id === id) {
+          // Allow updating safe properties even if locked (especially for system lights)
+          const safeProperties = ['locked', 'visible', 'color', 'parameters', 'name'];
+          if (n.locked && Object.keys(updates).some(k => !safeProperties.includes(k))) {
+            return n;
+          }
+          const updated = { ...n, ...updates };
+          if (updates.parameters) {
+            updated.parameters = { ...n.parameters, ...updates.parameters };
+          }
+          if (updates.material) {
+            updated.material = { ...n.material, ...updates.material };
+          }
+          return updated;
         }
-        const updated = { ...n, ...updates };
-        if (updates.parameters) {
-          updated.parameters = { ...n.parameters, ...updates.parameters };
-        }
-        return updated;
-      }
-      return n;
+        return n;
+      });
+      return nextNodesResult;
     });
-    setNodes(nextNodes);
-    pushHistory(nextNodes, selectedIds);
-  }, [nodes, selectedIds, pushHistory]);
+
+    // Auto-keyframe logic
+    const animatedProps = ['position', 'rotation', 'scale', 'color', 'intensity'] as const;
+    const currentTracks = animationRef.current.tracks;
+    
+    animatedProps.forEach(prop => {
+      const isParam = prop === 'intensity';
+      if (isParam ? updates.parameters?.intensity !== undefined : updates[prop as 'position'|'rotation'|'scale'|'color'] !== undefined) {
+        const trackExists = currentTracks.findIndex(t => t.nodeId === id && t.property === prop) !== -1;
+        if (trackExists) {
+          handleAddKeyframe(id, prop);
+        }
+      }
+    });
+
+    // We can't easily push to history here because setNodes is async.
+    // However, we can use historyRef to check if we should push.
+    // Actually, we'll just push nextNodesResult which we captured.
+    if (nextNodesResult.length > 0 && !skipHistory) {
+      pushHistory(nextNodesResult, selectedIdsRef.current);
+    }
+  }, [pushHistory, handleAddKeyframe]);
 
   const handleDeleteNode = useCallback((id: string) => {
     // Prevent deletion of locked nodes
@@ -652,13 +1084,41 @@ export default function App() {
     <TooltipProvider>
       <div className="flex flex-col h-screen w-screen bg-[#0e0e0e] overflow-hidden font-sans selection:bg-indigo-500/30">
         {/* Header */}
-        <header className="h-12 bg-[#181818] border-b border-[#2e2e2e] flex items-center justify-between px-4 z-50">
-          <div className="flex items-center gap-6">
-            <div className="font-bold tracking-tighter text-base flex items-center gap-1 text-[#e0e0e0]">
-              PRISM<span className="text-[#4a90e2]">3D</span>
-            </div>
-            
-            <div className="h-6 w-px bg-[#2e2e2e]" />
+        {!isPreviewMode && (
+          <header className="h-12 bg-[#181818] border-b border-[#2e2e2e] flex items-center justify-between px-4 z-50">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="font-bold tracking-tighter text-base flex items-center gap-1 text-[#e0e0e0]">
+                  GIO<span className="text-[#4a90e2]">3D</span>
+                </div>
+                
+                <div className="flex items-center gap-1 bg-[#121212] px-1.5 py-0.5 rounded-lg border border-[#2e2e2e]">
+                  <Tooltip>
+                    <TooltipTrigger 
+                      onClick={() => setIsAiOpen(!isAiOpen)}
+                      className={cn(
+                        "p-1.5 rounded-md transition-all",
+                        isAiOpen ? "bg-indigo-600 text-white" : "text-[#888888] hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </TooltipTrigger>
+                    <TooltipContent>AI Assistant</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger 
+                      onClick={() => setIsPreviewMode(true)}
+                      className="p-1.5 rounded-md text-[#888888] hover:text-white hover:bg-white/5 transition-all"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </TooltipTrigger>
+                    <TooltipContent>Preview Mode</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+              
+              <div className="h-6 w-px bg-[#2e2e2e]" />
             
             <div className="flex items-center gap-4">
               <Toolbar 
@@ -756,37 +1216,75 @@ export default function App() {
                 <DropdownMenuItem onClick={handleExportSVG} className="text-xs hover:bg-white/5 cursor-pointer">
                   Export as SVG
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportAnimationJS} className="text-xs hover:bg-white/5 cursor-pointer text-indigo-400 font-bold">
+                  Export Animation JS
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportGIF} className="text-xs hover:bg-white/5 cursor-pointer text-pink-400">
+                  Export as GIF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportJSModel} className="text-xs hover:bg-white/5 cursor-pointer text-indigo-300">
+                  Export JS Model
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
+      )}
+
+      {gifProgress !== null && (
+          <div className="fixed top-12 left-0 right-0 h-1 bg-indigo-900/30 z-[100]">
+            <div 
+              className="h-full bg-indigo-500 transition-all duration-300" 
+              style={{ width: `${gifProgress}%` }}
+            />
+            <div className="absolute top-2 right-4 text-[10px] text-indigo-400 font-mono bg-[#181818] px-2 py-1 rounded border border-indigo-500/20">
+              GENERATING GIF: {gifProgress}%
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 flex overflow-hidden">
-          <LayersPanel 
-            nodes={nodes}
-            selectedIds={selectedIds}
-            onSelect={setSelectedIds}
-            onUpdateNode={handleUpdateNode}
-            onReorder={setNodes}
-            showGrid={showGrid}
-            onToggleGrid={() => setShowGrid(!showGrid)}
-            onResetCamera={handleResetCamera}
-          />
+          {!isPreviewMode && (
+            <LayersPanel 
+              nodes={nodes}
+              selectedIds={selectedIds}
+              onSelect={setSelectedIds}
+              onUpdateNode={handleUpdateNode}
+              onReorder={setNodes}
+              showGrid={showGrid}
+              onToggleGrid={() => setShowGrid(!showGrid)}
+              onResetCamera={handleResetCamera}
+              isCollapsed={isLayersCollapsed}
+              onToggleCollapse={() => setIsLayersCollapsed(!isLayersCollapsed)}
+            />
+          )}
 
           {/* Main Content: Canvas */}
-          <main className="flex-1 relative bg-[#0e0e0e]">
+          <main className="flex-1 relative bg-[#0e0e0e] min-w-0">
+            {isPreviewMode && (
+              <div className="absolute top-6 left-6 z-50">
+                <button 
+                  onClick={() => setIsPreviewMode(false)}
+                  className="flex items-center gap-2 bg-[#1c1c1c]/80 backdrop-blur-md border border-[#2e2e2e] px-4 py-2 rounded-full text-xs font-bold text-white hover:bg-[#2e2e2e] transition-all shadow-xl"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  BACK TO EDIT
+                </button>
+              </div>
+            )}
+
             <Canvas3D 
-              nodes={nodes} 
-              selectedIds={selectedIds} 
-              onSelect={setSelectedIds}
+              nodes={animatedNodes} 
+              selectedIds={isPreviewMode ? [] : selectedIds} 
+              onSelect={isPreviewMode ? () => {} : setSelectedIds}
               onUpdateNode={handleUpdateNode}
               sceneRef={sceneRef}
               orbitControlsRef={orbitControlsRef}
-              showGrid={showGrid}
+              showGrid={isPreviewMode ? false : showGrid}
             />
             
             {/* Viewport Info */}
-            <div className="absolute bottom-5 left-5 bg-black/50 border border-[#2e2e2e] px-3 py-2 rounded-md text-[11px] font-mono text-[#888888] pointer-events-none flex flex-col gap-1">
+            <div className="absolute bottom-5 left-5 bg-black/50 border border-[#2e2e2e] px-3 py-2 rounded-md text-[11px] font-mono text-[#888888] pointer-events-none flex flex-col gap-1 z-10">
               <div>NODES: {nodes.length} | SELECTED: {selectedIds.length}</div>
               <div className="text-[9px] opacity-70 uppercase tracking-tighter">
                 {nodes.length === 0 ? "Scene is empty. Use the toolbar to add shapes." : "Scene is active"}
@@ -810,13 +1308,61 @@ export default function App() {
             )}
           </main>
           
-          {/* Right Sidebar: Properties */}
-          <PropertiesPanel 
-            selectedShape={selectedNode} 
-            nodes={nodes}
-            onUpdateShape={handleUpdateNode} 
-          />
+          {!isPreviewMode && (
+            <PropertiesPanel 
+              selectedShape={selectedNode} 
+              nodes={nodes}
+              onUpdateShape={handleUpdateNode} 
+              isCollapsed={isPropertiesCollapsed}
+              onToggleCollapse={() => setIsPropertiesCollapsed(!isPropertiesCollapsed)}
+              onOpenCodeEditor={() => {
+                if (selectedIds.length === 1) {
+                  const node = nodes.find(n => n.id === selectedIds[0]);
+                  if (node?.type === 'js_object') {
+                    setEditingNodeId(node.id);
+                    setIsCodeEditorOpen(true);
+                  }
+                }
+              }}
+            />
+          )}
         </div>
+
+        <CodeEditor 
+          isOpen={isCodeEditorOpen}
+          initialCode={editingNodeId ? (nodes.find(n => n.id === editingNodeId)?.script || '') : ''}
+          onSave={(code) => {
+            if (editingNodeId) {
+              handleUpdateNode(editingNodeId, { script: code });
+            }
+            setIsCodeEditorOpen(false);
+            setEditingNodeId(null);
+          }}
+          onCancel={() => {
+            setIsCodeEditorOpen(false);
+            setEditingNodeId(null);
+          }}
+        />
+
+        {!isPreviewMode && (
+          <Timeline 
+            animation={animation}
+            currentTime={currentTime}
+            isPlaying={isPlaying}
+            onTimeChange={setCurrentTime}
+            onTogglePlay={() => setIsPlaying(!isPlaying)}
+            onStopPlay={() => setIsPlaying(false)}
+            onAddKeyframe={handleAddKeyframe}
+            onRemoveKeyframe={handleRemoveKeyframe}
+            onUpdateKeyframe={handleUpdateKeyframe}
+            onDeleteTrack={handleDeleteTrack}
+            onUpdateAnimation={(data) => setAnimation(prev => ({ ...prev, ...data }))}
+            selectedNodeId={selectedIds.length === 1 ? selectedIds[0] : null}
+            nodes={nodes}
+            animatedNodes={animatedNodes}
+            onUpdateNode={handleUpdateNode}
+          />
+        )}
 
         <AICommander 
           nodes={nodes}
@@ -827,6 +1373,8 @@ export default function App() {
           onDeleteNode={handleDeleteNode}
           onSelectNodes={setSelectedIds}
           clearScene={clearScene}
+          isOpen={isAiOpen}
+          onClose={() => setIsAiOpen(false)}
         />
       </div>
     </TooltipProvider>

@@ -44,6 +44,8 @@ interface AICommanderProps {
   onDeleteNode: (id: string) => void;
   onSelectNodes: (ids: string[]) => void;
   clearScene: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 type TabType = 'chat' | 'build';
@@ -56,7 +58,9 @@ export function AICommander({
   onUpdateNode, 
   onDeleteNode, 
   onSelectNodes,
-  clearScene 
+  clearScene,
+  isOpen,
+  onClose
 }: AICommanderProps) {
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [messages, setMessages] = useState<Message[]>([
@@ -65,7 +69,6 @@ export function AICommander({
   const [chatInput, setChatInput] = useState('');
   const [buildInput, setBuildInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 340, height: 500 });
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -219,33 +222,18 @@ export function AICommander({
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[60]" ref={constraintsRef}>
-      <AnimatePresence mode="wait">
-        {isMinimized ? (
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
-            key="minimized"
-            layoutId="commander"
-            className="fixed bottom-20 right-6 pointer-events-auto"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-          >
-            <Button
-              className="w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 shadow-2xl flex items-center justify-center group border border-white/10"
-              onClick={() => setIsMinimized(false)}
-            >
-              <Sparkles className="w-6 h-6 text-white group-hover:animate-pulse" />
-            </Button>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="maximized"
-            layoutId="commander"
-            className="fixed bottom-20 right-6 pointer-events-auto flex flex-col bg-[#1c1c1c]/95 backdrop-blur-xl border border-[#2e2e2e] rounded-2xl shadow-2xl overflow-hidden"
+            key="commander"
+            className="fixed bottom-6 right-6 pointer-events-auto flex flex-col bg-[#1c1c1c]/95 backdrop-blur-xl border border-[#2e2e2e] rounded-2xl shadow-2xl overflow-hidden"
             style={{ width: dimensions.width, height: dimensions.height }}
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-center px-4 py-2 bg-[#222222] border-b border-[#2e2e2e]">
+            <div className="flex items-center justify-between px-4 py-2 bg-[#222222] border-b border-[#2e2e2e]">
               <div className="flex bg-[#121212] p-1 rounded-lg border border-[#2e2e2e]">
                 <button
                   onClick={() => setActiveTab('chat')}
@@ -266,6 +254,14 @@ export function AICommander({
                   <Hammer className="w-3 h-3" /> Build
                 </button>
               </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="w-8 h-8 text-[#888888] hover:text-white"
+                onClick={onClose}
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
 
             {/* Content */}
@@ -336,9 +332,6 @@ export function AICommander({
                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); activeTab === 'chat' ? handleSendChat() : handleBuild(); } }}
                 />
                 <div className="absolute right-2 bottom-2 flex gap-1">
-                  <Button variant="ghost" size="icon" className="w-7 h-7 hover:bg-white/10 text-[#888888] hover:text-[#e0e0e0]" onClick={() => setIsMinimized(true)}>
-                    <Minimize2 className="w-3.5 h-3.5" />
-                  </Button>
                   <Button 
                     size="icon" 
                     onClick={activeTab === 'chat' ? handleSendChat : handleBuild}
