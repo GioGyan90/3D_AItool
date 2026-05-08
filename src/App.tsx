@@ -1262,15 +1262,47 @@ return mesh;` : undefined,
           {/* Main Content: Canvas */}
           <main className="flex-1 relative bg-[#0e0e0e] min-w-0">
             {isPreviewMode && (
-              <div className="absolute top-6 left-6 z-50">
-                <button 
-                  onClick={() => setIsPreviewMode(false)}
-                  className="flex items-center gap-2 bg-[#1c1c1c]/80 backdrop-blur-md border border-[#2e2e2e] px-4 py-2 rounded-full text-xs font-bold text-white hover:bg-[#2e2e2e] transition-all shadow-xl"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  BACK TO EDIT
-                </button>
-              </div>
+              <>
+                <div className="absolute top-6 left-6 z-50">
+                  <button 
+                    onClick={() => setIsPreviewMode(false)}
+                    className="flex items-center gap-2 bg-[#1c1c1c]/80 backdrop-blur-md border border-[#2e2e2e] px-4 py-2 rounded-full text-xs font-bold text-white hover:bg-[#2e2e2e] transition-all shadow-xl"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    BACK TO EDIT
+                  </button>
+                </div>
+
+                <div className="absolute top-6 right-6 z-50">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="bg-[#4a90e2]/80 backdrop-blur-md hover:bg-[#357abd] text-white px-4 py-2 rounded-full text-xs font-bold transition-all shadow-xl flex items-center gap-2 outline-none">
+                      EXPORT
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="bg-[#181818] border-[#2e2e2e] text-[#e0e0e0] w-44">
+                      <DropdownMenuItem onClick={handleExportGLB} className="text-xs hover:bg-white/5 cursor-pointer py-2">
+                        Export as GLB
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportPNG} className="text-xs hover:bg-white/5 cursor-pointer py-2">
+                        Export as PNG
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportSVG} className="text-xs hover:bg-white/5 cursor-pointer py-2">
+                        Export as SVG
+                      </DropdownMenuItem>
+                      <div className="h-px bg-[#2e2e2e] my-1" />
+                      <DropdownMenuItem onClick={handleExportAnimationJS} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-indigo-400 font-bold">
+                        Export Animation JS
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportGIF} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-pink-400">
+                        Export as GIF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportJSModel} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-indigo-300">
+                        Export JS Model
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </>
             )}
 
             <Canvas3D 
