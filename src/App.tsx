@@ -68,6 +68,12 @@ const INITIAL_NODES: SceneNode[] = [
   }
 ];
 
+// Helper to ensure a value is a valid number
+const ensureNumber = (val: any, fallback: number): number => {
+  const n = Number(val);
+  return Number.isFinite(n) ? n : fallback;
+};
+
 export default function App() {
   const [nodes, setNodes] = useState<SceneNode[]>(INITIAL_NODES);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -78,8 +84,15 @@ export default function App() {
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [activeTool, setActiveTool] = useState('select');
   const [isLayersCollapsed, setIsLayersCollapsed] = useState(false);
   const [isPropertiesCollapsed, setIsPropertiesCollapsed] = useState(false);
+  
+  // Interaction state for animation triggers
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [hoverStartTimes, setHoverStartTimes] = useState<Record<string, number>>({});
+  const [clickedNodeIds, setClickedNodeIds] = useState<Set<string>>(new Set());
+  const [clickTimes, setClickTimes] = useState<Record<string, number>>({});
   
   // Animation state
   const [animation, setAnimation] = useState<AnimationData>({
@@ -88,19 +101,27 @@ export default function App() {
     loopStart: 0,
     loopEnd: 3
   });
+  const timerRef = useRef<THREE.Timer>(new THREE.Timer());
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const lastTimeRef = useRef<number>(performance.now());
 
   // Playback loop
   useEffect(() => {
     let frameId: number;
     
     const tick = (now: number) => {
-      if (isPlaying) {
-        const delta = (now - lastTimeRef.current) / 1000;
+      timerRef.current.update(now);
+      const delta = timerRef.current.getDelta();
+
+      if (isPlaying || isPreviewMode) {
         setCurrentTime(prev => {
           let next = prev + delta;
+          
+          if (isPreviewMode) {
+            // In preview mode, we just let the global clock run for relative interaction timings
+            return next;
+          }
+
           if (next >= animation.loopEnd) {
             return animation.loopStart;
           }
@@ -110,20 +131,33 @@ export default function App() {
           return next;
         });
       }
-      lastTimeRef.current = now;
       frameId = requestAnimationFrame(tick);
     };
 
     frameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frameId);
-  }, [isPlaying, animation.loopStart, animation.loopEnd]);
+  }, [isPlaying, isPreviewMode, animation.loopStart, animation.loopEnd]);
+
+  useEffect(() => {
+    if (isPreviewMode) {
+      setClickedNodeIds(new Set());
+      setHoveredNodeId(null);
+      setClickTimes({});
+      setHoverStartTimes({});
+      setCurrentTime(0); // Reset global clock when entering preview
+    }
+  }, [isPreviewMode]);
 
   // Interpolation helper
   const interpolate = (val1: any, val2: any, ratio: number) => {
     if (isNaN(ratio) || !isFinite(ratio)) return val1;
+    if (val1 === undefined || val1 === null) return val2;
+    if (val2 === undefined || val2 === null) return val1;
+
     if (Array.isArray(val1) && Array.isArray(val2)) {
       return val1.map((v, i) => {
-        const res = v + (val2[i] - v) * ratio;
+        const v2 = val2[i] !== undefined ? val2[i] : v;
+        const res = v + (v2 - v) * ratio;
         return isNaN(res) ? v : res;
       });
     }
@@ -137,29 +171,67 @@ export default function App() {
         return val1;
       }
     }
-    const res = val1 + (val2 - val1) * ratio;
-    return isNaN(res) ? val1 : res;
+    if (typeof val1 === 'number' && typeof val2 === 'number') {
+      const res = val1 + (val2 - val1) * ratio;
+      return isNaN(res) ? val1 : res;
+    }
+    return val1;
   };
 
   const getAnimatedValue = useCallback((nodeId: string, property: string, baseValue: any) => {
     const track = animation.tracks.find(t => t.nodeId === nodeId && t.property === property);
     if (!track || track.keyframes.length === 0) return baseValue;
 
+    const trigger = track.trigger || 'auto';
+    const triggerNodeId = track.triggerNodeId || nodeId;
+    const loopMode = track.loopMode || 'infinite';
+    
+    let timeToUse = currentTime;
+
+    if (isPreviewMode) {
+      if (trigger === 'hover') {
+        const startTime = hoverStartTimes[triggerNodeId] ?? -1;
+        timeToUse = startTime !== -1 ? (currentTime - startTime) : 0;
+      } else if (trigger === 'click') {
+        const startTime = clickTimes[triggerNodeId] ?? -1;
+        timeToUse = startTime !== -1 ? (currentTime - startTime) : 0;
+      }
+
+      // Handle loop mode
+      const sortedKFForDuration = [...track.keyframes].sort((a, b) => a.time - b.time);
+      const trackDuration = sortedKFForDuration[sortedKFForDuration.length - 1].time;
+      
+      if (trackDuration > 0) {
+        if (loopMode === 'once') {
+          timeToUse = Math.min(timeToUse, trackDuration);
+        } else if (loopMode === 'repeat2') {
+          if (timeToUse >= trackDuration * 2) {
+            timeToUse = trackDuration;
+          } else {
+            timeToUse = timeToUse % trackDuration;
+          }
+        } else {
+          // infinite
+          timeToUse = timeToUse % trackDuration;
+        }
+      }
+    }
+
     const sortedKF = [...track.keyframes].sort((a, b) => a.time - b.time);
     
-    if (currentTime <= sortedKF[0].time) return sortedKF[0].value;
-    if (currentTime >= sortedKF[sortedKF.length - 1].time) return sortedKF[sortedKF.length - 1].value;
+    if (timeToUse <= sortedKF[0].time) return sortedKF[0].value;
+    if (timeToUse >= sortedKF[sortedKF.length - 1].time) return sortedKF[sortedKF.length - 1].value;
 
     for (let i = 0; i < sortedKF.length - 1; i++) {
       const kf1 = sortedKF[i];
       const kf2 = sortedKF[i + 1];
-      if (currentTime >= kf1.time && currentTime <= kf2.time) {
-        const ratio = (currentTime - kf1.time) / (kf2.time - kf1.time);
+      if (timeToUse >= kf1.time && timeToUse <= kf2.time) {
+        const ratio = (timeToUse - kf1.time) / (kf2.time - kf1.time);
         return interpolate(kf1.value, kf2.value, ratio);
       }
     }
     return baseValue;
-  }, [animation, currentTime]);
+  }, [animation, currentTime, isPreviewMode, hoveredNodeId, clickedNodeIds]);
 
   const animatedNodes = useMemo(() => {
     return nodes.map(node => ({
@@ -319,9 +391,89 @@ export default function App() {
   const handleExportGLB = useCallback(() => {
     if (!sceneRef.current) return;
     
+    // Create a temporary scene for export to ensure a clean environment
+    const exportScene = new THREE.Scene();
+    
+    // We clone the group to avoid modifying the original scene during export
+    const clone = sceneRef.current.clone(true);
+    
+    // Traverse and clean up the scene for export
+    const toRemove: THREE.Object3D[] = [];
+    clone.traverse((child) => {
+      // More specific check for editor helpers to avoid removing valid model parts
+      const isEditorHelper = 
+        child.userData.isTransformControls || 
+        child.type.includes('Controls') ||
+        (child.name && (child.name.includes('TransformControls') || child.name.includes('SceneHelper'))) ||
+        child.userData.helper;
+
+      if (isEditorHelper) {
+        toRemove.push(child);
+        return;
+      }
+
+      if (child instanceof THREE.Mesh) {
+        // Find source node to ensure properties match exactly and colors are properly converted
+        let node = nodes.find(n => n.id === child.name);
+        if (!node) {
+          let parent = child.parent;
+          while (parent && !node) {
+            node = nodes.find(n => n.id === parent?.name);
+            parent = parent?.parent || null;
+          }
+        }
+
+        if (node && node.type !== 'ambientLight') {
+          // Create a physical material to support more features (like transmission)
+          const processMaterial = (oldMat: THREE.Material) => {
+            const mat = new THREE.MeshPhysicalMaterial();
+            if (oldMat && (oldMat as any).copy) {
+              mat.copy(oldMat as any);
+            }
+            
+            // Only override color if it's not the default white
+            // This preserves imported model colors while allowing override for local shapes
+            const nodeColor = node.color || '#ffffff';
+            if (nodeColor.toLowerCase() !== '#ffffff') {
+              mat.color.set(nodeColor);
+            } else if (oldMat && (oldMat as any).color) {
+              mat.color.copy((oldMat as any).color);
+            }
+            
+            // Ensure other material properties are synced if node has them
+            if (node.material) {
+              mat.roughness = ensureNumber(node.material.roughness, (oldMat as any)?.roughness ?? 0.5);
+              mat.metalness = ensureNumber(node.material.metalness, (oldMat as any)?.metalness ?? 0);
+              mat.opacity = ensureNumber(node.material.opacity, (oldMat as any)?.opacity ?? 1);
+              mat.transparent = mat.opacity < 1 || ((oldMat as any)?.transparent ?? false);
+              mat.transmission = ensureNumber(node.material.transmission, (oldMat as any)?.transmission ?? 0);
+              mat.thickness = ensureNumber(node.material.thickness, (oldMat as any)?.thickness ?? 0);
+              mat.ior = ensureNumber(node.material.ior, (oldMat as any)?.ior ?? 1.5);
+              mat.clearcoat = ensureNumber(node.material.clearcoat, (oldMat as any)?.clearcoat ?? 0);
+              mat.clearcoatRoughness = ensureNumber(node.material.clearcoatRoughness, (oldMat as any)?.clearcoatRoughness ?? 0);
+            }
+            mat.envMapIntensity = 1.0;
+            return mat;
+          };
+
+          if (Array.isArray(child.material)) {
+            child.material = child.material.map(processMaterial);
+          } else {
+            child.material = processMaterial(child.material);
+          }
+        }
+      }
+    });
+
+    toRemove.forEach(obj => {
+      if (obj.parent) obj.parent.remove(obj);
+    });
+
+    exportScene.add(clone);
+    
     const exporter = new GLTFExporter();
     exporter.parse(
-      sceneRef.current,
+      exportScene,
       (result) => {
         const output = result instanceof ArrayBuffer ? result : JSON.stringify(result, null, 2);
         const blob = new Blob([output], { type: result instanceof ArrayBuffer ? 'application/octet-stream' : 'application/json' });
@@ -335,9 +487,13 @@ export default function App() {
       (error) => {
         console.error('An error happened during export', error);
       },
-      { binary: true }
+      { 
+        binary: true,
+        includeCustomExtensions: true,
+        onlyVisible: false // Allow exporting invisible trigger objects if desired
+      }
     );
-  }, []);
+  }, [nodes]);
 
   const handleExportPNG = useCallback(() => {
     const canvas = document.querySelector('canvas');
@@ -349,67 +505,6 @@ export default function App() {
     link.download = 'scene.png';
     link.click();
   }, []);
-
-  const handleExportSVG = useCallback(async () => {
-    if (!sceneRef.current || !orbitControlsRef.current) return;
-    
-    const { SVGRenderer } = await import('three-stdlib');
-    const renderer = new SVGRenderer();
-    
-    const canvas = document.querySelector('canvas');
-    const width = canvas?.clientWidth || window.innerWidth;
-    const height = canvas?.clientHeight || window.innerHeight;
-    renderer.setSize(width, height);
-    
-    const tempScene = new THREE.Scene();
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    tempScene.add(ambientLight);
-    
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    dirLight.position.set(5, 10, 7);
-    tempScene.add(dirLight);
-    
-    const pointLight = new THREE.PointLight(0xffffff, 0.5);
-    pointLight.position.set(-10, 5, -10);
-    tempScene.add(pointLight);
-
-    if (showGrid) {
-      const gridHelper = new THREE.GridHelper(100, 100, 0x333333, 0x222222);
-      tempScene.add(gridHelper);
-    }
-    
-    const clone = sceneRef.current.clone();
-    clone.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        const oldMat = child.material as THREE.MeshStandardMaterial;
-        child.material = new THREE.MeshPhongMaterial({
-          color: oldMat.color,
-          opacity: oldMat.opacity,
-          transparent: oldMat.transparent,
-          side: THREE.DoubleSide,
-          shininess: 30,
-          specular: new THREE.Color(0x222222)
-        });
-        child.geometry.computeVertexNormals();
-      }
-    });
-    tempScene.add(clone);
-    
-    const currentCamera = orbitControlsRef.current.object;
-    renderer.render(tempScene, currentCamera);
-    
-    let svgString = renderer.domElement.outerHTML;
-    const bgRect = `<rect width="100%" height="100%" fill="#0e0e0e"/>`;
-    svgString = svgString.replace(/<svg([^>]*)>/, `<svg$1>${bgRect}`);
-    
-    const blob = new Blob([svgString], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'scene.svg';
-    link.click();
-    URL.revokeObjectURL(url);
-  }, [showGrid]);
 
   const handleExportAnimationJS = useCallback(() => {
     const animationCode = `
@@ -557,6 +652,146 @@ requestAnimationFrame(animate);
 function createScene(THREE) {
   const group = new THREE.Group();
 
+  // Helper for creating polygon/star shapes
+  const createPolygonShape = (sides, radius, innerRadius, isStar) => {
+    const shape = new THREE.Shape();
+    const points = isStar ? sides * 2 : sides;
+    const offset = -Math.PI / 2;
+    for (let i = 0; i <= points; i++) {
+      const angle = (i / points) * Math.PI * 2 + offset;
+      const r = isStar && i % 2 !== 0 ? radius * innerRadius : radius;
+      const x = Math.cos(angle) * r;
+      const y = Math.sin(angle) * r;
+      if (i === 0) shape.moveTo(x, y);
+      else shape.lineTo(x, y);
+    }
+    return shape;
+  };
+
+  const applyBend = (geo, amount) => {
+    if (amount === 0) return geo;
+    const pos = geo.attributes.position;
+    const box = new THREE.Box3().setFromBufferAttribute(pos);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const width = size.x;
+    const angle = amount * Math.PI * 2;
+    if (Math.abs(angle) < 0.0001 || width === 0) return geo;
+    const radius = width / angle;
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i);
+      let y = pos.getY(i);
+      let z = pos.getZ(i);
+      const theta = x / radius;
+      const r = radius - z;
+      pos.setXYZ(i, r * Math.sin(theta), y, radius - r * Math.cos(theta));
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    return geo;
+  };
+
+  const applyTaper = (geo, amount) => {
+    if (amount === 0) return geo;
+    const pos = geo.attributes.position;
+    const box = new THREE.Box3().setFromBufferAttribute(pos);
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    if (size.y === 0) return geo;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const normY = (y - box.min.y) / size.y;
+      const scale = 1 + amount * normY;
+      pos.setXYZ(i, (x - center.x) * scale + center.x, y, (z - center.z) * scale + center.z);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    return geo;
+  };
+
+  const applyStretch = (geo, amount) => {
+    if (amount === 0) return geo;
+    const pos = geo.attributes.position;
+    const box = new THREE.Box3().setFromBufferAttribute(pos);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const factor = 1 + amount;
+      const radialFactor = factor > 0 ? 1 / Math.sqrt(factor) : 1;
+      pos.setXYZ(i, (x - center.x) * radialFactor + center.x, (y - center.y) * factor + center.y, (z - center.z) * radialFactor + center.z);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    return geo;
+  };
+
+  const applyInflate = (geo, amount) => {
+    if (amount === 0) return geo;
+    const pos = geo.attributes.position;
+    if (!geo.attributes.normal) geo.computeVertexNormals();
+    const normal = geo.attributes.normal;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const nx = normal.getX(i);
+      const ny = normal.getY(i);
+      const nz = normal.getZ(i);
+      pos.setXYZ(i, x + nx * amount, y + ny * amount, z + nz * amount);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    return geo;
+  };
+
+  const applyTwist = (geo, twist) => {
+    if (!twist || (twist[0] === 0 && twist[1] === 0 && twist[2] === 0)) return geo;
+    const pos = geo.attributes.position;
+    const box = new THREE.Box3().setFromBufferAttribute(pos);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i);
+      let y = pos.getY(i);
+      let z = pos.getZ(i);
+      if (twist[1] !== 0) {
+        const angle = (y - center.y) * twist[1];
+        const s = Math.sin(angle);
+        const c = Math.cos(angle);
+        const nx = (x - center.x) * c - (z - center.z) * s + center.x;
+        const nz = (x - center.x) * s + (z - center.z) * c + center.z;
+        x = nx; z = nz;
+      }
+      if (twist[0] !== 0) {
+        const angle = (x - center.x) * twist[0];
+        const s = Math.sin(angle);
+        const c = Math.cos(angle);
+        const ny = (y - center.y) * c - (z - center.z) * s + center.y;
+        const nz = (y - center.y) * s + (z - center.z) * c + center.z;
+        y = ny; z = nz;
+      }
+      if (twist[2] !== 0) {
+        const angle = (z - center.z) * twist[2];
+        const s = Math.sin(angle);
+        const c = Math.cos(angle);
+        const nx = (x - center.x) * c - (y - center.y) * s + center.x;
+        const ny = (x - center.x) * s + (y - center.y) * c + center.y;
+        x = nx; y = ny;
+      }
+      pos.setXYZ(i, x, y, z);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    return geo;
+  };
+
 `;
 
     nodes.forEach(node => {
@@ -565,45 +800,104 @@ function createScene(THREE) {
       code += `  // ${node.name} (${node.type})\n`;
       
       let geometryCode = '';
-      let materialCode = `  const material_${node.id.replace(/-/g, '_')} = new THREE.MeshStandardMaterial({ color: '${node.color}' });\n`;
+      const params = node.parameters || {};
+      const thickness = params.thickness || 0.1;
+      const id = node.id.replace(/-/g, '_');
+      
+      let materialCode = `  const material_${id} = new THREE.MeshStandardMaterial({ 
+    color: '${node.color}',
+    roughness: ${node.material?.roughness ?? 0.5},
+    metalness: ${node.material?.metalness ?? 0}
+  });\n`;
 
       switch (node.type) {
         case 'box':
-          geometryCode = `new THREE.BoxGeometry(${node.parameters?.width || 1}, ${node.parameters?.height || 1}, ${node.parameters?.depth || 1})`;
+          geometryCode = `new THREE.BoxGeometry(${params.width || 1}, ${params.height || 1}, ${params.depth || 1})`;
           break;
         case 'sphere':
-          geometryCode = `new THREE.SphereGeometry(${node.parameters?.radius || 0.5}, 32, 32)`;
+          geometryCode = `new THREE.SphereGeometry(${params.radius || 0.5}, 32, 32)`;
           break;
         case 'cylinder':
-          geometryCode = `new THREE.CylinderGeometry(${node.parameters?.radiusTop || 0.5}, ${node.parameters?.radiusBottom || 0.5}, ${node.parameters?.height || 1}, 32)`;
+          geometryCode = `new THREE.CylinderGeometry(${params.radiusTop || 0.5}, ${params.radiusBottom || 0.5}, ${params.height || 1}, 32)`;
           break;
         case 'torus':
-          geometryCode = `new THREE.TorusGeometry(${node.parameters?.radius || 0.5}, ${node.parameters?.tube || 0.2}, 16, 100)`;
+          geometryCode = `new THREE.TorusGeometry(${params.radius || 0.5}, ${params.tube || 0.2}, 16, 100)`;
           break;
+        case 'polygon':
+          code += `  const shape_${id} = createPolygonShape(${params.sides || 5}, 0.5, ${params.innerRadius || 0.5}, ${params.isStar || false});\n`;
+          geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
+          break;
+        case 'rect':
         case 'plane':
-          geometryCode = `new THREE.PlaneGeometry(${node.parameters?.width || 1}, ${node.parameters?.height || 1})`;
+          code += `  const shape_${id} = new THREE.Shape();
+  shape_${id}.moveTo(-0.5, -0.5);
+  shape_${id}.lineTo(0.5, -0.5);
+  shape_${id}.lineTo(0.5, 0.5);
+  shape_${id}.lineTo(-0.5, 0.5);
+  shape_${id}.lineTo(-0.5, -0.5);\n`;
+          geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
+          break;
+        case 'triangle':
+          code += `  const shape_${id} = new THREE.Shape();
+  shape_${id}.moveTo(0, 0.5);
+  shape_${id}.lineTo(0.5, -0.5);
+  shape_${id}.lineTo(-0.5, -0.5);
+  shape_${id}.lineTo(0, 0.5);\n`;
+          geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
           break;
         case 'circle':
-          geometryCode = `new THREE.CircleGeometry(${node.parameters?.radius || 0.5}, 32)`;
+          code += `  const shape_${id} = new THREE.Shape();
+  shape_${id}.absarc(0, 0, ${params.radius || 0.5}, 0, Math.PI * 2, false);\n`;
+          geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
           break;
-        case 'js_object':
-          code += `  const mesh_${node.id.replace(/-/g, '_')} = (() => {\n${node.script?.split('\n').map(l => '    ' + l).join('\n')}\n  })();\n`;
+        case 'js_object': {
+          const paramsObj = node.parameters || {};
+          const paramInjections = Object.keys(paramsObj)
+            .filter(k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k))
+            .map(k => `    const ${k} = parameters['${k}'];`)
+            .join('\n');
+
+          code += `  const mesh_${id} = (() => {
+    const group = new THREE.Group();
+    const parameters = ${JSON.stringify(paramsObj)};
+    const color = '${node.color}';
+${paramInjections}
+    ${node.script?.split('\n').map(l => '    ' + l).join('\n')}
+    
+    const result = (typeof createScene === 'function') ? createScene(THREE) : group;
+    if (result && result.traverse) {
+      result.traverse(child => {
+        if (child.isMesh && child.geometry) {
+${params.bend ? `          applyBend(child.geometry, ${params.bend});` : ''}
+${params.taper ? `          applyTaper(child.geometry, ${params.taper});` : ''}
+${params.stretch ? `          applyStretch(child.geometry, ${params.stretch});` : ''}
+${params.inflate ? `          applyInflate(child.geometry, ${params.inflate});` : ''}
+${params.twist ? `          applyTwist(child.geometry, [${params.twist.join(', ')}]);` : ''}
+        }
+      });
+    }
+    return result;
+  })();\n`;
           break;
+        }
         case 'text':
-          geometryCode = `new THREE.BoxGeometry(${node.parameters?.size || 0.5}, ${node.parameters?.size || 0.5}, ${node.parameters?.thickness || 0.2})`; // Fallback for text since loaders are async
+          geometryCode = `new THREE.BoxGeometry(${params.size || 0.5}, ${params.size || 0.5}, ${thickness})`; 
           break;
         default:
           geometryCode = `new THREE.BoxGeometry(1, 1, 1)`;
       }
 
       if (node.type !== 'js_object') {
-        const id = node.id.replace(/-/g, '_');
         code += materialCode;
         code += `  const geometry_${id} = ${geometryCode};\n`;
+        if (params.bend) code += `  applyBend(geometry_${id}, ${params.bend});\n`;
+        if (params.taper) code += `  applyTaper(geometry_${id}, ${params.taper});\n`;
+        if (params.stretch) code += `  applyStretch(geometry_${id}, ${params.stretch});\n`;
+        if (params.inflate) code += `  applyInflate(geometry_${id}, ${params.inflate});\n`;
+        if (params.twist) code += `  applyTwist(geometry_${id}, [${params.twist.join(', ')}]);\n`;
         code += `  const mesh_${id} = new THREE.Mesh(geometry_${id}, material_${id});\n`;
       }
 
-      const id = node.id.replace(/-/g, '_');
       code += `  if (mesh_${id}) {\n`;
       code += `    mesh_${id}.position.set(${node.position.join(', ')});\n`;
       code += `    mesh_${id}.rotation.set(${node.rotation.join(', ')});\n`;
@@ -686,8 +980,17 @@ function createScene(THREE) {
       // 3. Center the resulting geometry so the gizmo is at the object's center
       resultGeometry.computeBoundingBox();
       const center = new THREE.Vector3();
-      resultGeometry.boundingBox?.getCenter(center);
-      resultGeometry.translate(-center.x, -center.y, -center.z);
+      if (resultGeometry.boundingBox) {
+        resultGeometry.boundingBox.getCenter(center);
+      }
+      
+      const safeCenter = {
+        x: Number.isFinite(center.x) ? center.x : 0,
+        y: Number.isFinite(center.y) ? center.y : 0,
+        z: Number.isFinite(center.z) ? center.z : 0
+      };
+      
+      resultGeometry.translate(-safeCenter.x, -safeCenter.y, -safeCenter.z);
       
       // 4. Create a new node for the result
       const newId = crypto.randomUUID();
@@ -696,7 +999,7 @@ function createScene(THREE) {
         name: `Boolean ${operationType.toUpperCase()}`,
         type: 'csg',
         parentId: null,
-        position: [center.x, center.y, center.z], // Set node position to the geometry center
+        position: [safeCenter.x, safeCenter.y, safeCenter.z], // Set node position to the geometry center
         rotation: [0, 0, 0],
         scale: [1, 1, 1],
         color: meshA.material instanceof THREE.MeshStandardMaterial ? `#${meshA.material.color.getHexString()}` : '#4a90e2',
@@ -723,9 +1026,40 @@ function createScene(THREE) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const fileName = file.name.toLowerCase();
+    const isSvg = fileName.endsWith('.svg');
+    const isJs = fileName.endsWith('.js');
+
+    if (isJs) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const scriptContent = e.target?.result as string;
+        const newId = crypto.randomUUID();
+        const newNode: SceneNode = {
+          id: newId,
+          name: file.name,
+          type: 'js_object',
+          parentId: null,
+          script: scriptContent,
+          position: [0, 0, 0],
+          rotation: [0, 0, 0],
+          scale: [1, 1, 1],
+          color: '#ffffff',
+          parameters: {},
+          visible: true
+        };
+        const updatedNodes = [...nodes, newNode];
+        setNodes(updatedNodes);
+        setSelectedIds([newId]);
+        pushHistory(updatedNodes, [newId]);
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+      return;
+    }
+
     const url = URL.createObjectURL(file);
     const newId = crypto.randomUUID();
-    const isSvg = file.name.toLowerCase().endsWith('.svg');
 
     const newNode: SceneNode = {
       id: newId,
@@ -768,7 +1102,8 @@ const mesh = new THREE.Mesh(geometry, material);
 return mesh;` : undefined,
       parameters: type === 'extruded' ? { thickness: 0.2 } : 
                   type === 'text' ? { text: 'Text', thickness: 0.2, size: 0.5 } :
-                  type === 'pointLight' ? { intensity: 1, decay: 2, distance: 10 } : {},
+                  type === 'pointLight' ? { intensity: 1, decay: 2, distance: 10 } : 
+                  type === 'polygon' ? { sides: 5, innerRadius: 0.5, isStar: false } : {},
       visible: true,
       ...properties
     };
@@ -799,6 +1134,64 @@ return mesh;` : undefined,
     setSelectedIds(nodesToAdd.map(n => n.id));
     pushHistory(updatedNodes, nodesToAdd.map(n => n.id));
   }, [nodes, pushHistory]);
+
+  const handleReplaceNodeWithPrimitives = useCallback((oldId: string, newNodesData: Partial<SceneNode>[]) => {
+    if (!Array.isArray(newNodesData) || newNodesData.length === 0) return;
+    
+    const nodesToAdd = newNodesData.map((data, index) => ({
+      id: crypto.randomUUID(),
+      name: data.name || `Subpart ${index + 1}`,
+      type: data.type || 'box',
+      parentId: null,
+      position: data.position || [0, 0, 0],
+      rotation: data.rotation || [0, 0, 0],
+      scale: data.scale || [1, 1, 1],
+      color: data.color || '#4a90e2',
+      parameters: data.parameters || {},
+      visible: true,
+      ...data
+    } as SceneNode));
+
+    const updatedNodes = nodes.filter(n => n.id !== oldId).concat(nodesToAdd);
+    const newSelectedIds = nodesToAdd.map(n => n.id);
+    
+    setNodes(updatedNodes);
+    setSelectedIds(newSelectedIds);
+    pushHistory(updatedNodes, newSelectedIds);
+  }, [nodes, pushHistory]);
+
+  const handleUpdateTrackTrigger = useCallback((nodeId: string, trigger: 'auto' | 'click' | 'hover') => {
+    setAnimation(prev => ({
+      ...prev,
+      tracks: prev.tracks.map(t => t.nodeId === nodeId ? { ...t, trigger } : t)
+    }));
+  }, []);
+
+  const handleUpdateTrackTriggerNode = useCallback((nodeId: string, triggerNodeId: string) => {
+    setAnimation(prev => ({
+      ...prev,
+      tracks: prev.tracks.map(t => t.nodeId === nodeId ? { ...t, triggerNodeId } : t)
+    }));
+  }, []);
+
+  const handleUpdateTrackLoopMode = useCallback((nodeId: string, loopMode: 'once' | 'repeat2' | 'infinite') => {
+    setAnimation(prev => ({
+      ...prev,
+      tracks: prev.tracks.map(t => t.nodeId === nodeId ? { ...t, loopMode } : t)
+    }));
+  }, []);
+
+  const handleHoverNode = useCallback((id: string | null) => {
+    setHoveredNodeId(id);
+    if (isPreviewMode && id) {
+      setHoverStartTimes(prev => ({ ...prev, [id]: currentTime }));
+    } else if (isPreviewMode && !id) {
+      // We could clear it here, but keeping it might be useful for "hover out" if we had that.
+      // But for trigger='hover', usually it only plays while hovered.
+      // Let's clear when unhovered to reset the animation.
+      setHoverStartTimes({});
+    }
+  }, [isPreviewMode, currentTime]);
 
   const handleUpdateNode = useCallback((id: string, updates: Partial<SceneNode>, skipHistory = false) => {
     let nextNodesResult: SceneNode[] = [];
@@ -1053,22 +1446,25 @@ return mesh;` : undefined,
     });
   };
 
-  const setMaterialPreset = (preset: 'metal' | 'plastic' | 'matte' | 'glass') => {
+  const setMaterialPreset = (preset: 'metal' | 'plastic' | 'matte' | 'glass' | 'frosted') => {
     if (!selectedNode) return;
     
     let material = {};
     switch (preset) {
       case 'metal':
-        material = { metalness: 0.9, roughness: 0.1 };
+        material = { metalness: 1.0, roughness: 0.15, transmission: 0, clearcoat: 0, preset: 'metal' };
         break;
       case 'plastic':
-        material = { metalness: 0.0, roughness: 0.2 };
+        material = { metalness: 0.0, roughness: 0.15, transmission: 0, clearcoat: 1.0, clearcoatRoughness: 0.02, ior: 1.45, preset: 'plastic' };
         break;
       case 'matte':
-        material = { metalness: 0.0, roughness: 0.8 };
+        material = { metalness: 0.0, roughness: 0.8, transmission: 0, clearcoat: 0, preset: 'matte' };
         break;
       case 'glass':
-        material = { metalness: 0.2, roughness: 0.0 };
+        material = { metalness: 0.0, roughness: 0.01, transmission: 1.0, ior: 1.5, thickness: 1.0, preset: 'glass' };
+        break;
+      case 'frosted':
+        material = { metalness: 0.0, roughness: 0.5, transmission: 1.0, ior: 1.5, thickness: 2.0, clearcoat: 0.1, preset: 'frosted' };
         break;
     }
     
@@ -1085,7 +1481,7 @@ return mesh;` : undefined,
       <div className="flex flex-col h-screen w-screen bg-[#0e0e0e] overflow-hidden font-sans selection:bg-indigo-500/30">
         {/* Header */}
         {!isPreviewMode && (
-          <header className="h-12 bg-[#181818] border-b border-[#2e2e2e] flex items-center justify-between px-4 z-50">
+          <header className="flex-none h-12 bg-[#181818] border-b border-[#2e2e2e] flex items-center justify-between px-4 z-50">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="font-bold tracking-tighter text-base flex items-center gap-1 text-[#e0e0e0]">
@@ -1122,11 +1518,14 @@ return mesh;` : undefined,
             
             <div className="flex items-center gap-4">
               <Toolbar 
+                activeTool={activeTool}
+                onToolChange={setActiveTool}
                 onAddShape={handleAddNode} 
                 onDeleteSelected={handleDeleteSelected}
                 onDuplicate={handleDuplicate}
                 onUndo={handleUndo}
                 onRedo={handleRedo}
+                onResetCamera={handleResetCamera}
                 canUndo={historyIndexRef.current > 0}
                 canRedo={historyIndexRef.current < historyRef.current.length - 1}
                 hasSelection={selectedIds.length > 0}
@@ -1198,7 +1597,7 @@ return mesh;` : undefined,
             <label className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1.5">
               <Upload className="w-3 h-3" />
               IMPORT
-              <input type="file" accept=".glb,.gltf,.svg" className="hidden" onChange={handleImport} />
+              <input type="file" accept=".glb,.gltf,.js" className="hidden" onChange={handleImport} />
             </label>
 
             <DropdownMenu>
@@ -1212,9 +1611,6 @@ return mesh;` : undefined,
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportPNG} className="text-xs hover:bg-white/5 cursor-pointer">
                   Export as PNG
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportSVG} className="text-xs hover:bg-white/5 cursor-pointer">
-                  Export as SVG
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportAnimationJS} className="text-xs hover:bg-white/5 cursor-pointer text-indigo-400 font-bold">
                   Export Animation JS
@@ -1243,24 +1639,9 @@ return mesh;` : undefined,
           </div>
         )}
 
-        <div className="flex-1 flex overflow-hidden">
-          {!isPreviewMode && (
-            <LayersPanel 
-              nodes={nodes}
-              selectedIds={selectedIds}
-              onSelect={setSelectedIds}
-              onUpdateNode={handleUpdateNode}
-              onReorder={setNodes}
-              showGrid={showGrid}
-              onToggleGrid={() => setShowGrid(!showGrid)}
-              onResetCamera={handleResetCamera}
-              isCollapsed={isLayersCollapsed}
-              onToggleCollapse={() => setIsLayersCollapsed(!isLayersCollapsed)}
-            />
-          )}
-
-          {/* Main Content: Canvas */}
-          <main className="flex-1 relative bg-[#0e0e0e] min-w-0">
+        {/* Main Content Area: Canvas + Floating Panels */}
+        <div className="flex-1 flex overflow-hidden min-h-0 relative">
+          <main className="flex-1 relative bg-[#0e0e0e] min-w-0 overflow-hidden">
             {isPreviewMode && (
               <>
                 <div className="absolute top-6 left-6 z-50">
@@ -1286,9 +1667,6 @@ return mesh;` : undefined,
                       <DropdownMenuItem onClick={handleExportPNG} className="text-xs hover:bg-white/5 cursor-pointer py-2">
                         Export as PNG
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleExportSVG} className="text-xs hover:bg-white/5 cursor-pointer py-2">
-                        Export as SVG
-                      </DropdownMenuItem>
                       <div className="h-px bg-[#2e2e2e] my-1" />
                       <DropdownMenuItem onClick={handleExportAnimationJS} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-indigo-400 font-bold">
                         Export Animation JS
@@ -1306,6 +1684,7 @@ return mesh;` : undefined,
             )}
 
             <Canvas3D 
+              activeTool={activeTool}
               nodes={animatedNodes} 
               selectedIds={isPreviewMode ? [] : selectedIds} 
               onSelect={isPreviewMode ? () => {} : setSelectedIds}
@@ -1313,6 +1692,20 @@ return mesh;` : undefined,
               sceneRef={sceneRef}
               orbitControlsRef={orbitControlsRef}
               showGrid={isPreviewMode ? false : showGrid}
+              onHoverNode={handleHoverNode}
+              isPreviewMode={isPreviewMode}
+              onClickNode={(id) => {
+                if (isPreviewMode) {
+                  const now = currentTime;
+                  setClickTimes(prev => ({ ...prev, [id]: now }));
+                  setClickedNodeIds(prev => {
+                    const next = new Set(prev);
+                    if (next.has(id)) next.delete(id);
+                    else next.add(id);
+                    return next;
+                  });
+                }
+              }}
             />
             
             {/* Viewport Info */}
@@ -1338,43 +1731,44 @@ return mesh;` : undefined,
                 </div>
               </div>
             )}
-          </main>
-          
-          {!isPreviewMode && (
-            <PropertiesPanel 
-              selectedShape={selectedNode} 
-              nodes={nodes}
-              onUpdateShape={handleUpdateNode} 
-              isCollapsed={isPropertiesCollapsed}
-              onToggleCollapse={() => setIsPropertiesCollapsed(!isPropertiesCollapsed)}
-              onOpenCodeEditor={() => {
-                if (selectedIds.length === 1) {
-                  const node = nodes.find(n => n.id === selectedIds[0]);
-                  if (node?.type === 'js_object') {
-                    setEditingNodeId(node.id);
-                    setIsCodeEditorOpen(true);
-                  }
-                }
-              }}
-            />
-          )}
-        </div>
 
-        <CodeEditor 
-          isOpen={isCodeEditorOpen}
-          initialCode={editingNodeId ? (nodes.find(n => n.id === editingNodeId)?.script || '') : ''}
-          onSave={(code) => {
-            if (editingNodeId) {
-              handleUpdateNode(editingNodeId, { script: code });
-            }
-            setIsCodeEditorOpen(false);
-            setEditingNodeId(null);
-          }}
-          onCancel={() => {
-            setIsCodeEditorOpen(false);
-            setEditingNodeId(null);
-          }}
-        />
+            {!isPreviewMode && (
+              <>
+                <div className="absolute top-4 left-4 z-40 max-h-[calc(100%-12rem)]">
+                  <LayersPanel 
+                    nodes={nodes} 
+                    selectedIds={selectedIds} 
+                    onSelect={setSelectedIds} 
+                    onUpdateNode={handleUpdateNode}
+                    onReorder={setNodes}
+                    isCollapsed={isLayersCollapsed}
+                    onToggleCollapse={() => setIsLayersCollapsed(!isLayersCollapsed)}
+                  />
+                </div>
+
+                <div className="absolute top-4 right-4 z-40 h-[calc(100%-8rem)]">
+                  <PropertiesPanel 
+                    selectedShape={selectedNode} 
+                    nodes={nodes}
+                    onUpdateShape={handleUpdateNode} 
+                    onAddNodes={handleAiAddNodes}
+                    onReplaceNode={handleReplaceNodeWithPrimitives}
+                    onDeleteNode={handleDeleteNode}
+                    onOpenCodeEditor={() => {
+                      if (selectedIds.length === 1) {
+                        const node = nodes.find(n => n.id === selectedIds[0]);
+                        if (node?.type === 'js_object') {
+                          setEditingNodeId(node.id);
+                          setIsCodeEditorOpen(true);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </>
+            )}
+          </main>
+        </div>
 
         {!isPreviewMode && (
           <Timeline 
@@ -1393,14 +1787,54 @@ return mesh;` : undefined,
             nodes={nodes}
             animatedNodes={animatedNodes}
             onUpdateNode={handleUpdateNode}
+            onUpdateTrackTrigger={handleUpdateTrackTrigger}
+            onUpdateTrackTriggerNode={handleUpdateTrackTriggerNode}
+            onUpdateTrackLoopMode={handleUpdateTrackLoopMode}
           />
         )}
+
+
+        <CodeEditor 
+          isOpen={isCodeEditorOpen}
+          nodeName={editingNodeId ? (nodes.find(n => n.id === editingNodeId)?.name || 'Object') : 'Object'}
+          initialCode={editingNodeId ? (nodes.find(n => n.id === editingNodeId)?.script || '') : ''}
+          onSave={(code) => {
+            if (editingNodeId) {
+              handleUpdateNode(editingNodeId, { script: code });
+            }
+            setIsCodeEditorOpen(false);
+            setEditingNodeId(null);
+          }}
+          onCancel={() => {
+            setIsCodeEditorOpen(false);
+            setEditingNodeId(null);
+          }}
+          onExtractLayer={(newNode) => {
+            if (editingNodeId) {
+              const editingNode = nodes.find(n => n.id === editingNodeId);
+              if (editingNode) {
+                // Add the new node relative to the edited node
+                handleAiAddNodes([{
+                  ...newNode,
+                  position: [
+                    (newNode.position?.[0] || 0) + editingNode.position[0],
+                    (newNode.position?.[1] || 0) + editingNode.position[1],
+                    (newNode.position?.[2] || 0) + editingNode.position[2]
+                  ]
+                }]);
+              }
+            }
+          }}
+        />
+
+
 
         <AICommander 
           nodes={nodes}
           selectedIds={selectedIds}
           onAddNode={handleAddNode}
           onAddNodes={handleAiAddNodes}
+          onReplaceNode={handleReplaceNodeWithPrimitives}
           onUpdateNode={handleUpdateNode}
           onDeleteNode={handleDeleteNode}
           onSelectNodes={setSelectedIds}

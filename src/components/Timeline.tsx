@@ -33,6 +33,9 @@ interface TimelineProps {
   onDeleteTrack: (trackIndex: number) => void;
   onUpdateAnimation: (data: Partial<AnimationData>) => void;
   onUpdateNode: (id: string, updates: Partial<SceneNode>) => void;
+  onUpdateTrackTrigger: (nodeId: string, trigger: 'auto' | 'click' | 'hover') => void;
+  onUpdateTrackTriggerNode: (nodeId: string, triggerNodeId: string) => void;
+  onUpdateTrackLoopMode: (nodeId: string, loopMode: 'once' | 'repeat2' | 'infinite') => void;
   selectedNodeId: string | null;
   nodes: EditorState['nodes'];
   animatedNodes: EditorState['nodes'];
@@ -119,13 +122,18 @@ export const Timeline: React.FC<TimelineProps> = ({
   onStopPlay,
   selectedNodeId,
   nodes,
-  animatedNodes
+  animatedNodes,
+  onUpdateTrackTrigger,
+  onUpdateTrackTriggerNode,
+  onUpdateTrackLoopMode
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [leftPanelWidth, setLeftPanelWidth] = useState(240); // Increased default width
   const scrollRef = useRef<HTMLDivElement>(null);
   const draggingLoop = useRef<'start' | 'end' | null>(null);
   const draggingKeyframe = useRef<{ trackIndex: number; keyframeId: string } | null>(null);
+  const draggingResizer = useRef(false);
   
   const duration = animation.duration;
   const pixelsPerSecond = 100;
@@ -187,6 +195,24 @@ export const Timeline: React.FC<TimelineProps> = ({
     window.addEventListener('mouseup', handleMouseUp);
   };
 
+  const handleResizerMouseMove = useCallback((e: MouseEvent) => {
+    if (!draggingResizer.current) return;
+    const newWidth = Math.max(150, Math.min(600, e.clientX));
+    setLeftPanelWidth(newWidth);
+  }, []);
+
+  const handleResizerMouseUp = useCallback(() => {
+    draggingResizer.current = false;
+    window.removeEventListener('mousemove', handleResizerMouseMove);
+    window.removeEventListener('mouseup', handleResizerMouseUp);
+  }, [handleResizerMouseMove]);
+
+  const startDraggingResizer = () => {
+    draggingResizer.current = true;
+    window.addEventListener('mousemove', handleResizerMouseMove);
+    window.addEventListener('mouseup', handleResizerMouseUp);
+  };
+
   const toggleNodeExpansion = (nodeId: string) => {
     setExpandedNodes(prev => {
       const next = new Set(prev);
@@ -233,7 +259,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 bg-[#121212] border-t border-[#2e2e2e] transition-all duration-300 z-50 overflow-hidden",
+      "relative flex-none bg-[#121212] border-t border-[#2e2e2e] transition-all duration-300 z-40 overflow-hidden",
       isExpanded ? "h-64" : "h-10"
     )}>
       {/* Header / Controls */}
@@ -268,12 +294,19 @@ export const Timeline: React.FC<TimelineProps> = ({
 
       {isExpanded && (
         <div className="flex flex-1 h-[calc(100%-40px)] overflow-hidden">
-          {/* Track Labels */}
+            {/* Track Labels */}
           <div 
             id="timeline-labels"
-            className="w-48 bg-[#181818] border-r border-[#2e2e2e] overflow-y-hidden shrink-0"
+            className="bg-[#181818] border-r border-[#2e2e2e] overflow-y-hidden shrink-0 relative"
+            style={{ width: leftPanelWidth }}
             onClick={stopIfNeeded}
           >
+            {/* Resizer */}
+            <div 
+              className="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-500/50 z-50 transition-colors"
+              onMouseDown={(e) => { e.stopPropagation(); startDraggingResizer(); }}
+            />
+
             {/* Align with ruler */}
             <div className="h-10 border-b border-[#2e2e2e] bg-[#1a1a1a]" />
             
@@ -287,6 +320,43 @@ export const Timeline: React.FC<TimelineProps> = ({
                   >
                     {expandedNodes.has(selectedNode.id) ? <ChevronDown className="w-3 h-3 text-indigo-400" /> : <ChevronRight className="w-3 h-3 text-indigo-400" />}
                     <span className="text-[10px] text-white truncate font-bold flex-1 uppercase tracking-tight">{selectedNode.name}</span>
+                    <div className="flex items-center gap-1">
+                      <select 
+                        className="bg-[#121212] border border-indigo-500/30 text-[9px] text-indigo-300 rounded px-1 py-px outline-none hover:border-indigo-500 transition-colors"
+                        value={animation.tracks.find(t => t.nodeId === selectedNode.id)?.trigger || 'auto'}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => onUpdateTrackTrigger(selectedNode.id, e.target.value as any)}
+                      >
+                        <option value="auto">Auto</option>
+                        <option value="click">Click</option>
+                        <option value="hover">Hover</option>
+                      </select>
+                      
+                      {(animation.tracks.find(t => t.nodeId === selectedNode.id)?.trigger || 'auto') !== 'auto' && (
+                        <select 
+                          className="bg-[#121212] border border-indigo-500/30 text-[9px] text-indigo-300 rounded px-1 py-px outline-none hover:border-indigo-500 transition-colors max-w-[80px]"
+                          value={animation.tracks.find(t => t.nodeId === selectedNode.id)?.triggerNodeId || selectedNode.id}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => onUpdateTrackTriggerNode(selectedNode.id, e.target.value)}
+                        >
+                          <option value={selectedNode.id}>Self</option>
+                          {nodes.filter(n => n.id !== selectedNode.id).map(n => (
+                            <option key={n.id} value={n.id}>{n.name}</option>
+                          ))}
+                        </select>
+                      )}
+
+                      <select 
+                        className="bg-[#121212] border border-indigo-500/30 text-[9px] text-indigo-300 rounded px-1 py-px outline-none hover:border-indigo-500 transition-colors"
+                        value={animation.tracks.find(t => t.nodeId === selectedNode.id)?.loopMode || 'infinite'}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => onUpdateTrackLoopMode(selectedNode.id, e.target.value as any)}
+                      >
+                        <option value="once">Once</option>
+                        <option value="repeat2">2 Times</option>
+                        <option value="infinite">Loop</option>
+                      </select>
+                    </div>
                   </div>
 
                   {expandedNodes.has(selectedNode.id) && (
@@ -363,6 +433,43 @@ export const Timeline: React.FC<TimelineProps> = ({
                     >
                       {isNodeExpanded ? <ChevronDown className="w-3 h-3 text-[#666]" /> : <ChevronRight className="w-3 h-3 text-[#666]" />}
                       <span className="text-[10px] text-[#e0e0e0] truncate font-medium flex-1">{node?.name || 'Unknown'}</span>
+                      <div className="flex items-center gap-1">
+                        <select 
+                          className="bg-[#121212] border border-[#2e2e2e] text-[9px] text-[#888] rounded px-1 py-px outline-none hover:border-[#444] transition-colors"
+                          value={tracks[0]?.track.trigger || 'auto'}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => onUpdateTrackTrigger(nodeId, e.target.value as any)}
+                        >
+                          <option value="auto">Auto</option>
+                          <option value="click">Click</option>
+                          <option value="hover">Hover</option>
+                        </select>
+
+                        {(tracks[0]?.track.trigger || 'auto') !== 'auto' && (
+                          <select 
+                            className="bg-[#121212] border border-[#2e2e2e] text-[9px] text-[#888] rounded px-1 py-px outline-none hover:border-[#444] transition-colors max-w-[80px]"
+                            value={tracks[0]?.track.triggerNodeId || nodeId}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => onUpdateTrackTriggerNode(nodeId, e.target.value)}
+                          >
+                            <option value={nodeId}>Self</option>
+                            {nodes.filter(n => n.id !== nodeId).map(n => (
+                              <option key={n.id} value={n.id}>{n.name}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        <select 
+                          className="bg-[#121212] border border-[#2e2e2e] text-[9px] text-[#888] rounded px-1 py-px outline-none hover:border-[#444] transition-colors"
+                          value={tracks[0]?.track.loopMode || 'infinite'}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => onUpdateTrackLoopMode(nodeId, e.target.value as any)}
+                        >
+                          <option value="once">Once</option>
+                          <option value="repeat2">2 Times</option>
+                          <option value="infinite">Loop</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* Property Rows (only if expanded) */}

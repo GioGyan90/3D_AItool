@@ -1,4 +1,4 @@
-export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text' | 'js_object';
+export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'polygon' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text' | 'js_object';
 
 export interface SceneNode {
   id: string;
@@ -34,6 +34,13 @@ export interface SceneNode {
     size?: number;
     font?: string;
     environment?: string; // Preset name or URL
+    sides?: number;       // For polygon
+    innerRadius?: number; // For star (0 to 1)
+    isStar?: boolean;      // Toggle star/polygon
+    twist?: [number, number, number]; // Twist deformation along x, y, z
+    taper?: number;                  // Tapering factor (along Y axis)
+    stretch?: number;                // Stretching factor (along Y axis)
+    inflate?: number;                // Inflation/Spherize factor
   };
   material?: {
     metalness?: number;
@@ -43,9 +50,12 @@ export interface SceneNode {
     ior?: number;
     thickness?: number; // Volume thickness for refraction
     map?: string; // URL to texture
-    preset?: 'metal' | 'plastic' | 'matte' | 'glass' | 'custom';
+    preset?: 'metal' | 'plastic' | 'matte' | 'glass' | 'frosted' | 'custom';
     attenuationDistance?: number;
     attenuationColor?: string;
+    wireframe?: boolean;
+    clearcoat?: number;
+    clearcoatRoughness?: number;
   };
   uniformScale?: boolean;
   visible: boolean;
@@ -63,6 +73,9 @@ export interface PropertyTrack {
   nodeId: string;
   property: 'position' | 'rotation' | 'scale' | 'color' | 'intensity';
   keyframes: Keyframe[];
+  trigger?: 'auto' | 'click' | 'hover';
+  triggerNodeId?: string;
+  loopMode?: 'once' | 'repeat2' | 'infinite';
 }
 
 export interface AnimationData {
