@@ -388,14 +388,24 @@ export default function App() {
     }
   }, []);
 
-  const handleExportGLB = useCallback(() => {
+  const handleExportGLB = useCallback((targetNodeId?: string) => {
     if (!sceneRef.current) return;
     
     // Create a temporary scene for export to ensure a clean environment
     const exportScene = new THREE.Scene();
     
+    // If targetNodeId is provided, we only export that object and its children
+    let sourceObject: THREE.Object3D | null = null;
+    if (targetNodeId) {
+      sourceObject = sceneRef.current.getObjectByName(targetNodeId) || null;
+    } else {
+      sourceObject = sceneRef.current;
+    }
+
+    if (!sourceObject) return;
+
     // We clone the group to avoid modifying the original scene during export
-    const clone = sceneRef.current.clone(true);
+    const clone = sourceObject.clone(true);
     
     // Traverse and clean up the scene for export
     const toRemove: THREE.Object3D[] = [];
@@ -480,7 +490,8 @@ export default function App() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'scene.glb';
+        const name = targetNodeId ? (nodes.find(n => n.id === targetNodeId)?.name || 'object') : 'scene';
+        link.download = `${name}.glb`;
         link.click();
         URL.revokeObjectURL(url);
       },
@@ -645,170 +656,195 @@ requestAnimationFrame(animate);
     gif.render();
   }, [animation.duration, currentTime]);
 
-  const handleExportJSModel = useCallback(() => {
-    let code = `// Prism3D Scene Export - Three.js Code
-// Generated on ${new Date().toLocaleString()}
+  const handleExportJSModel = useCallback((targetNodeId?: string) => {
+    const nodesToExport = targetNodeId ? (() => {
+      const node = nodes.find(n => n.id === targetNodeId);
+      if (!node) return [];
+      const findChildren = (parentId: string): SceneNode[] => {
+        const direct = nodes.filter(n => n.parentId === parentId);
+        return [...direct, ...direct.flatMap(d => findChildren(d.id))];
+      };
+      return [node, ...findChildren(node.id)];
+    })() : nodes;
 
-function createScene(THREE) {
-  const group = new THREE.Group();
+    if (nodesToExport.length === 0) return;
 
-  // Helper for creating polygon/star shapes
-  const createPolygonShape = (sides, radius, innerRadius, isStar) => {
-    const shape = new THREE.Shape();
-    const points = isStar ? sides * 2 : sides;
-    const offset = -Math.PI / 2;
-    for (let i = 0; i <= points; i++) {
-      const angle = (i / points) * Math.PI * 2 + offset;
-      const r = isStar && i % 2 !== 0 ? radius * innerRadius : radius;
-      const x = Math.cos(angle) * r;
-      const y = Math.sin(angle) * r;
-      if (i === 0) shape.moveTo(x, y);
-      else shape.lineTo(x, y);
+    const mainNode = targetNodeId ? nodes.find(n => n.id === targetNodeId) : null;
+    const modelName = mainNode ? mainNode.name.replace(/[^a-zA-Z0-9]/g, '') : 'Scene';
+    const funcName = `create${modelName}Model`;
+
+    let code = `(function(root) {
+    'use strict';
+
+    function requireThree(THREERef) {
+        const THREE = THREERef || root.THREE;
+        if (!THREE) throw new Error('THREE is required to create the ${modelName} model.');
+        return THREE;
     }
-    return shape;
-  };
 
-  const applyBend = (geo, amount) => {
-    if (amount === 0) return geo;
-    const pos = geo.attributes.position;
-    const box = new THREE.Box3().setFromBufferAttribute(pos);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    const width = size.x;
-    const angle = amount * Math.PI * 2;
-    if (Math.abs(angle) < 0.0001 || width === 0) return geo;
-    const radius = width / angle;
-    for (let i = 0; i < pos.count; i++) {
-      let x = pos.getX(i);
-      let y = pos.getY(i);
-      let z = pos.getZ(i);
-      const theta = x / radius;
-      const r = radius - z;
-      pos.setXYZ(i, r * Math.sin(theta), y, radius - r * Math.cos(theta));
-    }
-    pos.needsUpdate = true;
-    geo.computeVertexNormals();
-    return geo;
-  };
+    function ${funcName}(THREERef) {
+        const THREE = requireThree(THREERef);
+        const group = new THREE.Group();
 
-  const applyTaper = (geo, amount) => {
-    if (amount === 0) return geo;
-    const pos = geo.attributes.position;
-    const box = new THREE.Box3().setFromBufferAttribute(pos);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-    const center = new THREE.Vector3();
-    box.getCenter(center);
-    if (size.y === 0) return geo;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const z = pos.getZ(i);
-      const normY = (y - box.min.y) / size.y;
-      const scale = 1 + amount * normY;
-      pos.setXYZ(i, (x - center.x) * scale + center.x, y, (z - center.z) * scale + center.z);
-    }
-    pos.needsUpdate = true;
-    geo.computeVertexNormals();
-    return geo;
-  };
+        // Helper for creating polygon/star shapes
+        const createPolygonShape = (sides, radius, innerRadius, isStar) => {
+            const shape = new THREE.Shape();
+            const points = isStar ? sides * 2 : sides;
+            const offset = -Math.PI / 2;
+            for (let i = 0; i <= points; i++) {
+                const angle = (i / points) * Math.PI * 2 + offset;
+                const r = isStar && i % 2 !== 0 ? radius * innerRadius : radius;
+                const x = Math.cos(angle) * r;
+                const y = Math.sin(angle) * r;
+                if (i === 0) shape.moveTo(x, y);
+                else shape.lineTo(x, y);
+            }
+            return shape;
+        };
 
-  const applyStretch = (geo, amount) => {
-    if (amount === 0) return geo;
-    const pos = geo.attributes.position;
-    const box = new THREE.Box3().setFromBufferAttribute(pos);
-    const center = new THREE.Vector3();
-    box.getCenter(center);
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const z = pos.getZ(i);
-      const factor = 1 + amount;
-      const radialFactor = factor > 0 ? 1 / Math.sqrt(factor) : 1;
-      pos.setXYZ(i, (x - center.x) * radialFactor + center.x, (y - center.y) * factor + center.y, (z - center.z) * radialFactor + center.z);
-    }
-    pos.needsUpdate = true;
-    geo.computeVertexNormals();
-    return geo;
-  };
+        const applyBend = (geo, amount) => {
+            if (amount === 0) return geo;
+            const pos = geo.attributes.position;
+            const box = new THREE.Box3().setFromBufferAttribute(pos);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const width = size.x;
+            const angle = amount * Math.PI * 2;
+            if (Math.abs(angle) < 0.0001 || width === 0) return geo;
+            const radius = width / angle;
+            for (let i = 0; i < pos.count; i++) {
+                let x = pos.getX(i);
+                let y = pos.getY(i);
+                let z = pos.getZ(i);
+                const theta = x / radius;
+                const r = radius - z;
+                pos.setXYZ(i, r * Math.sin(theta), y, radius - r * Math.cos(theta));
+            }
+            pos.needsUpdate = true;
+            geo.computeVertexNormals();
+            return geo;
+        };
 
-  const applyInflate = (geo, amount) => {
-    if (amount === 0) return geo;
-    const pos = geo.attributes.position;
-    if (!geo.attributes.normal) geo.computeVertexNormals();
-    const normal = geo.attributes.normal;
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const z = pos.getZ(i);
-      const nx = normal.getX(i);
-      const ny = normal.getY(i);
-      const nz = normal.getZ(i);
-      pos.setXYZ(i, x + nx * amount, y + ny * amount, z + nz * amount);
-    }
-    pos.needsUpdate = true;
-    geo.computeVertexNormals();
-    return geo;
-  };
+        const applyTaper = (geo, amount) => {
+            if (amount === 0) return geo;
+            const pos = geo.attributes.position;
+            const box = new THREE.Box3().setFromBufferAttribute(pos);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            if (size.y === 0) return geo;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const z = pos.getZ(i);
+                const normY = (y - box.min.y) / size.y;
+                const scale = 1 + amount * normY;
+                pos.setXYZ(i, (x - center.x) * scale + center.x, y, (z - center.z) * scale + center.z);
+            }
+            pos.needsUpdate = true;
+            geo.computeVertexNormals();
+            return geo;
+        };
 
-  const applyTwist = (geo, twist) => {
-    if (!twist || (twist[0] === 0 && twist[1] === 0 && twist[2] === 0)) return geo;
-    const pos = geo.attributes.position;
-    const box = new THREE.Box3().setFromBufferAttribute(pos);
-    const center = new THREE.Vector3();
-    box.getCenter(center);
-    for (let i = 0; i < pos.count; i++) {
-      let x = pos.getX(i);
-      let y = pos.getY(i);
-      let z = pos.getZ(i);
-      if (twist[1] !== 0) {
-        const angle = (y - center.y) * twist[1];
-        const s = Math.sin(angle);
-        const c = Math.cos(angle);
-        const nx = (x - center.x) * c - (z - center.z) * s + center.x;
-        const nz = (x - center.x) * s + (z - center.z) * c + center.z;
-        x = nx; z = nz;
-      }
-      if (twist[0] !== 0) {
-        const angle = (x - center.x) * twist[0];
-        const s = Math.sin(angle);
-        const c = Math.cos(angle);
-        const ny = (y - center.y) * c - (z - center.z) * s + center.y;
-        const nz = (y - center.y) * s + (z - center.z) * c + center.z;
-        y = ny; z = nz;
-      }
-      if (twist[2] !== 0) {
-        const angle = (z - center.z) * twist[2];
-        const s = Math.sin(angle);
-        const c = Math.cos(angle);
-        const nx = (x - center.x) * c - (y - center.y) * s + center.x;
-        const ny = (x - center.x) * s + (y - center.y) * c + center.y;
-        x = nx; y = ny;
-      }
-      pos.setXYZ(i, x, y, z);
-    }
-    pos.needsUpdate = true;
-    geo.computeVertexNormals();
-    return geo;
-  };
+        const applyStretch = (geo, amount) => {
+            if (amount === 0) return geo;
+            const pos = geo.attributes.position;
+            const box = new THREE.Box3().setFromBufferAttribute(pos);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const z = pos.getZ(i);
+                const factor = 1 + amount;
+                const radialFactor = factor > 0 ? 1 / Math.sqrt(factor) : 1;
+                pos.setXYZ(i, (x - center.x) * radialFactor + center.x, (y - center.y) * factor + center.y, (z - center.z) * radialFactor + center.z);
+            }
+            pos.needsUpdate = true;
+            geo.computeVertexNormals();
+            return geo;
+        };
+
+        const applyInflate = (geo, amount) => {
+            if (amount === 0) return geo;
+            const pos = geo.attributes.position;
+            if (!geo.attributes.normal) geo.computeVertexNormals();
+            const normal = geo.attributes.normal;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const z = pos.getZ(i);
+                const nx = normal.getX(i);
+                const ny = normal.getY(i);
+                const nz = normal.getZ(i);
+                pos.setXYZ(i, x + nx * amount, y + ny * amount, z + nz * amount);
+            }
+            pos.needsUpdate = true;
+            geo.computeVertexNormals();
+            return geo;
+        };
+
+        const applyTwist = (geo, twist) => {
+            if (!twist || (twist[0] === 0 && twist[1] === 0 && twist[2] === 0)) return geo;
+            const pos = geo.attributes.position;
+            const box = new THREE.Box3().setFromBufferAttribute(pos);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            for (let i = 0; i < pos.count; i++) {
+                let x = pos.getX(i);
+                let y = pos.getY(i);
+                let z = pos.getZ(i);
+                if (twist[1] !== 0) {
+                    const angle = (y - center.y) * twist[1];
+                    const s = Math.sin(angle);
+                    const c = Math.cos(angle);
+                    const nx = (x - center.x) * c - (z - center.z) * s + center.x;
+                    const nz = (x - center.x) * s + (z - center.z) * c + center.z;
+                    x = nx; z = nz;
+                }
+                if (twist[0] !== 0) {
+                    const angle = (x - center.x) * twist[0];
+                    const s = Math.sin(angle);
+                    const c = Math.cos(angle);
+                    const ny = (y - center.y) * c - (z - center.z) * s + center.y;
+                    const nz = (y - center.y) * s + (z - center.z) * c + center.z;
+                    y = ny; z = nz;
+                }
+                if (twist[2] !== 0) {
+                    const angle = (z - center.z) * twist[2];
+                    const s = Math.sin(angle);
+                    const c = Math.cos(angle);
+                    const nx = (x - center.x) * c - (y - center.y) * s + center.x;
+                    const ny = (x - center.x) * s + (y - center.y) * c + center.y;
+                    x = nx; y = ny;
+                }
+                pos.setXYZ(i, x, y, z);
+            }
+            pos.needsUpdate = true;
+            geo.computeVertexNormals();
+            return geo;
+        };
 
 `;
 
-    nodes.forEach(node => {
+    nodesToExport.forEach(node => {
       if (node.type === 'pointLight' || node.type === 'ambientLight') return;
 
-      code += `  // ${node.name} (${node.type})\n`;
+      code += `        // ${node.name} (${node.type})\n`;
       
       let geometryCode = '';
       const params = node.parameters || {};
       const thickness = params.thickness || 0.1;
       const id = node.id.replace(/-/g, '_');
       
-      let materialCode = `  const material_${id} = new THREE.MeshStandardMaterial({ 
-    color: '${node.color}',
-    roughness: ${node.material?.roughness ?? 0.5},
-    metalness: ${node.material?.metalness ?? 0}
-  });\n`;
+      let materialCode = `        const mat_${id} = new THREE.MeshPhongMaterial({ 
+            color: '${node.color}',
+            flatShading: true,
+            transparent: ${ensureNumber(node.material?.opacity, 1) < 1},
+            opacity: ${ensureNumber(node.material?.opacity, 1)},
+            shininess: 50
+        });\n`;
 
       switch (node.type) {
         case 'box':
@@ -824,60 +860,60 @@ function createScene(THREE) {
           geometryCode = `new THREE.TorusGeometry(${params.radius || 0.5}, ${params.tube || 0.2}, 16, 100)`;
           break;
         case 'polygon':
-          code += `  const shape_${id} = createPolygonShape(${params.sides || 5}, 0.5, ${params.innerRadius || 0.5}, ${params.isStar || false});\n`;
+          code += `        const shape_${id} = createPolygonShape(${params.sides || 5}, 0.5, ${params.innerRadius || 0.5}, ${params.isStar || false});\n`;
           geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
           break;
         case 'rect':
         case 'plane':
-          code += `  const shape_${id} = new THREE.Shape();
-  shape_${id}.moveTo(-0.5, -0.5);
-  shape_${id}.lineTo(0.5, -0.5);
-  shape_${id}.lineTo(0.5, 0.5);
-  shape_${id}.lineTo(-0.5, 0.5);
-  shape_${id}.lineTo(-0.5, -0.5);\n`;
+          code += `        const shape_${id} = new THREE.Shape();
+        shape_${id}.moveTo(-0.5, -0.5);
+        shape_${id}.lineTo(0.5, -0.5);
+        shape_${id}.lineTo(0.5, 0.5);
+        shape_${id}.lineTo(-0.5, 0.5);
+        shape_${id}.lineTo(-0.5, -0.5);\n`;
           geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
           break;
         case 'triangle':
-          code += `  const shape_${id} = new THREE.Shape();
-  shape_${id}.moveTo(0, 0.5);
-  shape_${id}.lineTo(0.5, -0.5);
-  shape_${id}.lineTo(-0.5, -0.5);
-  shape_${id}.lineTo(0, 0.5);\n`;
+          code += `        const shape_${id} = new THREE.Shape();
+        shape_${id}.moveTo(0, 0.5);
+        shape_${id}.lineTo(0.5, -0.5);
+        shape_${id}.lineTo(-0.5, -0.5);
+        shape_${id}.lineTo(0, 0.5);\n`;
           geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
           break;
         case 'circle':
-          code += `  const shape_${id} = new THREE.Shape();
-  shape_${id}.absarc(0, 0, ${params.radius || 0.5}, 0, Math.PI * 2, false);\n`;
+          code += `        const shape_${id} = new THREE.Shape();
+        shape_${id}.absarc(0, 0, ${params.radius || 0.5}, 0, Math.PI * 2, false);\n`;
           geometryCode = `new THREE.ExtrudeGeometry(shape_${id}, { depth: ${thickness}, bevelEnabled: false })`;
           break;
         case 'js_object': {
           const paramsObj = node.parameters || {};
           const paramInjections = Object.keys(paramsObj)
             .filter(k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k))
-            .map(k => `    const ${k} = parameters['${k}'];`)
+            .map(k => `            const ${k} = parameters['${k}'];`)
             .join('\n');
 
-          code += `  const mesh_${id} = (() => {
-    const group = new THREE.Group();
-    const parameters = ${JSON.stringify(paramsObj)};
-    const color = '${node.color}';
+          code += `        const mesh_${id} = (() => {
+            const group = new THREE.Group();
+            const parameters = ${JSON.stringify(paramsObj)};
+            const color = '${node.color}';
 ${paramInjections}
-    ${node.script?.split('\n').map(l => '    ' + l).join('\n')}
-    
-    const result = (typeof createScene === 'function') ? createScene(THREE) : group;
-    if (result && result.traverse) {
-      result.traverse(child => {
-        if (child.isMesh && child.geometry) {
-${params.bend ? `          applyBend(child.geometry, ${params.bend});` : ''}
-${params.taper ? `          applyTaper(child.geometry, ${params.taper});` : ''}
-${params.stretch ? `          applyStretch(child.geometry, ${params.stretch});` : ''}
-${params.inflate ? `          applyInflate(child.geometry, ${params.inflate});` : ''}
-${params.twist ? `          applyTwist(child.geometry, [${params.twist.join(', ')}]);` : ''}
-        }
-      });
-    }
-    return result;
-  })();\n`;
+            ${node.script?.split('\n').map(l => '            ' + l).join('\n')}
+            
+            const result = (typeof createScene === 'function') ? createScene(THREE) : group;
+            if (result && result.traverse) {
+                result.traverse(child => {
+                    if (child.isMesh && child.geometry) {
+${params.bend ? `                        applyBend(child.geometry, ${params.bend});` : ''}
+${params.taper ? `                        applyTaper(child.geometry, ${params.taper});` : ''}
+${params.stretch ? `                        applyStretch(child.geometry, ${params.stretch});` : ''}
+${params.inflate ? `                        applyInflate(child.geometry, ${params.inflate});` : ''}
+${params.twist ? `                        applyTwist(child.geometry, [${params.twist.join(', ')}]);` : ''}
+                    }
+                });
+            }
+            return result;
+        })();\n`;
           break;
         }
         case 'text':
@@ -889,30 +925,31 @@ ${params.twist ? `          applyTwist(child.geometry, [${params.twist.join(', '
 
       if (node.type !== 'js_object') {
         code += materialCode;
-        code += `  const geometry_${id} = ${geometryCode};\n`;
-        if (params.bend) code += `  applyBend(geometry_${id}, ${params.bend});\n`;
-        if (params.taper) code += `  applyTaper(geometry_${id}, ${params.taper});\n`;
-        if (params.stretch) code += `  applyStretch(geometry_${id}, ${params.stretch});\n`;
-        if (params.inflate) code += `  applyInflate(geometry_${id}, ${params.inflate});\n`;
-        if (params.twist) code += `  applyTwist(geometry_${id}, [${params.twist.join(', ')}]);\n`;
-        code += `  const mesh_${id} = new THREE.Mesh(geometry_${id}, material_${id});\n`;
+        code += `        const geometry_${id} = ${geometryCode};\n`;
+        if (params.bend) code += `        applyBend(geometry_${id}, ${params.bend});\n`;
+        if (params.taper) code += `        applyTaper(geometry_${id}, ${params.taper});\n`;
+        if (params.stretch) code += `        applyStretch(geometry_${id}, ${params.stretch});\n`;
+        if (params.inflate) code += `        applyInflate(geometry_${id}, ${params.inflate});\n`;
+        if (params.twist) code += `        applyTwist(geometry_${id}, [${params.twist.join(', ')}]);\n`;
+        code += `        const mesh_${id} = new THREE.Mesh(geometry_${id}, mat_${id});\n`;
       }
 
-      code += `  if (mesh_${id}) {\n`;
-      code += `    mesh_${id}.position.set(${node.position.join(', ')});\n`;
-      code += `    mesh_${id}.rotation.set(${node.rotation.join(', ')});\n`;
-      code += `    mesh_${id}.scale.set(${node.scale.join(', ')});\n`;
-      code += `    group.add(mesh_${id});\n`;
-      code += `  }\n\n`;
+      code += `        if (mesh_${id}) {\n`;
+      code += `            mesh_${id}.position.set(${node.position.join(', ')});\n`;
+      code += `            mesh_${id}.rotation.set(${node.rotation.join(', ')});\n`;
+      code += `            mesh_${id}.scale.set(${node.scale.join(', ')});\n`;
+      code += `            group.add(mesh_${id});\n`;
+      code += `        }\n\n`;
     });
 
-    code += `  return group;\n}\n\n// Usage:\n// const myScene = createScene(THREE);\n// scene.add(myScene);\n`;
+    code += `        return group;\n    }\n\n    root.${funcName} = ${funcName};\n\n    if (typeof module !== 'undefined' && module.exports) {\n        module.exports = ${funcName};\n    }\n})(typeof window !== 'undefined' ? window : globalThis);\n`;
 
     const blob = new Blob([code], { type: 'text/javascript' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'scene_models.js';
+    const name = targetNodeId ? (nodes.find(n => n.id === targetNodeId)?.name || 'model') : 'scene_models';
+    link.download = `${name}.js`;
     link.click();
     URL.revokeObjectURL(url);
   }, [nodes]);
@@ -1032,8 +1069,43 @@ ${params.twist ? `          applyTwist(child.geometry, [${params.twist.join(', '
 
     if (isJs) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const scriptContent = e.target?.result as string;
+        
+        // Use regex for a quick check before calling AI
+        const funcRegex = /function\s+create[a-zA-Z0-9_]+\s*\(/g;
+        const matches = scriptContent.match(funcRegex) || [];
+
+        if (matches.length > 1) {
+          const confirmSplit = window.confirm(`Detected ${matches.length} possible models in this script. Would you like to use AI to intelligently extract them into individual layers?`);
+          
+          if (confirmSplit) {
+            setIsProcessing(true);
+            try {
+              const { parseModelLibrary } = await import('./services/aiService');
+              const extractedNodes = await parseModelLibrary(scriptContent);
+              
+              if (extractedNodes.length > 0) {
+                const nodesToAdd = extractedNodes.map(data => ({
+                  id: crypto.randomUUID(),
+                  ...data,
+                  visible: true
+                } as SceneNode));
+
+                const updatedNodes = [...nodes, ...nodesToAdd];
+                setNodes(updatedNodes);
+                setSelectedIds(nodesToAdd.map(n => n.id));
+                pushHistory(updatedNodes, nodesToAdd.map(n => n.id));
+                return;
+              }
+            } catch (err) {
+              console.error("AI Split failed, falling back to basic import", err);
+            } finally {
+              setIsProcessing(false);
+            }
+          }
+        }
+
         const newId = crypto.randomUUID();
         const newNode: SceneNode = {
           id: newId,
@@ -1606,19 +1678,19 @@ return mesh;` : undefined,
                 <ChevronDown className="w-3 h-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-[#181818] border-[#2e2e2e] text-[#e0e0e0] w-32">
-                <DropdownMenuItem onClick={handleExportGLB} className="text-xs hover:bg-white/5 cursor-pointer">
+                <DropdownMenuItem onClick={() => handleExportGLB()} className="text-xs hover:bg-white/5 cursor-pointer">
                   Export as GLB
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportPNG} className="text-xs hover:bg-white/5 cursor-pointer">
                   Export as PNG
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportAnimationJS} className="text-xs hover:bg-white/5 cursor-pointer text-indigo-400 font-bold">
+                <DropdownMenuItem onClick={() => handleExportAnimationJS()} className="text-xs hover:bg-white/5 cursor-pointer text-indigo-400 font-bold">
                   Export Animation JS
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportGIF} className="text-xs hover:bg-white/5 cursor-pointer text-pink-400">
+                <DropdownMenuItem onClick={() => handleExportGIF()} className="text-xs hover:bg-white/5 cursor-pointer text-pink-400">
                   Export as GIF
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportJSModel} className="text-xs hover:bg-white/5 cursor-pointer text-indigo-300">
+                <DropdownMenuItem onClick={() => handleExportJSModel()} className="text-xs hover:bg-white/5 cursor-pointer text-indigo-300">
                   Export JS Model
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -1661,20 +1733,20 @@ return mesh;` : undefined,
                       <ChevronDown className="w-3.5 h-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="bg-[#181818] border-[#2e2e2e] text-[#e0e0e0] w-44">
-                      <DropdownMenuItem onClick={handleExportGLB} className="text-xs hover:bg-white/5 cursor-pointer py-2">
+                      <DropdownMenuItem onClick={() => handleExportGLB()} className="text-xs hover:bg-white/5 cursor-pointer py-2">
                         Export as GLB
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleExportPNG} className="text-xs hover:bg-white/5 cursor-pointer py-2">
                         Export as PNG
                       </DropdownMenuItem>
                       <div className="h-px bg-[#2e2e2e] my-1" />
-                      <DropdownMenuItem onClick={handleExportAnimationJS} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-indigo-400 font-bold">
+                      <DropdownMenuItem onClick={() => handleExportAnimationJS()} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-indigo-400 font-bold">
                         Export Animation JS
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleExportGIF} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-pink-400">
+                      <DropdownMenuItem onClick={() => handleExportGIF()} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-pink-400">
                         Export as GIF
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleExportJSModel} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-indigo-300">
+                      <DropdownMenuItem onClick={() => handleExportJSModel()} className="text-xs hover:bg-white/5 cursor-pointer py-2 text-indigo-300">
                         Export JS Model
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -1735,36 +1807,36 @@ return mesh;` : undefined,
             {!isPreviewMode && (
               <>
                 <div className="absolute top-4 left-4 z-40 max-h-[calc(100%-12rem)]">
-                  <LayersPanel 
-                    nodes={nodes} 
-                    selectedIds={selectedIds} 
-                    onSelect={setSelectedIds} 
-                    onUpdateNode={handleUpdateNode}
-                    onReorder={setNodes}
-                    isCollapsed={isLayersCollapsed}
-                    onToggleCollapse={() => setIsLayersCollapsed(!isLayersCollapsed)}
-                  />
+                    <LayersPanel 
+                      nodes={nodes} 
+                      selectedIds={selectedIds} 
+                      onSelect={setSelectedIds} 
+                      onUpdateNode={handleUpdateNode}
+                      onReorder={setNodes}
+                      onExportGLB={handleExportGLB}
+                      onExportJS={handleExportJSModel}
+                      isCollapsed={isLayersCollapsed}
+                      onToggleCollapse={() => setIsLayersCollapsed(!isLayersCollapsed)}
+                    />
                 </div>
 
-                <div className="absolute top-4 right-4 z-40 h-[calc(100%-8rem)]">
-                  <PropertiesPanel 
-                    selectedShape={selectedNode} 
-                    nodes={nodes}
-                    onUpdateShape={handleUpdateNode} 
-                    onAddNodes={handleAiAddNodes}
-                    onReplaceNode={handleReplaceNodeWithPrimitives}
-                    onDeleteNode={handleDeleteNode}
-                    onOpenCodeEditor={() => {
-                      if (selectedIds.length === 1) {
-                        const node = nodes.find(n => n.id === selectedIds[0]);
-                        if (node?.type === 'js_object') {
-                          setEditingNodeId(node.id);
-                          setIsCodeEditorOpen(true);
-                        }
+                <PropertiesPanel 
+                  selectedShape={selectedNode} 
+                  nodes={nodes}
+                  onUpdateShape={handleUpdateNode} 
+                  onAddNodes={handleAiAddNodes}
+                  onReplaceNode={handleReplaceNodeWithPrimitives}
+                  onDeleteNode={handleDeleteNode}
+                  onOpenCodeEditor={() => {
+                    if (selectedIds.length === 1) {
+                      const node = nodes.find(n => n.id === selectedIds[0]);
+                      if (node?.type === 'js_object') {
+                        setEditingNodeId(node.id);
+                        setIsCodeEditorOpen(true);
                       }
-                    }}
-                  />
-                </div>
+                    }
+                  }}
+                />
               </>
             )}
           </main>

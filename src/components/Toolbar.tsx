@@ -24,7 +24,8 @@ import {
   Combine,
   Scaling,
   Maximize2,
-  CircleDot
+  CircleDot,
+  Minimize2
 } from 'lucide-react';
 
 const TrapezoidIcon = ({ className }: { className?: string }) => (
@@ -194,6 +195,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             )}
           >
             <CircleDot className="w-3.5 h-3.5" /> Inflate Tool
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => onToolChange(activeTool === 'bevel' ? 'select' : 'bevel')} 
+            className={cn(
+              "text-xs hover:bg-white/5 cursor-pointer gap-2",
+              activeTool === 'bevel' && "bg-white/10 text-indigo-100"
+            )}
+          >
+            <Minimize2 className="w-3.5 h-3.5" /> Bevel Tool (倒角)
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

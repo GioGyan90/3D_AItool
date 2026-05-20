@@ -19,7 +19,13 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { SceneNode } from '../types';
 import { cn } from '@/lib/utils';
-import { Box, Circle, Cylinder, Torus, Square, Layers as ExtrudeIcon, Folder, Eye, EyeOff, Triangle, Lock, Unlock, Image, Lightbulb, ChevronLeft, ChevronRight, List } from 'lucide-react';
+import { Box, Circle, Cylinder, Torus, Square, Layers as ExtrudeIcon, Folder, Eye, EyeOff, Triangle, Lock, Unlock, Image, Lightbulb, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, List, Download, Code, Combine } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 interface LayersPanelProps {
   nodes: SceneNode[];
@@ -27,6 +33,8 @@ interface LayersPanelProps {
   onSelect: (ids: string[]) => void;
   onUpdateNode: (id: string, updates: Partial<SceneNode>) => void;
   onReorder: (nodes: SceneNode[]) => void;
+  onExportGLB: (id: string) => void;
+  onExportJS: (id: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
 }
@@ -47,93 +55,12 @@ const NodeIcon = ({ type }: { type: SceneNode['type'] }) => {
     case 'pointLight': return <Lightbulb className="w-3.5 h-3.5 text-yellow-400/70" />;
     case 'ambientLight': return <Lightbulb className="w-3.5 h-3.5 text-white/50" />;
     case 'group': return <Folder className="w-3.5 h-3.5 text-[#4a90e2]" />;
+    case 'js_object': return <Code className="w-3.5 h-3.5 text-indigo-400" />;
+    case 'csg': return <Combine className="w-3.5 h-3.5 text-orange-400" />;
     default: return <Box className="w-3.5 h-3.5" />;
   }
 };
 
-const SortableLayerItem = ({ 
-  node, 
-  depth = 0, 
-  isSelected, 
-  onSelect,
-  onToggleVisibility,
-  allNodes
-}: { 
-  node: SceneNode; 
-  depth?: number;
-  isSelected: boolean;
-  onSelect: (id: string, multi: boolean) => void;
-  onToggleVisibility: (id: string) => void;
-  allNodes: SceneNode[];
-}) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: node.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    paddingLeft: `${depth * 12 + 16}px`,
-    zIndex: isDragging ? 100 : 0
-  };
-
-  const children = allNodes.filter(n => n.parentId === node.id);
-
-  return (
-    <div ref={setNodeRef} style={style} className={cn("group/item", isDragging && "opacity-50")}>
-      <div 
-        className={cn(
-          "w-full flex items-center gap-2 py-1.5 pr-2 text-[12px] transition-all relative cursor-pointer",
-          isSelected 
-            ? "bg-[#4a90e2]/10 text-[#e0e0e0] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-[#4a90e2]" 
-            : "text-[#888888] hover:bg-white/5 hover:text-[#e0e0e0]"
-        )}
-        onClick={(e) => onSelect(node.id, e.shiftKey || e.metaKey)}
-        {...attributes}
-        {...listeners}
-      >
-        <NodeIcon type={node.type} />
-        <span className="truncate flex-1">{node.name}</span>
-        
-        <button 
-          className={cn(
-            "opacity-0 group-hover/item:opacity-100 transition-opacity p-1 hover:text-white",
-            !node.visible && "opacity-100 text-[#4a90e2]"
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleVisibility(node.id);
-          }}
-        >
-          {node.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-        </button>
-      </div>
-      
-      {children.length > 0 && (
-        <div className="flex flex-col">
-          {children.map(child => (
-            <SortableLayerItem 
-              key={child.id} 
-              node={child} 
-              depth={depth + 1}
-              isSelected={isSelected} // This is wrong, should check child selection
-              onSelect={onSelect}
-              onToggleVisibility={onToggleVisibility}
-              allNodes={allNodes}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Fixed version of SortableLayerItem to handle selection correctly
 const SortableLayerItemFixed = ({ 
   node, 
   depth = 0, 
@@ -142,6 +69,8 @@ const SortableLayerItemFixed = ({
   onToggleVisibility,
   onToggleLock,
   onUpdateName,
+  onExportGLB,
+  onExportJS,
   allNodes
 }: { 
   node: SceneNode; 
@@ -151,11 +80,14 @@ const SortableLayerItemFixed = ({
   onToggleVisibility: (id: string) => void;
   onToggleLock: (id: string) => void;
   onUpdateName: (id: string, name: string) => void;
+  onExportGLB: (id: string) => void;
+  onExportJS: (id: string) => void;
   allNodes: SceneNode[];
 }) => {
   const isSelected = selectedIds.includes(node.id);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editName, setEditName] = React.useState(node.name);
+  const [isExpanded, setIsExpanded] = React.useState(true);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const {
@@ -170,7 +102,7 @@ const SortableLayerItemFixed = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    paddingLeft: `${depth * 12 + 16}px`,
+    paddingLeft: `${depth * 12 + 6}px`, // Reduced padding to accommodate toggle
     zIndex: isDragging ? 100 : 0
   };
 
@@ -209,7 +141,7 @@ const SortableLayerItemFixed = ({
     <div ref={setNodeRef} style={style} className={cn("group/item", isDragging && "opacity-50")}>
       <div 
         className={cn(
-          "w-full flex items-center gap-2 py-1.5 pr-2 text-[12px] transition-all relative cursor-pointer",
+          "w-full flex items-center gap-1.5 py-1.5 pr-2 text-[12px] transition-all relative cursor-pointer",
           isSelected 
             ? "bg-[#4a90e2]/10 text-[#e0e0e0] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-[#4a90e2]" 
             : "text-[#888888] hover:bg-white/5 hover:text-[#e0e0e0]"
@@ -219,6 +151,24 @@ const SortableLayerItemFixed = ({
         {...attributes}
         {...listeners}
       >
+        <div className="w-4 h-4 flex items-center justify-center">
+          {children.length > 0 && (
+            <button
+              className="p-0.5 hover:bg-white/10 rounded-sm text-[#555555] hover:text-white transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+            >
+              {isExpanded ? (
+                <ChevronDown className="w-3 h-3 text-[#4a90e2]" />
+              ) : (
+                <ChevronUp className="w-3 h-3" />
+              )}
+            </button>
+          )}
+        </div>
+
         <NodeIcon type={node.type} />
         {isEditing ? (
           <input
@@ -234,6 +184,29 @@ const SortableLayerItemFixed = ({
           <span className="truncate flex-1">{node.name}</span>
         )}
         
+        <DropdownMenu>
+          <DropdownMenuTrigger 
+            className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 hover:text-white outline-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Download className="w-3 h-3" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-[#181818] border-[#2e2e2e] text-[#e0e0e0] w-24">
+            <DropdownMenuItem 
+              onClick={(e) => { e.stopPropagation(); onExportGLB(node.id); }} 
+              className="text-[11px] hover:bg-white/5 cursor-pointer"
+            >
+              导出 GLB
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={(e) => { e.stopPropagation(); onExportJS(node.id); }} 
+              className="text-[11px] hover:bg-white/5 cursor-pointer"
+            >
+              导出 JS
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <button 
           className={cn(
             "opacity-0 group-hover/item:opacity-100 transition-opacity p-1 hover:text-white",
@@ -261,7 +234,7 @@ const SortableLayerItemFixed = ({
         </button>
       </div>
       
-      {children.length > 0 && (
+      {children.length > 0 && isExpanded && (
         <div className="flex flex-col">
           {children.map(child => (
             <SortableLayerItemFixed 
@@ -273,6 +246,8 @@ const SortableLayerItemFixed = ({
               onToggleVisibility={onToggleVisibility}
               onToggleLock={onToggleLock}
               onUpdateName={onUpdateName}
+              onExportGLB={onExportGLB}
+              onExportJS={onExportJS}
               allNodes={allNodes}
             />
           ))}
@@ -288,6 +263,8 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
   onSelect, 
   onUpdateNode,
   onReorder,
+  onExportGLB,
+  onExportJS,
   isCollapsed,
   onToggleCollapse
 }) => {
@@ -384,6 +361,8 @@ export const LayersPanel: React.FC<LayersPanelProps> = ({
                         if (node) onUpdateNode(id, { locked: !node.locked });
                       }}
                       onUpdateName={(id, name) => onUpdateNode(id, { name })}
+                      onExportGLB={onExportGLB}
+                      onExportJS={onExportJS}
                       allNodes={nodes}
                     />
                   ))}

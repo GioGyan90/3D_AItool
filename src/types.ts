@@ -50,6 +50,7 @@ export interface SceneNode {
     ior?: number;
     thickness?: number; // Volume thickness for refraction
     map?: string; // URL to texture
+    videoMap?: string; // URL to video or gif
     preset?: 'metal' | 'plastic' | 'matte' | 'glass' | 'frosted' | 'custom';
     attenuationDistance?: number;
     attenuationColor?: string;

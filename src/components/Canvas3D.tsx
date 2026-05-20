@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useEffect, Suspense } from 'react';
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls, TransformControls, Grid, ContactShadows, useGLTF, useTexture, Text3D, Center, Environment } from '@react-three/drei';
+import { Canvas, useLoader, useFrame } from '@react-three/fiber';
+import { OrbitControls, TransformControls, Grid, ContactShadows, useGLTF, useTexture, Text3D, Center, Environment, useVideoTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
@@ -424,18 +424,62 @@ const AmbientLightNode = ({ node }: { node: SceneNode }) => {
   );
 };
 
-const Material = ({ node, overrideColor }: { node: SceneNode; overrideColor?: string }) => {
-  const texture = node.material?.map ? useTexture(node.material.map) : null;
+const VideoMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor?: string }) => {
+  const [videoTexture, setVideoTexture] = React.useState<THREE.VideoTexture | null>(null);
+  const url = node.material?.videoMap;
+
+  React.useEffect(() => {
+    if (!url) {
+      setVideoTexture(null);
+      return;
+    }
+
+    const video = document.createElement('video');
+    video.src = url;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.autoplay = true;
+    video.crossOrigin = "Anonymous";
+    video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('playsinline', 'true');
+    
+    // Explicitly load the video
+    video.load();
+    
+    // For many browsers, we need to try playing
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        console.warn("Video auto-play failed or was interrupted:", err);
+        // Sometimes clicking anywhere on the page resolves this for the next load
+      });
+    }
+
+    const texture = new THREE.VideoTexture(video);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    setVideoTexture(texture);
+
+    return () => {
+      video.pause();
+      video.src = "";
+      video.load();
+      texture.dispose();
+    };
+  }, [url]);
+
   const isTransparent = (node.material?.opacity ?? 1) < 1 || (node.material?.transmission ?? 0) > 0;
   const color = overrideColor || node.color;
-  
+
   return (
     <meshPhysicalMaterial 
-      key={isTransparent ? 'transparent' : 'opaque'}
-      color={color} 
+      key={`video-${node.id}`}
+      color={videoTexture ? "#ffffff" : color} 
       metalness={node.material?.metalness ?? 0}
       roughness={node.material?.roughness ?? 0.5}
-      map={texture}
+      map={videoTexture}
       transmission={node.material?.transmission ?? 0}
       thickness={node.material?.thickness ?? (node.parameters?.thickness || 0.5)}
       opacity={node.material?.opacity ?? 1}
@@ -445,20 +489,99 @@ const Material = ({ node, overrideColor }: { node: SceneNode; overrideColor?: st
       envMapIntensity={2.0}
       attenuationDistance={node.material?.attenuationDistance ?? 5}
       attenuationColor={new THREE.Color(node.material?.attenuationColor ?? node.color)}
+      side={THREE.DoubleSide}
     />
   );
+};
+
+const StaticMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor?: string }) => {
+  const [texture, setTexture] = React.useState<THREE.Texture | null>(null);
+  const url = node.material?.map;
+
+  React.useEffect(() => {
+    if (!url) {
+      setTexture(null);
+      return;
+    }
+
+    const loader = new THREE.TextureLoader();
+    if (!url.startsWith('blob:') && !url.startsWith('data:')) {
+      loader.setCrossOrigin('anonymous');
+    }
+
+    let isMounted = true;
+    loader.load(
+      url,
+      (tex) => {
+        if (!isMounted) {
+          tex.dispose();
+          return;
+        }
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.flipY = false; // Match standard GLTF/web expectations
+        tex.needsUpdate = true;
+        setTexture(tex);
+      },
+      undefined,
+      (err) => console.error("Failed to load texture for mesh:", url, err)
+    );
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  React.useEffect(() => {
+    return () => {
+      if (texture) texture.dispose();
+    };
+  }, [texture, url]);
+
+  const isTransparent = (node.material?.opacity ?? 1) < 1 || (node.material?.transmission ?? 0) > 0;
+  const color = overrideColor || node.color;
+  
+  return (
+    <meshPhysicalMaterial 
+      key={`static-mat-${node.id}-${texture ? 'textured' : 'plain'}`}
+      color={texture ? "#ffffff" : color} 
+      metalness={node.material?.metalness ?? 0}
+      roughness={node.material?.roughness ?? 0.5}
+      map={texture}
+      transmission={node.material?.transmission ?? 0}
+      thickness={node.material?.thickness ?? (node.parameters?.thickness || 0.5)}
+      opacity={node.material?.opacity ?? 1}
+      transparent={isTransparent || !!texture}
+      ior={node.material?.ior ?? 1.5}
+      wireframe={node.material?.wireframe ?? false}
+      envMapIntensity={2.0}
+      attenuationDistance={node.material?.attenuationDistance ?? 5}
+      attenuationColor={new THREE.Color(node.material?.attenuationColor ?? node.color)}
+      side={THREE.DoubleSide}
+      onUpdate={(m) => {
+        if (texture) {
+          m.needsUpdate = true;
+        }
+      }}
+    />
+  );
+};
+
+const Material = ({ node, overrideColor }: { node: SceneNode; overrideColor?: string }) => {
+  // Use a simple selection logic without Suspense to prevent the 'static flag' and 'scene disappearing' issues
+  if (node.material?.videoMap) {
+    return <VideoMaterial node={node} overrideColor={overrideColor} />;
+  }
+  
+  return <StaticMaterial node={node} overrideColor={overrideColor} />;
 };
 
 const JSObjectNode = ({ node }: { node: SceneNode }) => {
   const object = useMemo(() => {
     if (!node.script) return null;
     try {
-      // Create a function that has THREE and the node's properties in its scope.
-      // We provide a pre-defined 'group' that the user can add items to.
-      // We also inject all parameters and basic properties like color into the scope.
-      
       const filteredParameters = { ...(node.parameters || {}) };
-      // Remove keys that might conflict with injected variables
       delete (filteredParameters as any).THREE;
       delete (filteredParameters as any).color;
       delete (filteredParameters as any).group;
@@ -467,52 +590,90 @@ const JSObjectNode = ({ node }: { node: SceneNode }) => {
       const paramValues = Object.values(filteredParameters);
       
       let scriptToRun = node.script || '';
-      
-      // Heuristic to support files that define a function but don't call it.
-      // We look for a pattern like: function createSomething(THREE) { ... }
-      // and if we don't find a call to it in the code (ignoring comments), we append the call.
-      
-      // Look for common function declaration patterns: 
-      // 1. function name(THREE) { ... }
-      // 2. const name = (THREE) => { ... }
-      const funcDeclRegex = /(?:function\s+([a-zA-Z0-9_]+)\s*\(\s*THREE\s*\))|(?:(?:const|let|var)\s+([a-zA-Z0-9_]+)\s*=\s*(?:\([^)]*\)|[a-zA-Z0-9_]+)\s*=>)/;
-      const funcDeclMatch = scriptToRun.match(funcDeclRegex);
-      
-      if (funcDeclMatch) {
-        const funcName = funcDeclMatch[1] || funcDeclMatch[2];
-        // Check if it's actually called later in the same script (ignoring comments)
-        const cleanScript = scriptToRun.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
-        // Search for the function name followed by a call token '(', but not as part of the declaration itself
-        const callPattern = new RegExp(`(?<!function\\s+|const\\s+|let\\s+|var\\s+)${funcName}\\s*\\(`);
-        
-        if (!callPattern.test(cleanScript)) {
-          scriptToRun += `\n\n// Automatically calling detected entry point\nreturn ${funcName}(THREE);`;
-        }
-      }
-
-      const wrappedScript = `
-        const group = new THREE.Group();
-        ${scriptToRun}
-        if (typeof createScene === 'function') {
-          return createScene(THREE);
-        }
-        return group;
-      `;
+      const rootMock: any = { THREE };
       
       // Inject parameters as arguments to the function
-      const scriptFunc = new Function('THREE', 'color', ...paramKeys, wrappedScript);
-      const result = scriptFunc(THREE, node.color, ...paramValues);
+      // We wrap the script to support the UMD pattern which expects 'root' or 'window'
+      const wrappedScript = `
+        const group = new THREE.Group();
+        const window = root;
+        const globalThis = root;
+        const self = root;
+        
+        // Execute the user script
+        try {
+          ${scriptToRun}
+        } catch (e) {
+          console.error("Error executing custom script:", e);
+        }
+        
+        // Entry point detection
+        
+        // 1. Check for specific createScene or createModel function in script scope or root
+        if (typeof globalThis.createScene === 'function') return globalThis.createScene(THREE, root);
+        if (typeof createScene === 'function') return createScene(THREE, root);
+        
+        // Search local scope for any function starting with 'create'
+        try {
+          const localFuncs = Object.keys(root).filter(k => typeof root[k] === 'function');
+          const creator = localFuncs.find(k => k.toLowerCase().startsWith('create'));
+          if (creator) return root[creator](THREE, root);
+        } catch(e) {}
+
+        // 2. Try to find an exported function on root (UMD pattern)
+        const exportedFuncs = Object.entries(root).filter(([k, v]) => typeof v === 'function' && k !== 'THREE');
+        if (exportedFuncs.length > 0) {
+           const creator = exportedFuncs.find(([k]) => k.toLowerCase().startsWith('create')) || exportedFuncs[0];
+           return creator[1](THREE, root);
+        }
+
+        // 3. Last fallback: group has children
+        if (group.children.length > 0) return group;
+        
+        return group;
+      `;
+
+      const scriptFunc = new Function('THREE', 'color', 'root', ...paramKeys, wrappedScript);
+      const result = scriptFunc(THREE, node.color, rootMock, ...paramValues);
       
       if (result instanceof THREE.Object3D) {
-        // Apply deformations to meshes within the custom object
+        // Apply deformations and material properties to meshes within the custom object
         result.traverse((child) => {
-          if (child instanceof THREE.Mesh && child.geometry) {
-            const params = node.parameters || {};
-            if (params.bend) applyBend(child.geometry, params.bend);
-            if (params.twist) applyTwist(child.geometry, params.twist);
-            if (params.taper) applyTaper(child.geometry, params.taper);
-            if (params.stretch) applyStretch(child.geometry, params.stretch);
-            if (params.inflate) applyInflate(child.geometry, params.inflate);
+          if (child instanceof THREE.Mesh) {
+            // Apply material properties if node has them
+            if (node.material || node.color) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(m => {
+                  if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhongMaterial) {
+                    if (node.color && node.color.toLowerCase() !== '#ffffff') m.color.set(node.color);
+                    if (node.material?.metalness !== undefined) (m as any).metalness = node.material.metalness;
+                    if (node.material?.roughness !== undefined) (m as any).roughness = node.material.roughness;
+                    if (node.material?.opacity !== undefined) {
+                      m.opacity = node.material.opacity;
+                      m.transparent = m.opacity < 1;
+                    }
+                  }
+                });
+              } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshPhongMaterial) {
+                const m = child.material;
+                if (node.color && node.color.toLowerCase() !== '#ffffff') m.color.set(node.color);
+                if (node.material?.metalness !== undefined) (m as any).metalness = node.material.metalness;
+                if (node.material?.roughness !== undefined) (m as any).roughness = node.material.roughness;
+                if (node.material?.opacity !== undefined) {
+                  m.opacity = node.material.opacity;
+                  m.transparent = m.opacity < 1;
+                }
+              }
+            }
+
+            if (child.geometry) {
+              const params = node.parameters || {};
+              if (params.bend) applyBend(child.geometry, params.bend);
+              if (params.twist) applyTwist(child.geometry, params.twist);
+              if (params.taper) applyTaper(child.geometry, params.taper);
+              if (params.stretch) applyStretch(child.geometry, params.stretch);
+              if (params.inflate) applyInflate(child.geometry, params.inflate);
+            }
           }
         });
         return result;
@@ -524,6 +685,18 @@ const JSObjectNode = ({ node }: { node: SceneNode }) => {
       return null;
     }
   }, [node.script, JSON.stringify(node.parameters), node.color]);
+
+  useFrame((state) => {
+    if (object && object.userData.animate) {
+      try {
+        // In the provided library format, the first arg is an entity object with a 'mesh' property
+        // and the second arg is time in ms
+        object.userData.animate({ mesh: object }, state.clock.elapsedTime * 1000);
+      } catch (e) {
+        // Ignore errors in custom animation scripts
+      }
+    }
+  });
 
   if (!object) return null;
 
@@ -561,6 +734,7 @@ const Node = ({
     initialTaper: number;
     initialStretch: number;
     initialInflate: number;
+    initialBevel: number;
   } | null>(null);
   const isSelected = selectedIds.includes(node.id);
   const isPrimarySelection = selectedIds[selectedIds.length - 1] === node.id;
@@ -609,15 +783,11 @@ const Node = ({
         shape.lineTo(x, y + safeH);
         shape.lineTo(x, y);
       } else {
-        shape.moveTo(x + radius, y);
-        shape.lineTo(x + safeW - radius, y);
-        shape.quadraticCurveTo(x + safeW, y, x + safeW, y + radius);
-        shape.lineTo(x + safeW, y + safeH - radius);
-        shape.quadraticCurveTo(x + safeW, y + safeH, x + safeW - radius, y + safeH);
-        shape.lineTo(x + radius, y + safeH);
-        shape.quadraticCurveTo(x, y + safeH, x, y + h - radius);
+        shape.absarc(x + radius, y + radius, radius, Math.PI, Math.PI * 1.5, false);
+        shape.absarc(x + w - radius, y + radius, radius, Math.PI * 1.5, Math.PI * 2, false);
+        shape.absarc(x + w - radius, y + h - radius, radius, 0, Math.PI * 0.5, false);
+        shape.absarc(x + radius, y + h - radius, radius, Math.PI * 0.5, Math.PI, false);
         shape.lineTo(x, y + radius);
-        shape.quadraticCurveTo(x, y, x + radius, y);
       }
       return shape;
     };
@@ -635,11 +805,11 @@ const Node = ({
       }
     } else if (type === 'box') {
       if (bevelRadius > 0) {
-        const r = Math.min(bevelRadius, 0.495);
-        const innerSide = Math.max(0.001, 1 - r * 2);
-        const shape = createRoundedRect(innerSide, innerSide, r);
+        const r = Math.min(bevelRadius, 0.49);
+        const innerW = 1 - r * 2;
+        const shape = createRoundedRect(innerW, innerW, r);
         baseGeometry = new THREE.ExtrudeGeometry(shape, { 
-          depth: innerSide, 
+          depth: innerW, 
           bevelEnabled: true, 
           bevelThickness: r, 
           bevelSize: r, 
@@ -650,36 +820,54 @@ const Node = ({
       } else {
         baseGeometry = new THREE.BoxGeometry(1, 1, 1, bend > 0 ? 64 : 1, 1, 1);
       }
-    } else if (thickness > 0 || type === 'extruded' || (bevelRadius > 0 && (type === 'rect' || type === 'plane' || type === 'circle' || type === 'triangle'))) {
+    } else if (type === 'cylinder') {
+      if (bevelRadius > 0) {
+        const r = Math.min(bevelRadius, 0.49);
+        const shape = new THREE.Shape();
+        shape.absarc(0, 0, 0.5 - r, 0, Math.PI * 2, false);
+        baseGeometry = new THREE.ExtrudeGeometry(shape, {
+          depth: 1 - r * 2,
+          bevelEnabled: true,
+          bevelThickness: r,
+          bevelSize: r,
+          bevelSegments: bevelSegments,
+          curveSegments: 32
+        });
+        baseGeometry.center();
+      } else {
+        baseGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, bend > 0 ? 64 : 32);
+      }
+    } else if (thickness > 0 || type === 'extruded' || (bevelRadius > 0 && (type === 'rect' || type === 'plane' || type === 'circle' || type === 'triangle' || type === 'polygon'))) {
       const depth = thickness || 0.2;
       let shape2D: THREE.Shape;
 
       switch (type) {
         case 'circle':
           shape2D = new THREE.Shape();
-          shape2D.absarc(0, 0, 0.5, 0, Math.PI * 2, false);
+          shape2D.absarc(0, 0, 0.5 - (bevelRadius > 0 ? bevelRadius : 0), 0, Math.PI * 2, false);
           break;
         case 'rect':
         case 'plane':
         case 'extruded':
-          shape2D = createRoundedRect(1, 1, bevelRadius);
+          shape2D = createRoundedRect(1 - (bevelRadius > 0 ? bevelRadius * 2 : 0), 1 - (bevelRadius > 0 ? bevelRadius * 2 : 0), bevelRadius);
           break;
         case 'triangle':
           shape2D = new THREE.Shape();
-          shape2D.moveTo(0, 0.5);
-          shape2D.lineTo(0.5, -0.5);
-          shape2D.lineTo(-0.5, -0.5);
-          shape2D.lineTo(0, 0.5);
+          const tr = bevelRadius > 0 ? bevelRadius : 0;
+          shape2D.moveTo(0, 0.5 - tr);
+          shape2D.lineTo(0.5 - tr, -0.5 + tr);
+          shape2D.lineTo(-0.5 + tr, -0.5 + tr);
+          shape2D.lineTo(0, 0.5 - tr);
           break;
         case 'polygon':
-          shape2D = createPolygonShape(sides, 0.5, innerRadius, isStar);
+          shape2D = createPolygonShape(sides, 0.5 - (bevelRadius > 0 ? bevelRadius : 0), innerRadius, isStar);
           break;
         default:
           return new THREE.BufferGeometry();
       }
       
       baseGeometry = new THREE.ExtrudeGeometry(shape2D, { 
-        depth, 
+        depth: Math.max(0.001, depth - (bevelRadius > 0 ? bevelRadius * 2 : 0)), 
         bevelEnabled: bevelRadius > 0, 
         bevelThickness: bevelRadius, 
         bevelSize: bevelRadius, 
@@ -689,9 +877,8 @@ const Node = ({
       baseGeometry.center();
     } else {
       switch (type) {
-        case 'sphere': baseGeometry = new THREE.SphereGeometry(0.5, bend > 0 ? 64 : 32, 32); break;
-        case 'cylinder': baseGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1, bend > 0 ? 64 : 32); break;
-        case 'torus': baseGeometry = new THREE.TorusGeometry(0.5, 0.2, 16, 100); break;
+        case 'sphere': baseGeometry = new THREE.SphereGeometry(parameters.radius || 0.5, bend > 0 ? 64 : 32, 32); break;
+        case 'torus': baseGeometry = new THREE.TorusGeometry(parameters.radius || 0.5, parameters.tube || 0.2, 16, 100); break;
         case 'plane': baseGeometry = new THREE.PlaneGeometry(1, 1, bend > 0 ? 64 : 1, 1); break;
         case 'circle': baseGeometry = new THREE.CircleGeometry(0.5, bend > 0 ? 64 : 32); break;
         case 'rect': baseGeometry = new THREE.PlaneGeometry(1, 1, bend > 0 ? 64 : 1, 1); break;
@@ -758,7 +945,7 @@ const Node = ({
           onHoverNode?.(null);
         }}
         onPointerDown={(e) => {
-          if (!['twist', 'taper', 'stretch', 'inflate'].includes(activeTool || '')) return;
+          if (!['twist', 'taper', 'stretch', 'inflate', 'bevel'].includes(activeTool || '')) return;
           e.stopPropagation();
           (e.target as any).setPointerCapture(e.pointerId);
           draggingRef.current = {
@@ -767,7 +954,8 @@ const Node = ({
             initialTwist: node.parameters.twist ? [...node.parameters.twist] : [0, 0, 0],
             initialTaper: node.parameters.taper || 0,
             initialStretch: node.parameters.stretch || 0,
-            initialInflate: node.parameters.inflate || 0
+            initialInflate: node.parameters.inflate || 0,
+            initialBevel: node.parameters.bevelRadius || 0
           };
           if (orbitControlsRef?.current) orbitControlsRef.current.enabled = false;
         }}
@@ -805,6 +993,11 @@ const Node = ({
               ...node.parameters,
               inflate: draggingRef.current.initialInflate + dx * 0.01
             };
+          } else if (activeTool === 'bevel') {
+            updates.parameters = {
+              ...node.parameters,
+              bevelRadius: Math.max(0, Math.min(0.5, draggingRef.current.initialBevel + dx * 0.005))
+            };
           }
           
           if (Object.keys(updates).length > 0) {
@@ -812,7 +1005,7 @@ const Node = ({
           }
         }}
         onPointerUp={(e) => {
-          if (!['twist', 'taper', 'stretch', 'inflate'].includes(activeTool || '')) return;
+          if (!['twist', 'taper', 'stretch', 'inflate', 'bevel'].includes(activeTool || '')) return;
           e.stopPropagation();
           (e.target as any).releasePointerCapture(e.pointerId);
           draggingRef.current = null;

@@ -273,3 +273,67 @@ export const splitSelectionToLayer = async (name: string, selection: string): Pr
     throw error;
   }
 };
+
+export const parseModelLibrary = async (scriptContent: string): Promise<Partial<SceneNode>[]> => {
+  const modelToUse = "gemini-3.1-pro-preview"; 
+
+  try {
+    const response = await ai.models.generateContent({
+      model: modelToUse,
+      contents: [{ 
+        role: 'user', 
+        parts: [{ 
+          text: `Identify all 3D model creation functions in the following script and split them into individual SceneNodes.
+          
+          SCRIPT:
+          \`\`\`javascript
+          ${scriptContent}
+          \`\`\`
+          
+          TASK: 
+          1. Find functions that return THREE.Object3D or THREE.Group (e.g., createRobotEnemy, createDroneEnemy).
+          2. For each, generate a SceneNode.
+          3. The 'script' for each node should be the REQUIRED HELPER FUNCTIONS (like createTrapezoidMesh) plus a call to the model function.
+          4. Detect parameters (e.g., isHard, isElite) and add them to the 'parameters' field.
+          
+          RETURN COMPACT JSON ARRAY: [{ n: "Name", js: "full script with internal helpers + call", params: { key: defaultValue } }]` 
+        }] 
+      }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              n: { type: Type.STRING },
+              js: { type: Type.STRING },
+              params: { type: Type.OBJECT }
+            },
+            required: ['n', 'js']
+          }
+        },
+        systemInstruction: "You are a professional Three.js refactoring tool. Identify all exportable models in a script and package them as standalone SceneNodes with necessary helpers included in each script block. Output only valid JSON."
+      },
+    });
+
+    if (!response || !response.text) {
+      throw new Error("Invalid response");
+    }
+
+    const raw = JSON.parse(response.text);
+    return raw.map((item: any) => ({
+      name: item.n || 'Extracted Model',
+      type: 'js_object',
+      position: [0, 0, 0],
+      rotation: [0, 0, 0],
+      scale: [1, 1, 1],
+      color: '#ffffff',
+      script: item.js || '',
+      parameters: item.params || {}
+    }));
+  } catch (error) {
+    console.error("Library Parse Error:", error);
+    throw error;
+  }
+};
