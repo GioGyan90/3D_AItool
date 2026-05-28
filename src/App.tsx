@@ -6,6 +6,8 @@ import { Toolbar } from './components/Toolbar';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { LayersPanel } from './components/LayersPanel';
 import { AICommander } from './components/AICommander';
+import { UVEditor } from './components/UVEditor';
+import { BoneRigEditor } from './components/BoneRigEditor';
 import { SceneNode, NodeType, PropertyTrack, AnimationData, Keyframe } from './types';
 import { Timeline } from './components/Timeline';
 import { CodeEditor } from './components/CodeEditor';
@@ -24,6 +26,7 @@ import {
   Upload,
   Combine,
   Scissors,
+  Bone,
   BoxSelect,
   Loader2,
   Eye,
@@ -84,6 +87,8 @@ export default function App() {
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [isUvEditorOpen, setIsUvEditorOpen] = useState(false);
+  const [isBoneRigOpen, setIsBoneRigOpen] = useState(false);
   const [activeTool, setActiveTool] = useState('select');
   const [isLayersCollapsed, setIsLayersCollapsed] = useState(false);
   const [isPropertiesCollapsed, setIsPropertiesCollapsed] = useState(false);
@@ -233,19 +238,116 @@ export default function App() {
     return baseValue;
   }, [animation, currentTime, isPreviewMode, hoveredNodeId, clickedNodeIds]);
 
-  const animatedNodes = useMemo(() => {
-    return nodes.map(node => ({
-      ...node,
-      position: getAnimatedValue(node.id, 'position', node.position),
-      rotation: getAnimatedValue(node.id, 'rotation', node.rotation),
-      scale: getAnimatedValue(node.id, 'scale', node.scale),
-      color: getAnimatedValue(node.id, 'color', node.color),
-      parameters: {
-        ...node.parameters,
-        intensity: getAnimatedValue(node.id, 'intensity', node.parameters?.intensity)
+  const getPointOnPath = useCallback((pathPoints: [number, number, number][], progress: number, pathNode: SceneNode) => {
+    if (pathPoints.length === 0) return [0, 0, 0] as [number, number, number];
+    if (pathPoints.length === 1) {
+      const pt = pathPoints[0];
+      const vec = new THREE.Vector3(pt[0], pt[1], pt[2]);
+      vec.x *= pathNode.scale[0];
+      vec.y *= pathNode.scale[1];
+      vec.z *= pathNode.scale[2];
+      const euler = new THREE.Euler(pathNode.rotation[0], pathNode.rotation[1], pathNode.rotation[2]);
+      vec.applyEuler(euler);
+      vec.x += pathNode.position[0];
+      vec.y += pathNode.position[1];
+      vec.z += pathNode.position[2];
+      return [vec.x, vec.y, vec.z] as [number, number, number];
+    }
+
+    const pathType = pathNode?.parameters?.pathType || 'smooth';
+    let targetPt: THREE.Vector3;
+
+    if (pathType === 'polyline') {
+      const pts = pathPoints.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+      const cumLengths = [0];
+      let totalLength = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const dist = pts[i].distanceTo(pts[i + 1]);
+        totalLength += dist;
+        cumLengths.push(totalLength);
       }
-    }));
-  }, [nodes, getAnimatedValue]);
+      if (totalLength === 0) {
+        targetPt = pts[0].clone();
+      } else {
+        const targetLength = progress * totalLength;
+        let segmentIndex = 0;
+        for (let i = 0; i < cumLengths.length - 1; i++) {
+          if (targetLength >= cumLengths[i] && targetLength <= cumLengths[i + 1]) {
+            segmentIndex = i;
+            break;
+          }
+        }
+        const segStart = cumLengths[segmentIndex];
+        const segEnd = cumLengths[segmentIndex + 1];
+        const segLength = segEnd - segStart;
+        const segRatio = segLength > 0 ? (targetLength - segStart) / segLength : 0;
+        targetPt = new THREE.Vector3().lerpVectors(pts[segmentIndex], pts[segmentIndex + 1], segRatio);
+      }
+    } else {
+      const curvePoints = pathPoints.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+      const curve = new THREE.CatmullRomCurve3(curvePoints);
+      targetPt = curve.getPointAt(progress);
+    }
+    
+    const vec = targetPt.clone();
+    vec.x *= pathNode.scale[0];
+    vec.y *= pathNode.scale[1];
+    vec.z *= pathNode.scale[2];
+
+    const euler = new THREE.Euler(pathNode.rotation[0], pathNode.rotation[1], pathNode.rotation[2]);
+    vec.applyEuler(euler);
+
+    vec.x += pathNode.position[0];
+    vec.y += pathNode.position[1];
+    vec.z += pathNode.position[2];
+
+    return [vec.x, vec.y, vec.z] as [number, number, number];
+  }, []);
+
+  const animatedNodes = useMemo(() => {
+    return nodes.map(node => {
+      let finalPosition = getAnimatedValue(node.id, 'position', node.position);
+
+      if (node.motionPathId) {
+        const pathNode = nodes.find(n => n.id === node.motionPathId);
+        if (pathNode && pathNode.parameters?.pathPoints && pathNode.parameters.pathPoints.length > 0) {
+          let duration = 3.0;
+          if (node.motionPathSpeed !== undefined) {
+            duration = Math.max(0.01, 3.0 / node.motionPathSpeed);
+          } else if (node.motionPathDuration !== undefined) {
+            duration = node.motionPathDuration;
+          }
+          const infinite = node.motionPathInfinite !== false;
+          const loops = node.motionPathLoops || 1;
+
+          let progress = 0;
+          if (infinite) {
+            progress = (currentTime % duration) / duration;
+          } else {
+            const totalTime = duration * loops;
+            if (currentTime >= totalTime) {
+              progress = 1.0;
+            } else {
+              progress = (currentTime % duration) / duration;
+            }
+          }
+          finalPosition = getPointOnPath(pathNode.parameters.pathPoints, progress, pathNode);
+        }
+      }
+
+      return {
+        ...node,
+        position: finalPosition,
+        rotation: getAnimatedValue(node.id, 'rotation', node.rotation),
+        scale: getAnimatedValue(node.id, 'scale', node.scale),
+        color: getAnimatedValue(node.id, 'color', node.color),
+        parameters: {
+          ...node.parameters,
+          intensity: getAnimatedValue(node.id, 'intensity', node.parameters?.intensity)
+        }
+      };
+    });
+  }, [nodes, getAnimatedValue, currentTime, getPointOnPath]);
 
   const handleAddKeyframe = useCallback((nodeId: string, property: PropertyTrack['property']) => {
     const node = nodesRef.current.find(n => n.id === nodeId);
@@ -785,6 +887,51 @@ requestAnimationFrame(animate);
             return geo;
         };
 
+        const applyAsymmetricScale = (geo, amount) => {
+            if (!amount || (amount[0] === 0 && amount[1] === 0 && amount[2] === 0)) return geo;
+            const pos = geo.attributes.position;
+            const box = new THREE.Box3().setFromBufferAttribute(pos);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            if (size.y === 0) return geo;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const z = pos.getZ(i);
+                const normY = (y - box.min.y) / size.y;
+                const scaleX = 1 + amount[0] * normY;
+                const scaleY = 1 + amount[1] * normY;
+                const scaleZ = 1 + amount[2] * normY;
+                pos.setXYZ(i, (x - center.x) * scaleX + center.x, (y - center.y) * scaleY + center.y, (z - center.z) * scaleZ + center.z);
+            }
+            pos.needsUpdate = true;
+            geo.computeVertexNormals();
+            return geo;
+        };
+
+        const applyEdgeShift = (geo, amount) => {
+            if (!amount || (amount[0] === 0 && amount[1] === 0 && amount[2] === 0)) return geo;
+            const pos = geo.attributes.position;
+            const box = new THREE.Box3().setFromBufferAttribute(pos);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            if (size.x === 0 || size.y === 0 || size.z === 0) return geo;
+            for (let i = 0; i < pos.count; i++) {
+                const x = pos.getX(i);
+                const y = pos.getY(i);
+                const z = pos.getZ(i);
+                const normY = Math.max(0, Math.min(1, (y - box.min.y) / size.y));
+                const normX = Math.max(0, Math.min(1, (x - box.min.x) / size.x));
+                const weight = Math.pow(normY, 2) * Math.pow(normX, 2);
+                pos.setXYZ(i, x + amount[0] * weight, y + amount[1] * weight, z + amount[2] * weight);
+            }
+            pos.needsUpdate = true;
+            geo.computeVertexNormals();
+            return geo;
+        };
+
         const applyTwist = (geo, twist) => {
             if (!twist || (twist[0] === 0 && twist[1] === 0 && twist[2] === 0)) return geo;
             const pos = geo.attributes.position;
@@ -909,6 +1056,8 @@ ${params.taper ? `                        applyTaper(child.geometry, ${params.ta
 ${params.stretch ? `                        applyStretch(child.geometry, ${params.stretch});` : ''}
 ${params.inflate ? `                        applyInflate(child.geometry, ${params.inflate});` : ''}
 ${params.twist ? `                        applyTwist(child.geometry, [${params.twist.join(', ')}]);` : ''}
+${params.asymmetricScale ? `                        applyAsymmetricScale(child.geometry, [${params.asymmetricScale.join(', ')}]);` : ''}
+${params.edgeShift ? `                        applyEdgeShift(child.geometry, [${params.edgeShift.join(', ')}]);` : ''}
                     }
                 });
             }
@@ -931,6 +1080,8 @@ ${params.twist ? `                        applyTwist(child.geometry, [${params.t
         if (params.stretch) code += `        applyStretch(geometry_${id}, ${params.stretch});\n`;
         if (params.inflate) code += `        applyInflate(geometry_${id}, ${params.inflate});\n`;
         if (params.twist) code += `        applyTwist(geometry_${id}, [${params.twist.join(', ')}]);\n`;
+        if (params.asymmetricScale) code += `        applyAsymmetricScale(geometry_${id}, [${params.asymmetricScale.join(', ')}]);\n`;
+        if (params.edgeShift) code += `        applyEdgeShift(geometry_${id}, [${params.edgeShift.join(', ')}]);\n`;
         code += `        const mesh_${id} = new THREE.Mesh(geometry_${id}, mat_${id});\n`;
       }
 
@@ -1163,7 +1314,7 @@ ${params.twist ? `                        applyTwist(child.geometry, [${params.t
       name: properties?.name || `${typeLabel} ${nodes.length + 1}`,
       type: type || 'box',
       parentId: null,
-      position: properties?.position || (type === 'js_object' ? [0, 0, 0] : [0, 0.5, 0]),
+      position: properties?.position || (['js_object', 'motion_path'].includes(type) ? [0, 0, 0] : [0, 0.5, 0]),
       rotation: properties?.rotation || [0, 0, 0],
       scale: properties?.scale || [1, 1, 1],
       color: properties?.color || (type === 'pointLight' ? '#ffffff' : '#4a90e2'),
@@ -1175,7 +1326,8 @@ return mesh;` : undefined,
       parameters: type === 'extruded' ? { thickness: 0.2 } : 
                   type === 'text' ? { text: 'Text', thickness: 0.2, size: 0.5 } :
                   type === 'pointLight' ? { intensity: 1, decay: 2, distance: 10 } : 
-                  type === 'polygon' ? { sides: 5, innerRadius: 0.5, isStar: false } : {},
+                  type === 'polygon' ? { sides: 5, innerRadius: 0.5, isStar: false } :
+                  type === 'motion_path' ? { pathPoints: [[-2, 0, -2], [0, 1, 0], [2, 0, 2]] } : {},
       visible: true,
       ...properties
     };
@@ -1576,6 +1728,32 @@ return mesh;` : undefined,
 
                   <Tooltip>
                     <TooltipTrigger 
+                      onClick={() => setIsUvEditorOpen(!isUvEditorOpen)}
+                      className={cn(
+                        "p-1.5 rounded-md transition-all",
+                        isUvEditorOpen ? "bg-indigo-600 text-white" : "text-[#888888] hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      <Scissors className="w-3.5 h-3.5" />
+                    </TooltipTrigger>
+                    <TooltipContent>UV Editor • UV展开编辑器</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger 
+                      onClick={() => setIsBoneRigOpen(!isBoneRigOpen)}
+                      className={cn(
+                        "p-1.5 rounded-md transition-all",
+                        isBoneRigOpen ? "bg-amber-600 text-white" : "text-[#888888] hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      <Bone className="w-3.5 h-3.5" />
+                    </TooltipTrigger>
+                    <TooltipContent>Skeleton Rigging • 骨骼绑定工具</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger 
                       onClick={() => setIsPreviewMode(true)}
                       className="p-1.5 rounded-md text-[#888888] hover:text-white hover:bg-white/5 transition-all"
                     >
@@ -1913,6 +2091,22 @@ return mesh;` : undefined,
           clearScene={clearScene}
           isOpen={isAiOpen}
           onClose={() => setIsAiOpen(false)}
+        />
+
+        <UVEditor
+          nodes={nodes}
+          selectedIds={selectedIds}
+          onUpdateNode={handleUpdateNode}
+          isOpen={isUvEditorOpen}
+          onClose={() => setIsUvEditorOpen(false)}
+        />
+
+        <BoneRigEditor
+          nodes={nodes}
+          selectedIds={selectedIds}
+          onUpdateNode={handleUpdateNode}
+          isOpen={isBoneRigOpen}
+          onClose={() => setIsBoneRigOpen(false)}
         />
       </div>
     </TooltipProvider>

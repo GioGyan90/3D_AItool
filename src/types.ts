@@ -1,4 +1,4 @@
-export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'polygon' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text' | 'js_object';
+export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'polygon' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text' | 'js_object' | 'motion_path';
 
 export interface SceneNode {
   id: string;
@@ -12,6 +12,12 @@ export interface SceneNode {
   url?: string; // For imported models
   script?: string; // For JS Object code
   geometryData?: any; // For storing serialized CSG geometry or custom mesh data
+  motionPathId?: string;
+  motionPathLoops?: number;
+  motionPathInfinite?: boolean;
+  motionPathDuration?: number;
+  motionPathSpeed?: number;
+  selectedPathPointIndex?: number;
   parameters: {
     radius?: number;
     radiusTop?: number;
@@ -41,6 +47,26 @@ export interface SceneNode {
     taper?: number;                  // Tapering factor (along Y axis)
     stretch?: number;                // Stretching factor (along Y axis)
     inflate?: number;                // Inflation/Spherize factor
+    asymmetricScale?: [number, number, number]; // Asymmetric scaling along X, Y, Z
+    edgeShift?: [number, number, number];       // Shift a single edge along X, Y, Z
+    pathPoints?: [number, number, number][];    // List of 3D coordinates for motion path
+    pathType?: 'smooth' | 'polyline';          // Path styling (smooth curves vs straight lines)
+    customUVs?: number[];                      // Custom loaded or calculated UV float array
+    boneRig?: {
+      type: 'none' | 'L' | 'Z' | 'chain';
+      joints: {
+        id: string;
+        name: string;
+        parentJointId: string | null;
+        position: [number, number, number];
+        rotation: [number, number, number];
+        length: number;
+      }[];
+      binds?: {
+        nodeId: string;
+        jointId: string;
+      }[];
+    };
   };
   material?: {
     metalness?: number;
@@ -50,6 +76,13 @@ export interface SceneNode {
     ior?: number;
     thickness?: number; // Volume thickness for refraction
     map?: string; // URL to texture
+    mapOffsetX?: number;
+    mapOffsetY?: number;
+    mapRepeatX?: number;
+    mapRepeatY?: number;
+    mapRotation?: number; // in degrees
+    mapWrapS?: 'repeat' | 'clamp' | 'mirror';
+    mapWrapT?: 'repeat' | 'clamp' | 'mirror';
     videoMap?: string; // URL to video or gif
     preset?: 'metal' | 'plastic' | 'matte' | 'glass' | 'frosted' | 'custom';
     attenuationDistance?: number;

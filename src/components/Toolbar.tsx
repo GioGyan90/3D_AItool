@@ -19,6 +19,7 @@ import {
   Lightbulb,
   Type,
   Code,
+  Milestone,
   Camera,
   ChevronRight,
   Combine,
@@ -31,6 +32,24 @@ import {
 const TrapezoidIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M7 6L3 18H21L17 6H7Z" />
+  </svg>
+);
+
+const DeformIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    {/* Right-angle trapezoid */}
+    <path d="M5 6H12L15 18H5V6Z" />
+    {/* Arched Arrow next to it */}
+    <path d="M19 16C19 12.5, 17 9.5, 13.5 9.5" />
+    <path d="M16 7L13 9L16 11" />
+  </svg>
+);
+
+const EdgeShiftIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 18V6H13L18 11V18H4Z" />
+    <path d="M12 4L15 6L12 8" />
+    <path d="M8 6H15" />
   </svg>
 );
 
@@ -137,13 +156,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </DropdownMenuItem>
           <div className="h-px bg-[#2e2e2e] my-1" />
           <div className="px-2 py-1.5 text-[10px] font-bold text-[#555] uppercase tracking-wider">Advanced</div>
+          <DropdownMenuItem onClick={() => onAddShape('motion_path')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
+            <Milestone className="w-3.5 h-3.5 text-indigo-400" /> Motion Path
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onAddShape('js_object')} className="text-xs hover:bg-white/5 cursor-pointer gap-2">
             <Code className="w-3.5 h-3.5 text-indigo-400" /> JS Object
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DropdownMenu>
+       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger render={
             <DropdownMenuTrigger className={cn(
@@ -152,7 +174,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               activeTool !== 'select' ? "text-indigo-400 bg-indigo-400/10" : "text-[#888888] hover:text-[#e0e0e0] hover:bg-white/5"
             )}>
               <div className="w-full h-full flex items-center justify-center">
-                <TrapezoidIcon className="w-4 h-4" />
+                <DeformIcon className="w-4 h-4" />
               </div>
             </DropdownMenuTrigger>
           } />
@@ -179,6 +201,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <TrapezoidIcon className="w-3.5 h-3.5" /> Taper Tool
           </DropdownMenuItem>
           <DropdownMenuItem 
+            onClick={() => onToolChange(activeTool === 'asym_scale' ? 'select' : 'asym_scale')} 
+            className={cn(
+              "text-xs hover:bg-white/5 cursor-pointer gap-2",
+              activeTool === 'asym_scale' && "bg-white/10 text-indigo-100"
+            )}
+          >
+            <DeformIcon className="w-3.5 h-3.5" /> Asymmetric Scale
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => onToolChange(activeTool === 'edge_shift' ? 'select' : 'edge_shift')} 
+            className={cn(
+              "text-xs hover:bg-white/5 cursor-pointer gap-2",
+              activeTool === 'edge_shift' && "bg-white/10 text-indigo-100"
+            )}
+          >
+            <EdgeShiftIcon className="w-3.5 h-3.5" /> Edge Shift Tool
+          </DropdownMenuItem>
+          <DropdownMenuItem 
             onClick={() => onToolChange(activeTool === 'stretch' ? 'select' : 'stretch')} 
             className={cn(
               "text-xs hover:bg-white/5 cursor-pointer gap-2",
@@ -203,12 +243,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               activeTool === 'bevel' && "bg-white/10 text-indigo-100"
             )}
           >
-            <Minimize2 className="w-3.5 h-3.5" /> Bevel Tool (倒角)
+            <Minimize2 className="w-3.5 h-3.5" /> Bevel Tool
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <div className="w-px h-4 bg-[#2e2e2e] mx-1" />
 
       <Tooltip>
         <TooltipTrigger 

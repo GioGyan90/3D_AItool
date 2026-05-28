@@ -2,5 +2,5 @@
   "name": "Shape3D Studio",
   "description": "A web-based 3D modeling tool inspired by Spline, featuring advanced material presets like glass with refraction and real-time parameter editing.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

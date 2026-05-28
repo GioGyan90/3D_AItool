@@ -59,23 +59,42 @@ const PropertyRow = ({ label, children, action, vertical = true }: any) => (
   </div>
 );
 
-const CoordInput = ({ label, value, onChange }: any) => (
-  <div className="relative group/coord">
-    <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[8px] font-black text-[#333] group-hover/coord:text-[#4a90e2] transition-colors pointer-events-none">{label}</span>
-    <input
-      type="number"
-      step="0.1"
-      value={Number.isFinite(value) ? Number(value.toFixed(2)) : 0}
-      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      className="w-full bg-[#121212] border border-[#262626] rounded px-1.5 py-1.5 pl-4 text-[10px] font-mono text-[#aaa] focus:outline-none focus:border-[#4a90e2] focus:text-[#fff] hover:border-[#3a3a3a] transition-all shadow-inner"
-    />
-  </div>
-);
+const CoordInput = ({ label, value, onChange, step = 0.1 }: any) => {
+  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? step : -step;
+    const newValue = (value ?? 0) + delta;
+    onChange(parseFloat(newValue.toFixed(3)));
+  };
+
+  return (
+    <div className="relative group/coord">
+      <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-[8px] font-black text-[#333] group-hover/coord:text-[#4a90e2] transition-colors pointer-events-none">{label}</span>
+      <input
+        type="number"
+        step={step}
+        value={Number.isFinite(value) ? Number(value.toFixed(2)) : 0}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        onWheel={handleWheel}
+        className="w-full bg-[#121212] border border-[#262626] rounded px-1.5 py-1.5 pl-4 text-[10px] font-mono text-[#aaa] focus:outline-none focus:border-[#4a90e2] focus:text-[#fff] hover:border-[#3a3a3a] transition-all shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      />
+    </div>
+  );
+};
 
 const RotationInput = ({ value: radians, onChange, disabled }: any) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState('');
   const degrees = useMemo(() => (radians * 180) / Math.PI, [radians]);
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (disabled) return;
+    e.preventDefault();
+    const step = 5; // degrees
+    const delta = e.deltaY < 0 ? step : -step;
+    const newDegrees = degrees + delta;
+    onChange((newDegrees * Math.PI) / 180);
+  };
 
   if (isEditing && !disabled) {
     return (
@@ -84,6 +103,15 @@ const RotationInput = ({ value: radians, onChange, disabled }: any) => {
         type="number"
         value={tempValue}
         onChange={(e) => setTempValue(e.target.value)}
+        onWheel={(e) => {
+          e.preventDefault();
+          const step = 5;
+          const delta = e.deltaY < 0 ? step : -step;
+          const currentVal = parseFloat(tempValue) || 0;
+          const nextVal = currentVal + delta;
+          setTempValue(nextVal.toFixed(1));
+          onChange((nextVal * Math.PI) / 180);
+        }}
         onBlur={() => {
           const val = parseFloat(tempValue);
           if (!isNaN(val)) onChange((val * Math.PI) / 180);
@@ -98,8 +126,9 @@ const RotationInput = ({ value: radians, onChange, disabled }: any) => {
   return (
     <div 
       onClick={() => { if (!disabled) { setTempValue(degrees.toFixed(1)); setIsEditing(true); } }}
+      onWheel={handleWheel}
       className={cn(
-        "bg-[#121212] border border-[#262626] rounded px-1 py-1.5 text-[10px] font-mono w-full truncate h-full transition-all flex items-center justify-center",
+        "bg-[#121212] border border-[#262626] rounded px-1 py-1.5 text-[10px] font-mono w-full truncate h-full transition-all flex items-center justify-center select-none cursor-pointer",
         disabled ? "text-[#333] cursor-not-allowed" : "text-[#888] cursor-text hover:border-[#3a3a3a] hover:text-[#bbb]"
       )}
     >
@@ -108,20 +137,89 @@ const RotationInput = ({ value: radians, onChange, disabled }: any) => {
   );
 };
 
-const CompactSlider = ({ value, min, max, step = 0.1, onChange, onCommit }: any) => (
-  <div className="flex items-center gap-2.5 px-0.5">
-    <Slider
-      value={[value]}
-      min={min}
-      max={max}
-      step={step}
-      onValueChange={(v) => onChange(v[0])}
-      onValueCommitted={(v) => onCommit(v[0])}
-      className="flex-1 h-3"
-    />
-    <span className="text-[10px] font-mono text-[#555] min-w-[32px] text-right font-medium">{value.toFixed(step >= 1 ? 0 : 1)}</span>
-  </div>
-);
+const CompactSlider = ({ value, min, max, step = 0.1, onChange, onCommit }: any) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [tempValue, setTempValue] = useState('');
+
+  const handleValueChange = (v: any) => {
+    const val = Array.isArray(v) ? v[0] : v;
+    if (typeof val === 'number' && !isNaN(val)) {
+      onChange(val);
+    }
+  };
+
+  const handleValueCommit = (v: any) => {
+    const val = Array.isArray(v) ? v[0] : v;
+    if (typeof val === 'number' && !isNaN(val)) {
+      if (onCommit) {
+        onCommit(val);
+      }
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? step : -step;
+    const newValue = Math.min(max, Math.max(min, value + delta));
+    const roundedValue = parseFloat(newValue.toFixed(step >= 0.1 ? 2 : 4));
+    onChange(roundedValue);
+    if (onCommit) {
+      onCommit(roundedValue);
+    }
+  };
+
+  const handleInputBlur = () => {
+    const parsed = parseFloat(tempValue);
+    if (!isNaN(parsed)) {
+      const clamped = Math.min(max, Math.max(min, parsed));
+      onChange(clamped);
+      if (onCommit) onCommit(clamped);
+    }
+    setIsEditing(false);
+  };
+
+  return (
+    <div 
+      className="flex items-center gap-2.5 px-0.5" 
+      onPointerDown={(e) => e.stopPropagation()} 
+      onMouseDown={(e) => e.stopPropagation()}
+      onWheel={handleWheel}
+    >
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        step={step}
+        onValueChange={handleValueChange}
+        onValueCommitted={handleValueCommit}
+        className="flex-1 h-3 cursor-pointer"
+      />
+      {isEditing ? (
+        <input
+          autoFocus
+          type="number"
+          step={step}
+          value={tempValue}
+          onChange={(e) => setTempValue(e.target.value)}
+          onBlur={handleInputBlur}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+          className="text-[10px] font-mono text-white bg-black/60 border border-[#4a90e2] rounded px-1 py-0.5 w-[42px] text-right focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        />
+      ) : (
+        <span 
+          onClick={() => {
+            setTempValue(value.toFixed(step >= 1 ? 0 : (step >= 0.1 ? 1 : 2)));
+            setIsEditing(true);
+          }}
+          className="text-[10px] font-mono text-[#555] hover:text-[#bbb] cursor-pointer hover:underline min-w-[32px] text-right font-medium transition-colors"
+          title="Click to input value"
+        >
+          {value.toFixed(step >= 1 ? 0 : (step >= 0.1 ? 1 : 2))}
+        </span>
+      )}
+    </div>
+  );
+};
 
 const ColorInput = ({ value, onChange }: any) => (
   <div className="flex items-center gap-3">
@@ -245,6 +343,44 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     }, false);
   };
 
+  const handleNodeCountChange = (newCount: number) => {
+    if (!effectiveShape || isNaN(newCount) || newCount < 2) return;
+    const currentPoints = [...(effectiveShape.parameters?.pathPoints || [[-2, 0, -2], [0, 1, 0], [2, 0, 2]])];
+    const oldCount = currentPoints.length;
+    if (newCount === oldCount) return;
+
+    let updatedPoints = [];
+    if (newCount < oldCount) {
+      updatedPoints = currentPoints.slice(0, newCount);
+    } else {
+      updatedPoints = [...currentPoints];
+      const lastPt = currentPoints[currentPoints.length - 1] || [0, 0, 0];
+      const prevPt = currentPoints[currentPoints.length - 2] || [lastPt[0] - 1.5, lastPt[1], lastPt[2]];
+      const dx = lastPt[0] - prevPt[0];
+      const dy = lastPt[1] - prevPt[1];
+      const dz = lastPt[2] - prevPt[2];
+      
+      const stepX = (dx === 0 && dy === 0 && dz === 0) ? 1.5 : dx;
+      const stepY = dy;
+      const stepZ = dz;
+
+      for (let i = oldCount; i < newCount; i++) {
+        const idx = i - oldCount + 1;
+        updatedPoints.push([
+          lastPt[0] + stepX * idx,
+          lastPt[1] + stepY * idx,
+          lastPt[2] + stepZ * idx
+        ]);
+      }
+    }
+    onUpdateShape(effectiveShape.id, {
+      parameters: {
+        ...effectiveShape.parameters,
+        pathPoints: updatedPoints
+      }
+    });
+  };
+
   const handleSolidify = async () => {
     if (!effectiveShape || isSolidifying || !onAddNodes || !onDeleteNode) return;
     setIsSolidifying(true);
@@ -290,9 +426,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
         left: panelPos.x,
         top: panelPos.y,
         width: isPanelCollapsed ? 48 : panelWidth,
-        height: panelHeight,
-        maxHeight: 'calc(100vh - 48px)'
+        height: isPanelCollapsed ? 320 : 'auto',
+        maxHeight: isPanelCollapsed ? undefined : Math.min(panelHeight, window.innerHeight - 48),
+        minHeight: isPanelCollapsed ? undefined : 160
       }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
     >
       {/* Sidebar Tabs */}
       <div className="w-12 bg-black/20 border-r border-white/[0.04] flex flex-col items-center py-4 gap-4 shrink-0">
@@ -355,7 +496,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             </button>
           </div>
 
-          <ScrollArea className="flex-1">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="p-4">
               {activeTab === 'transform' && !isAmbient && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -404,7 +545,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
               {activeTab === 'geometry' && (
                  <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-                    {(['box', 'sphere', 'cylinder', 'torus', 'extruded', 'circle', 'rect', 'triangle', 'polygon', 'plane', 'svg', 'text', 'js_object'].includes(effectiveShape.type)) ? (
+                    {(['box', 'sphere', 'cylinder', 'torus', 'extruded', 'circle', 'rect', 'triangle', 'polygon', 'plane', 'svg', 'text', 'js_object', 'motion_path'].includes(effectiveShape.type)) ? (
                       <div className="space-y-6">
                         {/* Type Specific Parameters */}
                         {effectiveShape.type === 'text' && (
@@ -451,39 +592,275 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                             })}
                           </div>
                         )}
+                        {/* Motion Path Custom Parameters */}
+                        {effectiveShape.type === 'motion_path' && (
+                          <div className="space-y-4 pt-1">
+                            {/* Node Count Configuration */}
+                            <PropertyRow label="Node Count (节点数)">
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1">
+                                  <CompactSlider
+                                    value={effectiveShape.parameters?.pathPoints?.length || 3}
+                                    min={2}
+                                    max={20}
+                                    step={1}
+                                    onChange={(v: number) => handleNodeCountChange(Math.round(v))}
+                                  />
+                                </div>
+                                <input
+                                  type="number"
+                                  min={2}
+                                  max={50}
+                                  value={effectiveShape.parameters?.pathPoints?.length || 3}
+                                  onChange={(e) => handleNodeCountChange(parseInt(e.target.value) || 2)}
+                                  className="w-12 bg-[#121212] border border-[#262626] rounded px-1.5 py-1 text-center text-[10px] font-mono font-bold text-indigo-300 focus:outline-none focus:border-indigo-500"
+                                />
+                              </div>
+                            </PropertyRow>
+
+                            <PropertyRow label="Path Style (路径样式)">
+                              <div className="flex bg-[#121212] border border-[#262626] rounded p-0.5">
+                                <button
+                                  onClick={() => onUpdateShape(effectiveShape.id, {
+                                    parameters: {
+                                      ...effectiveShape.parameters,
+                                      pathType: 'smooth'
+                                    }
+                                  })}
+                                  className={cn(
+                                    "flex-1 text-[9px] py-1 font-bold text-center rounded transition-all cursor-pointer",
+                                    (effectiveShape.parameters?.pathType || 'smooth') === 'smooth'
+                                      ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                                      : "text-[#555555] hover:text-[#aaaaaa] border border-transparent"
+                                  )}
+                                >
+                                  Smooth (平滑)
+                                </button>
+                                <button
+                                  onClick={() => onUpdateShape(effectiveShape.id, {
+                                    parameters: {
+                                      ...effectiveShape.parameters,
+                                      pathType: 'polyline'
+                                    }
+                                  })}
+                                  className={cn(
+                                    "flex-1 text-[9px] py-1 font-bold text-center rounded transition-all cursor-pointer",
+                                    effectiveShape.parameters?.pathType === 'polyline'
+                                      ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                                      : "text-[#555555] hover:text-[#aaaaaa] border border-transparent"
+                                  )}
+                                >
+                                  Straight (直角)
+                                </button>
+                              </div>
+                            </PropertyRow>
+
+                            <div className="flex items-center justify-between border-t border-white/[0.04] pt-3">
+                              <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Path Coordinates (节点坐标)</span>
+                              <button
+                                onClick={() => {
+                                  // Append a new point mirroring the last point with X + 1.5
+                                  const currentPoints = [...(effectiveShape.parameters?.pathPoints || [[0, 0, 0]])];
+                                  const lastPt = currentPoints[currentPoints.length - 1];
+                                  const newPt: [number, number, number] = [lastPt[0] + 1.5, lastPt[1], lastPt[2]];
+                                  onUpdateShape(effectiveShape.id, {
+                                    parameters: {
+                                      ...effectiveShape.parameters,
+                                      pathPoints: [...currentPoints, newPt]
+                                    }
+                                  });
+                                }}
+                                className="px-2 py-1 rounded bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-500/30 text-[9px] text-indigo-300 transition-colors font-bold uppercase tracking-wider cursor-pointer"
+                              >
+                                Add Node Point
+                              </button>
+                            </div>
+
+                            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 select-none border border-white/[0.04] bg-white/[0.01] p-2 rounded">
+                              {(effectiveShape.parameters?.pathPoints || []).map((pt: [number, number, number], idx: number) => {
+                                const selectedIdx = effectiveShape.selectedPathPointIndex !== undefined ? effectiveShape.selectedPathPointIndex : 0;
+                                const isPointSelected = selectedIdx === idx;
+                                return (
+                                  <div 
+                                    key={idx} 
+                                    onClick={() => {
+                                      if (effectiveShape.selectedPathPointIndex !== idx) {
+                                        onUpdateShape(effectiveShape.id, { selectedPathPointIndex: idx });
+                                      }
+                                    }}
+                                    className={`flex items-center gap-2 p-1.5 rounded border transition-all cursor-pointer ${
+                                      isPointSelected 
+                                        ? "bg-indigo-500/10 border-indigo-500/80 shadow-[0_0_8px_rgba(99,102,241,0.25)]" 
+                                        : "bg-[#121212] border-[#22212a] hover:border-white/10"
+                                    }`}
+                                  >
+                                    <span className={`text-[10px] font-bold w-4 transition-colors ${isPointSelected ? "text-indigo-400" : "text-[#555]"}`}>
+                                      #{idx + 1}
+                                    </span>
+                                    <div className="grid grid-cols-3 gap-1 flex-1">
+                                      {pt.map((coordVal: number, coordIdx: number) => (
+                                        <CoordInput
+                                          key={coordIdx}
+                                          label={['X', 'Y', 'Z'][coordIdx]}
+                                          value={coordVal}
+                                          onChange={(newVal: number) => {
+                                            const updatedPoints = [...(effectiveShape.parameters?.pathPoints || [])];
+                                            const updatedPt = [...pt] as [number, number, number];
+                                            updatedPt[coordIdx] = newVal;
+                                            updatedPoints[idx] = updatedPt;
+                                            onUpdateShape(effectiveShape.id, {
+                                              selectedPathPointIndex: idx,
+                                              parameters: {
+                                                ...effectiveShape.parameters,
+                                                pathPoints: updatedPoints
+                                              }
+                                            });
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <button
+                                      disabled={(effectiveShape.parameters?.pathPoints || []).length <= 2}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const updatedPoints = (effectiveShape.parameters?.pathPoints || []).filter((_: any, i: number) => i !== idx);
+                                        let nextSelected = selectedIdx;
+                                        if (selectedIdx >= updatedPoints.length) {
+                                          nextSelected = Math.max(0, updatedPoints.length - 1);
+                                        }
+                                        onUpdateShape(effectiveShape.id, {
+                                          selectedPathPointIndex: nextSelected,
+                                          parameters: {
+                                            ...effectiveShape.parameters,
+                                            pathPoints: updatedPoints
+                                          }
+                                        });
+                                      }}
+                                      className="p-1 rounded text-red-400 hover:bg-red-400/10 hover:text-red-300 stroke-2 outline-none disabled:opacity-30 transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Shared Deformations */}
-                        <div className="pt-4 border-t border-white/[0.04] space-y-5">
-                          <span className="text-[10px] font-black text-[#333] uppercase tracking-[2px]">Deformers</span>
-                          
-                          <PropertyRow label="Bend Amount">
-                            <CompactSlider value={ensureNumber(effectiveShape.parameters?.bend, 0)} min={-1} max={1} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'bend')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'bend')} />
-                          </PropertyRow>
-                          
-                          <PropertyRow label="Taper Ratio">
-                            <CompactSlider value={ensureNumber(effectiveShape.parameters?.taper, 0)} min={-1} max={1} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'taper')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'taper')} />
-                          </PropertyRow>
+                        {effectiveShape.type !== 'motion_path' && (
+                          <div className="pt-4 border-t border-white/[0.04] space-y-5">
+                            <span className="text-[10px] font-black text-[#333] uppercase tracking-[2px]">Deformers</span>
+                            
+                            <PropertyRow label="Bend Amount">
+                              <CompactSlider value={ensureNumber(effectiveShape.parameters?.bend, 0)} min={-1} max={1} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'bend')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'bend')} />
+                            </PropertyRow>
+                            
+                            <PropertyRow label="Taper Ratio">
+                              <CompactSlider value={ensureNumber(effectiveShape.parameters?.taper, 0)} min={-1} max={1} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'taper')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'taper')} />
+                            </PropertyRow>
 
-                          <PropertyRow label="Stretch">
-                            <CompactSlider value={ensureNumber(effectiveShape.parameters?.stretch, 0)} min={-1} max={2} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'stretch')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'stretch')} />
-                          </PropertyRow>
+                            <PropertyRow label="Stretch">
+                              <CompactSlider value={ensureNumber(effectiveShape.parameters?.stretch, 0)} min={-1} max={2} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'stretch')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'stretch')} />
+                            </PropertyRow>
 
-                          <PropertyRow label="Inflate / Bloat">
-                            <CompactSlider value={ensureNumber(effectiveShape.parameters?.inflate, 0)} min={-0.5} max={0.5} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'inflate')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'inflate')} />
-                          </PropertyRow>
+                            <PropertyRow label="Inflate / Bloat">
+                              <CompactSlider value={ensureNumber(effectiveShape.parameters?.inflate, 0)} min={-0.5} max={0.5} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'inflate')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'inflate')} />
+                            </PropertyRow>
 
-                          <PropertyRow label="Twist Force">
-                             <div className="grid grid-cols-3 gap-2">
-                               {[0, 1, 2].map(i => (
-                                 <CoordInput key={i} label={['X', 'Y', 'Z'][i]} value={effectiveShape.parameters?.twist?.[i] || 0} onChange={(val: number) => {
-                                   const t = [...(effectiveShape.parameters?.twist || [0, 0, 0])];
-                                   t[i] = val;
-                                   onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, twist: t } });
-                                 }} />
-                               ))}
-                             </div>
-                          </PropertyRow>
-                        </div>
+                            <PropertyRow label="Asymmetric Scale">
+                              <div className="space-y-3">
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[9px] text-[#5c5c5c] font-black uppercase tracking-wider">Top X Axis</span>
+                                  <CompactSlider 
+                                    value={ensureNumber(effectiveShape.parameters?.asymmetricScale?.[0], 0)} 
+                                    min={-1.5} 
+                                    max={2.5} 
+                                    step={0.01} 
+                                    onChange={(v: number) => {
+                                      const s = [...(effectiveShape.parameters?.asymmetricScale || [0, 0, 0])];
+                                      s[0] = v;
+                                      onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, asymmetricScale: s as [number, number, number] } });
+                                    }} 
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[9px] text-[#5c5c5c] font-black uppercase tracking-wider">Top Z Axis</span>
+                                  <CompactSlider 
+                                    value={ensureNumber(effectiveShape.parameters?.asymmetricScale?.[2], 0)} 
+                                    min={-1.5} 
+                                    max={2.5} 
+                                    step={0.01} 
+                                    onChange={(v: number) => {
+                                      const s = [...(effectiveShape.parameters?.asymmetricScale || [0, 0, 0])];
+                                      s[2] = v;
+                                      onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, asymmetricScale: s as [number, number, number] } });
+                                    }} 
+                                  />
+                                </div>
+                              </div>
+                            </PropertyRow>
+
+                            <PropertyRow label="Taper Edge Shift">
+                              <div className="space-y-3">
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[9px] text-[#5c5c5c] font-black uppercase tracking-wider">Shift X</span>
+                                  <CompactSlider 
+                                    value={ensureNumber(effectiveShape.parameters?.edgeShift?.[0], 0)} 
+                                    min={-3.0} 
+                                    max={3.0} 
+                                    step={0.01} 
+                                    onChange={(v: number) => {
+                                      const s = [...(effectiveShape.parameters?.edgeShift || [0, 0, 0])];
+                                      s[0] = v;
+                                      onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, edgeShift: s as [number, number, number] } });
+                                    }} 
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[9px] text-[#5c5c5c] font-black uppercase tracking-wider">Shift Y</span>
+                                  <CompactSlider 
+                                    value={ensureNumber(effectiveShape.parameters?.edgeShift?.[1], 0)} 
+                                    min={-3.0} 
+                                    max={3.0} 
+                                    step={0.01} 
+                                    onChange={(v: number) => {
+                                      const s = [...(effectiveShape.parameters?.edgeShift || [0, 0, 0])];
+                                      s[1] = v;
+                                      onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, edgeShift: s as [number, number, number] } });
+                                    }} 
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[9px] text-[#5c5c5c] font-black uppercase tracking-wider">Shift Z</span>
+                                  <CompactSlider 
+                                    value={ensureNumber(effectiveShape.parameters?.edgeShift?.[2], 0)} 
+                                    min={-3.0} 
+                                    max={3.0} 
+                                    step={0.01} 
+                                    onChange={(v: number) => {
+                                      const s = [...(effectiveShape.parameters?.edgeShift || [0, 0, 0])];
+                                      s[2] = v;
+                                      onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, edgeShift: s as [number, number, number] } });
+                                    }} 
+                                  />
+                                </div>
+                              </div>
+                            </PropertyRow>
+
+                            <PropertyRow label="Twist Force">
+                               <div className="grid grid-cols-3 gap-2">
+                                 {[0, 1, 2].map(i => (
+                                   <CoordInput key={i} label={['X', 'Y', 'Z'][i]} value={effectiveShape.parameters?.twist?.[i] || 0} onChange={(val: number) => {
+                                     const t = [...(effectiveShape.parameters?.twist || [0, 0, 0])];
+                                     t[i] = val;
+                                     onUpdateShape(effectiveShape.id, { parameters: { ...effectiveShape.parameters, twist: t as [number, number, number] } });
+                                   }} />
+                                 ))}
+                               </div>
+                            </PropertyRow>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-12 text-[#333]">
@@ -566,14 +943,136 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                            </Button>
                          </div>
                          {effectiveShape.material?.map && (
-                           <div className="p-2.5 rounded bg-black/40 border border-white/[0.03] flex items-center justify-between group/m">
-                             <div className="flex items-center gap-2">
-                               <div className="w-5 h-5 rounded overflow-hidden border border-white/10">
-                                 <img src={effectiveShape.material.map} className="w-full h-full object-cover" />
+                           <div className="space-y-4">
+                             <div className="p-2.5 rounded bg-black/40 border border-white/[0.03] flex items-center justify-between group/m">
+                               <div className="flex items-center gap-2">
+                                 <div className="w-5 h-5 rounded overflow-hidden border border-white/10">
+                                   <img src={effectiveShape.material.map} className="w-full h-full object-cover" />
+                                 </div>
+                                 <span className="text-[9px] text-[#555] font-mono truncate max-w-[140px]">active_map.png</span>
                                </div>
-                               <span className="text-[9px] text-[#555] font-mono truncate max-w-[140px]">active_map.png</span>
+                               <button onClick={() => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, map: undefined } })} className="text-[#333] hover:text-red-400 opacity-0 group-hover/m:opacity-100 transition-all"><Trash2 className="w-3 h-3" /></button>
                              </div>
-                             <button onClick={() => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, map: undefined } })} className="text-[#333] hover:text-red-400 opacity-0 group-hover/m:opacity-100 transition-all"><Trash2 className="w-3 h-3" /></button>
+
+                             {/* Texture Coordinates & Transformation parameters */}
+                             <div className="space-y-3.5 pt-1.5 animate-in fade-in slide-in-from-top-2 duration-300">
+                               {/* Position / Offset Shift */}
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                   <span className="text-[8px] text-[#3e3e3e] font-black tracking-widest uppercase">Position Offset</span>
+                                   <span className="text-[8px] font-mono text-[#444]">X: {(effectiveShape.material?.mapOffsetX ?? 0).toFixed(2)} Y: {(effectiveShape.material?.mapOffsetY ?? 0).toFixed(2)}</span>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-2.5">
+                                   <div className="bg-black/10 rounded p-1.5 border border-white/[0.02]">
+                                     <span className="text-[8px] font-black text-[#555] block mb-1">OFFSET X</span>
+                                     <CompactSlider 
+                                       value={ensureNumber(effectiveShape.material?.mapOffsetX, 0)} 
+                                       min={-5} 
+                                       max={5} 
+                                       step={0.01} 
+                                       onChange={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapOffsetX: v } })} 
+                                       onCommit={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapOffsetX: v } })} 
+                                     />
+                                   </div>
+                                   <div className="bg-black/10 rounded p-1.5 border border-white/[0.02]">
+                                     <span className="text-[8px] font-black text-[#555] block mb-1">OFFSET Y</span>
+                                     <CompactSlider 
+                                       value={ensureNumber(effectiveShape.material?.mapOffsetY, 0)} 
+                                       min={-5} 
+                                       max={5} 
+                                       step={0.01} 
+                                       onChange={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapOffsetY: v } })} 
+                                       onCommit={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapOffsetY: v } })} 
+                                     />
+                                   </div>
+                                 </div>
+                               </div>
+
+                               {/* Scale / Tiling Repeat */}
+                               <div className="space-y-2">
+                                 <div className="flex items-center justify-between">
+                                   <span className="text-[8px] text-[#3e3e3e] font-black tracking-widest uppercase">Tiling Repeat</span>
+                                   <span className="text-[8px] font-mono text-[#444]">X: {(effectiveShape.material?.mapRepeatX ?? 1).toFixed(2)} Y: {(effectiveShape.material?.mapRepeatY ?? 1).toFixed(2)}</span>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-2.5">
+                                   <div className="bg-black/10 rounded p-1.5 border border-white/[0.02]">
+                                     <span className="text-[8px] font-black text-[#555] block mb-1">REPEAT X</span>
+                                     <CompactSlider 
+                                       value={ensureNumber(effectiveShape.material?.mapRepeatX, 1)} 
+                                       min={0.05} 
+                                       max={10} 
+                                       step={0.05} 
+                                       onChange={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapRepeatX: v } })} 
+                                       onCommit={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapRepeatX: v } })} 
+                                     />
+                                   </div>
+                                   <div className="bg-black/10 rounded p-1.5 border border-white/[0.02]">
+                                     <span className="text-[8px] font-black text-[#555] block mb-1">REPEAT Y</span>
+                                     <CompactSlider 
+                                       value={ensureNumber(effectiveShape.material?.mapRepeatY, 1)} 
+                                       min={0.05} 
+                                       max={10} 
+                                       step={0.05} 
+                                       onChange={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapRepeatY: v } })} 
+                                       onCommit={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapRepeatY: v } })} 
+                                     />
+                                   </div>
+                                 </div>
+                               </div>
+
+                               {/* Texture Rotation */}
+                               <div className="space-y-2 bg-black/10 rounded p-2 border border-white/[0.02]">
+                                 <div className="flex items-center justify-between">
+                                   <span className="text-[8px] text-[#3e3e3e] font-black tracking-widest uppercase">Rotation Angle</span>
+                                   <span className="text-[8px] font-mono text-[#444]">{Math.round(ensureNumber(effectiveShape.material?.mapRotation, 0))}°</span>
+                                 </div>
+                                 <CompactSlider 
+                                   value={ensureNumber(effectiveShape.material?.mapRotation, 0)} 
+                                   min={-180} 
+                                   max={180} 
+                                   step={1} 
+                                   onChange={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapRotation: v } })} 
+                                   onCommit={(v: number) => onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapRotation: v } })} 
+                                 />
+                               </div>
+
+                               {/* Mirroring Wrap Toggles */}
+                               <div className="space-y-2 bg-black/10 rounded p-2 border border-white/[0.02]">
+                                 <span className="text-[8px] text-[#3e3e3e] font-black tracking-widest uppercase block">Mirroring modes</span>
+                                 <div className="grid grid-cols-2 gap-2">
+                                   <button
+                                     onClick={() => {
+                                       const current = effectiveShape.material?.mapWrapS || 'repeat';
+                                       const next = current === 'mirror' ? 'repeat' : 'mirror';
+                                       onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapWrapS: next } });
+                                     }}
+                                     className={cn(
+                                       "py-1.5 px-2 rounded text-[8.5px] font-mono transition-all border flex items-center justify-center gap-1",
+                                       effectiveShape.material?.mapWrapS === 'mirror' 
+                                         ? "bg-[#4a90e2]/10 border-[#4a90e2]/30 text-[#4a90e2] font-bold" 
+                                         : "bg-black/20 border-transparent text-[#666] hover:bg-black/30 hover:text-[#999]"
+                                     )}
+                                   >
+                                     {effectiveShape.material?.mapWrapS === 'mirror' ? "● Mirror S (X)" : "Mirror S (X)"}
+                                   </button>
+                                   <button
+                                     onClick={() => {
+                                       const current = effectiveShape.material?.mapWrapT || 'repeat';
+                                       const next = current === 'mirror' ? 'repeat' : 'mirror';
+                                       onUpdateShape(effectiveShape.id, { material: { ...effectiveShape.material, mapWrapT: next } });
+                                     }}
+                                     className={cn(
+                                       "py-1.5 px-2 rounded text-[8.5px] font-mono transition-all border flex items-center justify-center gap-1",
+                                       effectiveShape.material?.mapWrapT === 'mirror' 
+                                         ? "bg-[#4a90e2]/10 border-[#4a90e2]/30 text-[#4a90e2] font-bold" 
+                                         : "bg-black/20 border-transparent text-[#666] hover:bg-black/30 hover:text-[#999]"
+                                     )}
+                                   >
+                                     {effectiveShape.material?.mapWrapT === 'mirror' ? "● Mirror T (Y)" : "Mirror T (Y)"}
+                                   </button>
+                                 </div>
+                               </div>
+                             </div>
                            </div>
                          )}
                       </div>

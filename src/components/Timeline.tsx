@@ -361,6 +361,70 @@ export const Timeline: React.FC<TimelineProps> = ({
 
                   {expandedNodes.has(selectedNode.id) && (
                     <div className="flex flex-col">
+                      {/* Motion Path Configuration Row */}
+                      <div className="flex items-center justify-between px-3 py-1.5 border-t border-b border-indigo-500/10 bg-indigo-500/5 gap-2 flex-wrap">
+                        <span className="text-[9px] text-indigo-300 font-bold uppercase tracking-widest">Motion Path</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <select
+                            className="bg-[#121212] border border-indigo-500/30 text-[9px] text-indigo-300 rounded px-1 py-px outline-none hover:border-indigo-500 transition-colors"
+                            value={selectedNode.motionPathId || ''}
+                            onChange={(e) => onUpdateNode(selectedNode.id, { motionPathId: e.target.value || undefined })}
+                          >
+                            <option value="">Move along path (None)</option>
+                            {nodes.filter(n => n.type === 'motion_path').map(n => (
+                              <option key={n.id} value={n.id}>{n.name}</option>
+                            ))}
+                          </select>
+
+                          {selectedNode.motionPathId && (
+                            <>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[8px] text-[#888888]" title="Speed (multiplier) - larger is faster / 速度（倍率）：数值越大，运行越快">Speed (速度):</span>
+                                <input
+                                  type="number"
+                                  min="0.1"
+                                  step="0.1"
+                                  className="w-10 bg-[#121212] border border-indigo-500/30 text-[9px] text-indigo-300 rounded px-1 py-px outline-none focus:border-indigo-500"
+                                  value={selectedNode.motionPathSpeed !== undefined ? selectedNode.motionPathSpeed : (selectedNode.motionPathDuration ? (3.0 / selectedNode.motionPathDuration) : 1.0)}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value) || 1.0;
+                                    onUpdateNode(selectedNode.id, { 
+                                      motionPathSpeed: val,
+                                      motionPathDuration: 3.0 / val
+                                    });
+                                  }}
+                                />
+                                <span className="text-[8px] text-[#555] font-mono">
+                                  ({(3.0 / (selectedNode.motionPathSpeed !== undefined ? selectedNode.motionPathSpeed : (selectedNode.motionPathDuration ? (3.0 / selectedNode.motionPathDuration) : 1.0))).toFixed(1)}s)
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1">
+                                <span className="text-[8px] text-[#888888]">Loops:</span>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  disabled={selectedNode.motionPathInfinite !== false}
+                                  className="w-8 bg-[#121212] border border-indigo-500/30 text-[9px] text-indigo-300 rounded px-1 py-px outline-none disabled:opacity-30 focus:border-indigo-500"
+                                  value={selectedNode.motionPathLoops || 1}
+                                  onChange={(e) => onUpdateNode(selectedNode.id, { motionPathLoops: parseInt(e.target.value) || 1 })}
+                                />
+                              </div>
+
+                              <label className="flex items-center gap-1 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  className="w-2.5 h-2.5 accent-indigo-500 bg-[#121212] border-indigo-500/30 rounded"
+                                  checked={selectedNode.motionPathInfinite !== false}
+                                  onChange={(e) => onUpdateNode(selectedNode.id, { motionPathInfinite: e.target.checked })}
+                                />
+                                <span className="text-[8px] text-[#888888]">Infinite</span>
+                              </label>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
                       {['position', 'rotation', 'scale'].map(prop => {
                         const track = animation.tracks.find(t => t.nodeId === selectedNode.id && t.property === prop);
                         const trackIndex = animation.tracks.findIndex(t => t.nodeId === selectedNode.id && t.property === prop);

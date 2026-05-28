@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useEffect, Suspense } from 'react';
-import { Canvas, useLoader, useFrame } from '@react-three/fiber';
+import { Canvas, useLoader, useFrame, useThree, createPortal } from '@react-three/fiber';
 import { OrbitControls, TransformControls, Grid, ContactShadows, useGLTF, useTexture, Text3D, Center, Environment, useVideoTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
@@ -207,6 +207,76 @@ const applyTwist = (geo: THREE.BufferGeometry, twist: [number, number, number]) 
   return geo;
 };
 
+const applyAsymmetricScale = (geo: THREE.BufferGeometry, amount: [number, number, number]) => {
+  if (!amount || (amount[0] === 0 && amount[1] === 0 && amount[2] === 0)) return geo;
+  const pos = geo.attributes.position;
+  const box = new THREE.Box3().setFromBufferAttribute(pos as THREE.BufferAttribute);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  const center = new THREE.Vector3();
+  box.getCenter(center);
+
+  if (size.y === 0) return geo;
+
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+
+    // Normalize Y to [0, 1] relative to bottom of box
+    const normY = (y - box.min.y) / size.y;
+    
+    // Scale X and Z independently based on normY and the amount factors
+    const scaleX = 1 + amount[0] * normY;
+    const scaleY = 1 + amount[1] * normY;
+    const scaleZ = 1 + amount[2] * normY;
+
+    pos.setXYZ(
+      i, 
+      (x - center.x) * scaleX + center.x, 
+      (y - center.y) * scaleY + center.y, 
+      (z - center.z) * scaleZ + center.z
+    );
+  }
+  
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+};
+
+const applyEdgeShift = (geo: THREE.BufferGeometry, amount: [number, number, number]) => {
+  if (!amount || (amount[0] === 0 && amount[1] === 0 && amount[2] === 0)) return geo;
+  const pos = geo.attributes.position;
+  const box = new THREE.Box3().setFromBufferAttribute(pos as THREE.BufferAttribute);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  if (size.x === 0 || size.y === 0 || size.z === 0) return geo;
+
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+
+    const normY = Math.max(0, Math.min(1, (y - box.min.y) / size.y));
+    const normX = Math.max(0, Math.min(1, (x - box.min.x) / size.x));
+
+    // Shift only the top-right corner edge smoothly
+    const weight = Math.pow(normY, 2) * Math.pow(normX, 2);
+
+    pos.setXYZ(
+      i,
+      x + amount[0] * weight,
+      y + amount[1] * weight,
+      z + amount[2] * weight
+    );
+  }
+
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  return geo;
+};
+
+
 const Model = ({ node }: { node: SceneNode }) => {
   const url = node.url || '';
   const color = node.color;
@@ -411,6 +481,204 @@ const PointLightNode = ({ node, isSelected }: { node: SceneNode; isSelected: boo
   );
 };
 
+interface PathPointHandleProps {
+  node: SceneNode;
+  pointIndex: number;
+  point: [number, number, number];
+  isActive: boolean;
+  onClickHandle: () => void;
+  onPointDrag: (index: number, localPos: [number, number, number]) => void;
+  onPointDragEnd: (index: number, localPos: [number, number, number]) => void;
+  orbitControlsRef?: React.MutableRefObject<any>;
+}
+
+const PathPointHandle: React.FC<PathPointHandleProps> = ({
+  node,
+  pointIndex,
+  point,
+  isActive,
+  onClickHandle,
+  onPointDrag,
+  onPointDragEnd,
+  orbitControlsRef
+}) => {
+  const { scene } = useThree();
+  const [mesh, setMesh] = React.useState<THREE.Mesh | null>(null);
+  const isDraggingRef = React.useRef(false);
+
+  // Sync position imperatively when not dragging
+  React.useEffect(() => {
+    if (mesh && !isDraggingRef.current) {
+      mesh.position.set(point[0], point[1], point[2]);
+    }
+  }, [point, mesh]);
+
+  const getLocalPos = (): [number, number, number] | null => {
+    if (!mesh) return null;
+    return [mesh.position.x, mesh.position.y, mesh.position.z];
+  };
+
+  const handleUpdate = () => {
+    const local = getLocalPos();
+    if (local) {
+      onPointDrag(pointIndex, local);
+    }
+  };
+
+  const handleUpdateEnd = () => {
+    isDraggingRef.current = false;
+    const local = getLocalPos();
+    if (local) {
+      onPointDragEnd(pointIndex, local);
+    }
+  };
+
+  return (
+    <group>
+      {isActive && mesh && createPortal(
+        <TransformControls
+          object={mesh}
+          mode="translate"
+          onMouseDown={() => {
+            isDraggingRef.current = true;
+            if (orbitControlsRef?.current) orbitControlsRef.current.enabled = false;
+          }}
+          onObjectChange={handleUpdate}
+          onMouseUp={() => {
+            if (orbitControlsRef?.current) orbitControlsRef.current.enabled = true;
+            handleUpdateEnd();
+          }}
+        />,
+        scene
+      )}
+      <mesh
+        ref={setMesh}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClickHandle();
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          if (document.body) document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          if (document.body) document.body.style.cursor = 'auto';
+        }}
+      >
+        <sphereGeometry args={[isActive ? 0.22 : 0.14, 16, 16]} />
+        <meshBasicMaterial color={isActive ? "#fbbf24" : "#818cf8"} depthTest={false} transparent opacity={0.9} />
+      </mesh>
+    </group>
+  );
+};
+
+const MotionPathNode = ({
+  node,
+  isSelected,
+  activeTool,
+  onUpdateNode,
+  orbitControlsRef,
+  isPreviewMode
+}: {
+  node: SceneNode;
+  isSelected: boolean;
+  activeTool?: string;
+  onUpdateNode: any;
+  orbitControlsRef: any;
+  isPreviewMode?: boolean;
+}) => {
+  const points = node.parameters?.pathPoints || [];
+  const selectedPointIndex = node.selectedPathPointIndex !== undefined ? node.selectedPathPointIndex : 0;
+  const lineRef = useRef<any>(null);
+
+  // Keep local points vector array for high-performance visual edits
+  const localPointsRef = useRef<THREE.Vector3[]>([]);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      localPointsRef.current = points.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+      updateLineGeometry();
+    }
+  }, [points]);
+
+  const updateLineGeometry = () => {
+    if (!lineRef.current) return;
+    const curvePoints = localPointsRef.current;
+    if (curvePoints.length === 0) return;
+
+    const pathType = node.parameters?.pathType || 'smooth';
+    const curve = (pathType === 'smooth' && curvePoints.length > 1) ? new THREE.CatmullRomCurve3(curvePoints) : null;
+    const linePoints = curve ? curve.getPoints(50) : curvePoints;
+    const floatArray = new Float32Array(linePoints.flatMap(p => [p.x, p.y, p.z]));
+
+    const geom = lineRef.current.geometry;
+    geom.setAttribute('position', new THREE.BufferAttribute(floatArray, 3));
+    geom.attributes.position.needsUpdate = true;
+  };
+
+  const handlePointDrag = (index: number, localPos: [number, number, number]) => {
+    isDraggingRef.current = true;
+    localPointsRef.current[index] = new THREE.Vector3(localPos[0], localPos[1], localPos[2]);
+    updateLineGeometry();
+  };
+
+  const handlePointDragEnd = (index: number, localPos: [number, number, number]) => {
+    isDraggingRef.current = false;
+    const updatedPoints = [...points];
+    updatedPoints[index] = localPos;
+
+    onUpdateNode(node.id, {
+      selectedPathPointIndex: index,
+      parameters: {
+        ...node.parameters,
+        pathPoints: updatedPoints
+      }
+    });
+  };
+
+  if (points.length === 0) return null;
+  if (!node.visible && isPreviewMode) return null;
+
+  const curvePoints = points.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+  const pathType = node.parameters?.pathType || 'smooth';
+  const curve = (pathType === 'smooth' && points.length > 1) ? new THREE.CatmullRomCurve3(curvePoints) : null;
+  const initialLinePoints = curve ? curve.getPoints(50) : curvePoints;
+
+  return (
+    <group>
+      <line ref={lineRef}>
+        <bufferGeometry attach="geometry">
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array(initialLinePoints.flatMap(p => [p.x, p.y, p.z])), 3]}
+            count={initialLinePoints.length}
+            itemSize={3}
+          />
+        </bufferGeometry>
+        <lineBasicMaterial attach="material" color={isSelected ? "#818cf8" : "#4b5563"} linewidth={3} />
+      </line>
+
+      {isSelected && points.map((pt, index) => (
+        <PathPointHandle
+          key={index}
+          node={node}
+          pointIndex={index}
+          point={pt}
+          isActive={index === selectedPointIndex}
+          onClickHandle={() => {
+            onUpdateNode(node.id, { selectedPathPointIndex: index });
+          }}
+          onPointDrag={handlePointDrag}
+          onPointDragEnd={handlePointDragEnd}
+          orbitControlsRef={orbitControlsRef}
+        />
+      ))}
+    </group>
+  );
+};
+
 const AmbientLightNode = ({ node }: { node: SceneNode }) => {
   const { intensity = 0.5 } = node.parameters || {};
   // Hemisphere light provides a more natural sky/ground gradient
@@ -427,6 +695,7 @@ const AmbientLightNode = ({ node }: { node: SceneNode }) => {
 const VideoMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor?: string }) => {
   const [videoTexture, setVideoTexture] = React.useState<THREE.VideoTexture | null>(null);
   const url = node.material?.videoMap;
+  const materialRef = React.useRef<THREE.MeshPhysicalMaterial>(null);
 
   React.useEffect(() => {
     if (!url) {
@@ -452,7 +721,6 @@ const VideoMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor
     if (playPromise !== undefined) {
       playPromise.catch(err => {
         console.warn("Video auto-play failed or was interrupted:", err);
-        // Sometimes clicking anywhere on the page resolves this for the next load
       });
     }
 
@@ -460,6 +728,38 @@ const VideoMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
+    
+    // Initial wrapping modes
+    const wrapSMode = node.material?.mapWrapS === 'mirror' 
+      ? THREE.MirroredRepeatWrapping 
+      : (node.material?.mapWrapS === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+    const wrapTMode = node.material?.mapWrapT === 'mirror' 
+      ? THREE.MirroredRepeatWrapping 
+      : (node.material?.mapWrapT === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+      
+    texture.wrapS = wrapSMode;
+    texture.wrapT = wrapTMode;
+
+    // Initial repeats and offsets with mirroring/flipping support
+    const rx = node.material?.mapRepeatX ?? 1;
+    const ry = node.material?.mapRepeatY ?? 1;
+    const baseOx = node.material?.mapOffsetX ?? 0;
+    const baseOy = node.material?.mapOffsetY ?? 0;
+
+    const finalRx = node.material?.mapWrapS === 'mirror' ? -rx : rx;
+    const finalRy = node.material?.mapWrapT === 'mirror' ? -ry : ry;
+
+    const finalOx = node.material?.mapWrapS === 'mirror' ? baseOx + rx : baseOx;
+    const finalOy = node.material?.mapWrapT === 'mirror' ? baseOy + ry : baseOy;
+
+    texture.repeat.set(finalRx, finalRy);
+    texture.offset.set(finalOx, finalOy);
+
+    // Initial rotation
+    const rotDeg = node.material?.mapRotation ?? 0;
+    texture.center.set(0.5, 0.5);
+    texture.rotation = (rotDeg * Math.PI) / 180;
+    
     setVideoTexture(texture);
 
     return () => {
@@ -470,11 +770,82 @@ const VideoMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor
     };
   }, [url]);
 
+  React.useEffect(() => {
+    if (!videoTexture) return;
+
+    let changed = false;
+
+    // wrapping modes
+    const wrapSMode = node.material?.mapWrapS === 'mirror' 
+      ? THREE.MirroredRepeatWrapping 
+      : (node.material?.mapWrapS === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+    const wrapTMode = node.material?.mapWrapT === 'mirror' 
+      ? THREE.MirroredRepeatWrapping 
+      : (node.material?.mapWrapT === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+
+    if (videoTexture.wrapS !== wrapSMode) {
+      videoTexture.wrapS = wrapSMode;
+      changed = true;
+    }
+    if (videoTexture.wrapT !== wrapTMode) {
+      videoTexture.wrapT = wrapTMode;
+      changed = true;
+    }
+
+    // repeats and offsets with mirroring/flipping support
+    const rx = node.material?.mapRepeatX ?? 1;
+    const ry = node.material?.mapRepeatY ?? 1;
+    const baseOx = node.material?.mapOffsetX ?? 0;
+    const baseOy = node.material?.mapOffsetY ?? 0;
+
+    const finalRx = node.material?.mapWrapS === 'mirror' ? -rx : rx;
+    const finalRy = node.material?.mapWrapT === 'mirror' ? -ry : ry;
+
+    const finalOx = node.material?.mapWrapS === 'mirror' ? baseOx + rx : baseOx;
+    const finalOy = node.material?.mapWrapT === 'mirror' ? baseOy + ry : baseOy;
+
+    if (videoTexture.repeat.x !== finalRx || videoTexture.repeat.y !== finalRy) {
+      videoTexture.repeat.set(finalRx, finalRy);
+      changed = true;
+    }
+
+    if (videoTexture.offset.x !== finalOx || videoTexture.offset.y !== finalOy) {
+      videoTexture.offset.set(finalOx, finalOy);
+      changed = true;
+    }
+
+    // rotation
+    const rotDeg = node.material?.mapRotation ?? 0;
+    const rotRad = (rotDeg * Math.PI) / 180;
+    if (videoTexture.rotation !== rotRad) {
+      videoTexture.center.set(0.5, 0.5);
+      videoTexture.rotation = rotRad;
+      changed = true;
+    }
+
+    if (changed) {
+      videoTexture.needsUpdate = true;
+      if (materialRef.current) {
+        materialRef.current.needsUpdate = true;
+      }
+    }
+  }, [
+    videoTexture,
+    node.material?.mapOffsetX,
+    node.material?.mapOffsetY,
+    node.material?.mapRepeatX,
+    node.material?.mapRepeatY,
+    node.material?.mapRotation,
+    node.material?.mapWrapS,
+    node.material?.mapWrapT
+  ]);
+
   const isTransparent = (node.material?.opacity ?? 1) < 1 || (node.material?.transmission ?? 0) > 0;
   const color = overrideColor || node.color;
 
   return (
     <meshPhysicalMaterial 
+      ref={materialRef}
       key={`video-${node.id}`}
       color={videoTexture ? "#ffffff" : color} 
       metalness={node.material?.metalness ?? 0}
@@ -497,6 +868,7 @@ const VideoMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor
 const StaticMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColor?: string }) => {
   const [texture, setTexture] = React.useState<THREE.Texture | null>(null);
   const url = node.material?.map;
+  const materialRef = React.useRef<THREE.MeshPhysicalMaterial>(null);
 
   React.useEffect(() => {
     if (!url) {
@@ -518,10 +890,41 @@ const StaticMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColo
           return;
         }
         tex.colorSpace = THREE.SRGBColorSpace;
-        tex.wrapS = THREE.RepeatWrapping;
-        tex.wrapT = THREE.RepeatWrapping;
+        
+        // Initial wrapping modes
+        const wrapSMode = node.material?.mapWrapS === 'mirror' 
+          ? THREE.MirroredRepeatWrapping 
+          : (node.material?.mapWrapS === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+        const wrapTMode = node.material?.mapWrapT === 'mirror' 
+          ? THREE.MirroredRepeatWrapping 
+          : (node.material?.mapWrapT === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+        
+        tex.wrapS = wrapSMode;
+        tex.wrapT = wrapTMode;
+
+        // Initial repeats and offsets with mirroring/flipping support
+        const rx = node.material?.mapRepeatX ?? 1;
+        const ry = node.material?.mapRepeatY ?? 1;
+        const baseOx = node.material?.mapOffsetX ?? 0;
+        const baseOy = node.material?.mapOffsetY ?? 0;
+
+        const finalRx = node.material?.mapWrapS === 'mirror' ? -rx : rx;
+        const finalRy = node.material?.mapWrapT === 'mirror' ? -ry : ry;
+
+        const finalOx = node.material?.mapWrapS === 'mirror' ? baseOx + rx : baseOx;
+        const finalOy = node.material?.mapWrapT === 'mirror' ? baseOy + ry : baseOy;
+
+        tex.repeat.set(finalRx, finalRy);
+        tex.offset.set(finalOx, finalOy);
+
+        // Initial rotation
+        const rotDeg = node.material?.mapRotation ?? 0;
+        tex.center.set(0.5, 0.5);
+        tex.rotation = (rotDeg * Math.PI) / 180;
+
         tex.flipY = false; // Match standard GLTF/web expectations
         tex.needsUpdate = true;
+        
         setTexture(tex);
       },
       undefined,
@@ -539,11 +942,82 @@ const StaticMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColo
     };
   }, [texture, url]);
 
+  React.useEffect(() => {
+    if (!texture) return;
+
+    let changed = false;
+
+    // wrapping modes
+    const wrapSMode = node.material?.mapWrapS === 'mirror' 
+      ? THREE.MirroredRepeatWrapping 
+      : (node.material?.mapWrapS === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+    const wrapTMode = node.material?.mapWrapT === 'mirror' 
+      ? THREE.MirroredRepeatWrapping 
+      : (node.material?.mapWrapT === 'clamp' ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping);
+
+    if (texture.wrapS !== wrapSMode) {
+      texture.wrapS = wrapSMode;
+      changed = true;
+    }
+    if (texture.wrapT !== wrapTMode) {
+      texture.wrapT = wrapTMode;
+      changed = true;
+    }
+
+    // repeats and offsets with mirroring/flipping support
+    const rx = node.material?.mapRepeatX ?? 1;
+    const ry = node.material?.mapRepeatY ?? 1;
+    const baseOx = node.material?.mapOffsetX ?? 0;
+    const baseOy = node.material?.mapOffsetY ?? 0;
+
+    const finalRx = node.material?.mapWrapS === 'mirror' ? -rx : rx;
+    const finalRy = node.material?.mapWrapT === 'mirror' ? -ry : ry;
+
+    const finalOx = node.material?.mapWrapS === 'mirror' ? baseOx + rx : baseOx;
+    const finalOy = node.material?.mapWrapT === 'mirror' ? baseOy + ry : baseOy;
+
+    if (texture.repeat.x !== finalRx || texture.repeat.y !== finalRy) {
+      texture.repeat.set(finalRx, finalRy);
+      changed = true;
+    }
+
+    if (texture.offset.x !== finalOx || texture.offset.y !== finalOy) {
+      texture.offset.set(finalOx, finalOy);
+      changed = true;
+    }
+
+    // rotation
+    const rotDeg = node.material?.mapRotation ?? 0;
+    const rotRad = (rotDeg * Math.PI) / 180;
+    if (texture.rotation !== rotRad) {
+      texture.center.set(0.5, 0.5);
+      texture.rotation = rotRad;
+      changed = true;
+    }
+
+    if (changed) {
+      texture.needsUpdate = true;
+      if (materialRef.current) {
+        materialRef.current.needsUpdate = true;
+      }
+    }
+  }, [
+    texture,
+    node.material?.mapOffsetX,
+    node.material?.mapOffsetY,
+    node.material?.mapRepeatX,
+    node.material?.mapRepeatY,
+    node.material?.mapRotation,
+    node.material?.mapWrapS,
+    node.material?.mapWrapT
+  ]);
+
   const isTransparent = (node.material?.opacity ?? 1) < 1 || (node.material?.transmission ?? 0) > 0;
   const color = overrideColor || node.color;
   
   return (
     <meshPhysicalMaterial 
+      ref={materialRef}
       key={`static-mat-${node.id}-${texture ? 'textured' : 'plain'}`}
       color={texture ? "#ffffff" : color} 
       metalness={node.material?.metalness ?? 0}
@@ -673,6 +1147,8 @@ const JSObjectNode = ({ node }: { node: SceneNode }) => {
               if (params.taper) applyTaper(child.geometry, params.taper);
               if (params.stretch) applyStretch(child.geometry, params.stretch);
               if (params.inflate) applyInflate(child.geometry, params.inflate);
+              if (params.asymmetricScale) applyAsymmetricScale(child.geometry, params.asymmetricScale);
+              if (params.edgeShift) applyEdgeShift(child.geometry, params.edgeShift);
             }
           }
         });
@@ -703,6 +1179,76 @@ const JSObjectNode = ({ node }: { node: SceneNode }) => {
   return <primitive object={object} />;
 };
 
+interface JointMatrices {
+  matrices: { [id: string]: THREE.Matrix4 };
+  rests: { [id: string]: THREE.Matrix4 };
+  skins: { [id: string]: THREE.Matrix4 };
+}
+
+export const computeJointMatrices = (boneRig: any): JointMatrices => {
+  const matrices: { [id: string]: THREE.Matrix4 } = {};
+  const rests: { [id: string]: THREE.Matrix4 } = {};
+  const skins: { [id: string]: THREE.Matrix4 } = {};
+
+  if (!boneRig || !Array.isArray(boneRig.joints) || boneRig.joints.length === 0) {
+    return { matrices, rests, skins };
+  }
+
+  const jointsMap = new Map(boneRig.joints.map((j: any) => [j.id, j]));
+
+  const getLocalMatrix = (joint: any, applyPose: boolean) => {
+    const mat = new THREE.Matrix4();
+    const pos = new THREE.Vector3(...joint.position);
+    const rot = new THREE.Euler();
+    
+    if (applyPose && Array.isArray(joint.rotation)) {
+      const rx = (joint.rotation[0] || 0) * Math.PI / 180;
+      const ry = (joint.rotation[1] || 0) * Math.PI / 180;
+      const rz = (joint.rotation[2] || 0) * Math.PI / 180;
+      rot.set(rx, ry, rz);
+    }
+    
+    mat.makeRotationFromEuler(rot);
+    mat.setPosition(pos);
+    return mat;
+  };
+
+  const traverse = (jointId: string, parentMatrix: THREE.Matrix4, parentRest: THREE.Matrix4) => {
+    const joint = jointsMap.get(jointId);
+    if (!joint) return;
+
+    // Pose local matrix
+    const localPose = getLocalMatrix(joint, true);
+    const globalPose = parentMatrix.clone().multiply(localPose);
+    matrices[jointId] = globalPose;
+
+    // Rest local matrix
+    const localRest = getLocalMatrix(joint, false);
+    const globalRest = parentRest.clone().multiply(localRest);
+    rests[jointId] = globalRest;
+
+    // Compute skin matrix: Pose * Rest_inv
+    const restInv = globalRest.clone().invert();
+    skins[jointId] = globalPose.clone().multiply(restInv);
+
+    // Recursively handle descendants
+    boneRig.joints.forEach((child: any) => {
+      if (child.parentJointId === jointId) {
+        traverse(child.id, globalPose, globalRest);
+      }
+    });
+  };
+
+  // Find roots (joints with parentJointId null or not present in mapping)
+  boneRig.joints.forEach((j: any) => {
+    if (!j.parentJointId || !jointsMap.has(j.parentJointId)) {
+      traverse(j.id, new THREE.Matrix4(), new THREE.Matrix4());
+    }
+  });
+
+  return { matrices, rests, skins };
+};
+
 const Node = ({ 
   node, 
   allNodes,
@@ -713,7 +1259,8 @@ const Node = ({
   onHoverNode,
   onClickNode,
   isPreviewMode,
-  activeTool
+  activeTool,
+  parentBoneRig
 }: { 
   node: SceneNode; 
   allNodes: SceneNode[];
@@ -725,8 +1272,44 @@ const Node = ({
   onClickNode?: (id: string) => void;
   isPreviewMode?: boolean;
   activeTool?: string;
+  parentBoneRig?: any;
 }) => {
   const [mesh, setMesh] = React.useState<THREE.Group | null>(null);
+  const groupRef = useRef<THREE.Group | null>(null);
+
+  const parentBinds = parentBoneRig?.binds || [];
+  const childBind = parentBinds.find((b: any) => b.nodeId === node.id);
+  const boundJointId = childBind?.jointId;
+
+  useFrame(() => {
+    if (!groupRef.current) return;
+
+    if (parentBoneRig && boundJointId) {
+      const { skins } = computeJointMatrices(parentBoneRig);
+      const skinMat = skins[boundJointId];
+      if (skinMat) {
+        groupRef.current.matrixAutoUpdate = false;
+
+        const localMat = new THREE.Matrix4();
+        const pos = new THREE.Vector3(...node.position);
+        
+        const rot = new THREE.Euler(
+          node.rotation[0] || 0,
+          node.rotation[1] || 0,
+          node.rotation[2] || 0
+        );
+        const q = new THREE.Quaternion().setFromEuler(rot);
+        const scl = new THREE.Vector3(...node.scale);
+        localMat.compose(pos, q, scl);
+
+        const finalMat = skinMat.clone().multiply(localMat);
+        groupRef.current.matrix.copy(finalMat);
+      }
+    } else {
+      groupRef.current.matrixAutoUpdate = true;
+    }
+  });
+
   const draggingRef = useRef<{ 
     startX: number; 
     startY: number; 
@@ -735,6 +1318,8 @@ const Node = ({
     initialStretch: number;
     initialInflate: number;
     initialBevel: number;
+    initialAsymScale?: [number, number, number];
+    initialEdgeShift?: [number, number, number];
   } | null>(null);
   const isSelected = selectedIds.includes(node.id);
   const isPrimarySelection = selectedIds[selectedIds.length - 1] === node.id;
@@ -911,6 +1496,97 @@ const Node = ({
       applyInflate(baseGeometry, node.parameters.inflate);
     }
 
+    if (node.parameters.asymmetricScale) {
+      applyAsymmetricScale(baseGeometry, node.parameters.asymmetricScale);
+    }
+
+    if (node.parameters.edgeShift) {
+      applyEdgeShift(baseGeometry, node.parameters.edgeShift);
+    }
+
+    if (node.parameters?.customUVs) {
+      try {
+        const customUVsArray = new Float32Array(node.parameters.customUVs);
+        baseGeometry.setAttribute('uv', new THREE.BufferAttribute(customUVsArray, 2));
+      } catch (err) {
+        console.warn('Failed to apply custom UVs:', err);
+      }
+    }
+
+    if (node.parameters?.boneRig) {
+      try {
+        const rig = node.parameters.boneRig;
+        const { rests, skins } = computeJointMatrices(rig);
+        const posAttr = baseGeometry.getAttribute('position');
+        
+        if (posAttr && rig.joints && rig.joints.length > 0) {
+          const originalPosition = posAttr.clone();
+          const count = posAttr.count;
+          
+          const jointsMap = new Map(rig.joints.map((j: any) => [j.id, j]));
+          const bones: { jointId: string; start: THREE.Vector3; end: THREE.Vector3 }[] = [];
+          
+          rig.joints.forEach((joint: any) => {
+            const endPos = new THREE.Vector3();
+            if (rests[joint.id]) {
+              endPos.setFromMatrixPosition(rests[joint.id]);
+            }
+            
+            const startPos = new THREE.Vector3();
+            if (joint.parentJointId && rests[joint.parentJointId]) {
+              startPos.setFromMatrixPosition(rests[joint.parentJointId]);
+            } else {
+              startPos.set(0, 0, 0);
+            }
+            bones.push({ jointId: joint.id, start: startPos, end: endPos });
+          });
+
+          const v = new THREE.Vector3();
+          const vTransformed = new THREE.Vector3();
+          const tempV = new THREE.Vector3();
+          
+          for (let i = 0; i < count; i++) {
+            v.fromBufferAttribute(originalPosition, i);
+            
+            let weights: { jointId: string; weight: number }[] = [];
+            
+            bones.forEach((bone) => {
+              const segment = new THREE.Line3(bone.start, bone.end);
+              const closestPoint = new THREE.Vector3();
+              segment.closestPointToPoint(v, true, closestPoint);
+              const distSq = v.distanceToSquared(closestPoint);
+              
+              const w = 1.0 / (distSq + 0.1);
+              weights.push({ jointId: bone.jointId, weight: w });
+            });
+            
+            weights.sort((a, b) => b.weight - a.weight);
+            const topWeights = weights.slice(0, 2);
+            let sumTop = 0;
+            topWeights.forEach(tw => sumTop += tw.weight);
+            
+            vTransformed.set(0, 0, 0);
+            topWeights.forEach((tw) => {
+              const normalizedW = tw.weight / (sumTop || 1);
+              const skinMat = skins[tw.jointId];
+              if (skinMat) {
+                tempV.copy(v);
+                tempV.applyMatrix4(skinMat);
+                vTransformed.addScaledVector(tempV, normalizedW);
+              }
+            });
+            
+            posAttr.setXYZ(i, vTransformed.x, vTransformed.y, vTransformed.z);
+          }
+          
+          posAttr.needsUpdate = true;
+          baseGeometry.computeVertexNormals();
+        }
+      } catch (err) {
+        console.warn('Failed to deform mesh vertices:', err);
+      }
+    }
+
     // Ensure BVH is computed for CSG and raycasting
     if (!(baseGeometry as any).boundsTree) {
       (baseGeometry as any).computeBoundsTree();
@@ -931,11 +1607,15 @@ const Node = ({
   return (
     <>
       <group
-        ref={setMesh}
+        ref={(el) => {
+          setMesh(el);
+          groupRef.current = el;
+        }}
         name={node.id}
         position={node.position}
         rotation={node.rotation}
         scale={node.scale}
+        visible={isPreviewMode ? node.visible !== false : true}
         onPointerOver={(e) => {
           e.stopPropagation();
           onHoverNode?.(node.id);
@@ -945,7 +1625,7 @@ const Node = ({
           onHoverNode?.(null);
         }}
         onPointerDown={(e) => {
-          if (!['twist', 'taper', 'stretch', 'inflate', 'bevel'].includes(activeTool || '')) return;
+          if (!['twist', 'taper', 'stretch', 'inflate', 'bevel', 'asym_scale', 'edge_shift'].includes(activeTool || '')) return;
           e.stopPropagation();
           (e.target as any).setPointerCapture(e.pointerId);
           draggingRef.current = {
@@ -955,7 +1635,9 @@ const Node = ({
             initialTaper: node.parameters.taper || 0,
             initialStretch: node.parameters.stretch || 0,
             initialInflate: node.parameters.inflate || 0,
-            initialBevel: node.parameters.bevelRadius || 0
+            initialBevel: node.parameters.bevelRadius || 0,
+            initialAsymScale: node.parameters.asymmetricScale ? [...node.parameters.asymmetricScale] : [0, 0, 0],
+            initialEdgeShift: node.parameters.edgeShift ? [...node.parameters.edgeShift] : [0, 0, 0]
           };
           if (orbitControlsRef?.current) orbitControlsRef.current.enabled = false;
         }}
@@ -998,6 +1680,26 @@ const Node = ({
               ...node.parameters,
               bevelRadius: Math.max(0, Math.min(0.5, draggingRef.current.initialBevel + dx * 0.005))
             };
+          } else if (activeTool === 'asym_scale') {
+            const init = draggingRef.current.initialAsymScale || [0, 0, 0];
+            updates.parameters = {
+              ...node.parameters,
+              asymmetricScale: [
+                init[0] + dx * 0.01,
+                init[1],
+                init[2] - dy * 0.01
+              ]
+            };
+          } else if (activeTool === 'edge_shift') {
+            const init = draggingRef.current.initialEdgeShift || [0, 0, 0];
+            updates.parameters = {
+              ...node.parameters,
+              edgeShift: [
+                init[0] + dx * 0.01,
+                init[1],
+                init[2] - dy * 0.01
+              ]
+            };
           }
           
           if (Object.keys(updates).length > 0) {
@@ -1005,7 +1707,7 @@ const Node = ({
           }
         }}
         onPointerUp={(e) => {
-          if (!['twist', 'taper', 'stretch', 'inflate', 'bevel'].includes(activeTool || '')) return;
+          if (!['twist', 'taper', 'stretch', 'inflate', 'bevel', 'asym_scale', 'edge_shift'].includes(activeTool || '')) return;
           e.stopPropagation();
           (e.target as any).releasePointerCapture(e.pointerId);
           draggingRef.current = null;
@@ -1039,6 +1741,15 @@ const Node = ({
           <PointLightNode node={node} isSelected={isSelected} />
         ) : node.type === 'ambientLight' ? (
           <AmbientLightNode node={node} />
+        ) : node.type === 'motion_path' ? (
+          <MotionPathNode 
+            node={node} 
+            isSelected={isSelected} 
+            activeTool={activeTool} 
+            onUpdateNode={onUpdateNode} 
+            orbitControlsRef={orbitControlsRef} 
+            isPreviewMode={isPreviewMode}
+          />
         ) : node.type !== 'group' ? (
           <mesh geometry={geometry} name={node.id}>
             {!node.visible && isPreviewMode ? (
@@ -1054,6 +1765,47 @@ const Node = ({
             )}
           </mesh>
         ) : null}
+
+        {node.parameters?.boneRig && (
+          <group name="visual-skeleton">
+            {(() => {
+              const { matrices } = computeJointMatrices(node.parameters.boneRig);
+              return node.parameters.boneRig.joints.map((joint: any) => {
+                const jointPos = new THREE.Vector3();
+                if (matrices[joint.id]) {
+                  jointPos.setFromMatrixPosition(matrices[joint.id]);
+                }
+                
+                const parentPos = new THREE.Vector3();
+                if (joint.parentJointId && matrices[joint.parentJointId]) {
+                  parentPos.setFromMatrixPosition(matrices[joint.parentJointId]);
+                } else {
+                  parentPos.set(0, 0, 0); 
+                }
+
+                return (
+                  <group key={joint.id}>
+                    {/* The Joint Sphere */}
+                    <mesh position={jointPos}>
+                      <sphereGeometry args={[0.045, 12, 12]} />
+                      <meshBasicMaterial color="#06b6d4" depthTest={false} transparent opacity={0.9} />
+                    </mesh>
+                    
+                    {/* The Bone Connection line/octahedron */}
+                    {joint.parentJointId && (
+                      <line>
+                        <bufferGeometry attach="geometry" onUpdate={(self) => {
+                          self.setFromPoints([parentPos, jointPos]);
+                        }} />
+                        <lineBasicMaterial attach="material" color="#f59e0b" linewidth={3} depthTest={false} transparent opacity={0.8} />
+                      </line>
+                    )}
+                  </group>
+                );
+              });
+            })()}
+          </group>
+        )}
         
         {children.map(child => (
           <Node 
@@ -1068,6 +1820,7 @@ const Node = ({
             onClickNode={onClickNode}
             isPreviewMode={isPreviewMode}
             activeTool={activeTool}
+            parentBoneRig={node.parameters.boneRig}
           />
         ))}
       </group>
