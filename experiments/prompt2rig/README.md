@@ -2,11 +2,13 @@
 
 独立实验目录，未修改 `3D_AItool` 原应用。基于 [blendi-remade/prompt2rig](https://github.com/blendi-remade/prompt2rig)，固定研究版本为 `fe3d3eec992772b538992374ca933020ed517938`，研究日期 2026-10-29。
 
-## 先看自建人物
+## 先看复用少年
 
-**在线查看：[GitHub Pages 动作实验室](https://giogyan90.github.io/3D_AItool/lab/)**。默认显示独立自建的截面灰模：29 个封口零件、2,572 个三角面、52 根骨骼，支持正交多视角、拆解、单件、线框和动作检查。详见 [建模记录与边界](docs/PROCEDURAL_CHARACTER.md)，可下载 [静态人物 GLB](samples/procedural_character_v1.glb)。
+**在线查看：[GitHub Pages 人物动作实验室](https://giogyan90.github.io/3D_AItool/lab/)**。默认装配评审版来自你的 CharaBuilder 少年预设，拆解和减面后重新装配，补反戴帽、T 恤领肩和鞋底；脸部、头身和骨骼比例保留。约 2.1 万面 → 1.31 万面，52 根映射动作骨骼，35 个网格零件。详见 [制作记录和待完成的视觉复查](docs/CHARABUILDER_BOY.md)。
 
-当前流程：**自建人物 → 灰模比例与体积检查 → 输入提示词 / 导入聊天方案 → 绑定动作 → 导出 GLB**。GLB 导入、自动减面压缩与骨骼映射保留为后备方案。API 默认 OpenAI，也支持自定义兼容接口。详见 [可复用工作流](docs/WORKFLOW.md)。
+“人物方案”可以切换原始少年和上一版截面灰模，保留同一视角做对比；支持原始材质 / 灰模 / 分部颜色、线框、单件与拆解，以及多视角和动作检查。静态装配文件见 [reassembled-boy.glb](public/lab/characters/teen-boy/reassembled-boy.glb)，来源、许可和逐件面数一起保存。
+
+当前流程：**先查已有资产 → 选原始预设 → 拆解 / 减面 / 重新装配 → 补缺件 → 形体与动作检查 → 导出**。需要时仍可导入其他 GLB、自动减面压缩和映射骨架。API 默认 OpenAI，也支持自定义兼容服务；[聊天 JSON 工作流](docs/WORKFLOW.md)继续适用。
 
 本地运行：
 
@@ -18,9 +20,9 @@ node server.mjs
 
 浏览器打开 <http://localhost:5177/lab/>。Node.js 18+；查看、导入、优化与方案绑定无需 `npm install`、密钥或 GPU，在线提示词生成需要自己的 API Key。依赖随工程保留对应许可。请通过 HTTP 打开，不要双击 HTML。
 
-![自建截面灰模预览](docs/procedural-preview.jpg)
+![少年头部检查（本地预览）](docs/teen-boy-head.jpg)
 
-默认人物没有使用外部角色网格，先保留无五官、无发型的素灰基础体，供轮廓审查。以下是前一轮流程样机的动作文件，仍可用作回归样本：
+以下是最初流程样机的动作文件，仍作为回归样本；它们并非当前的少年模型：
 
 | 测试动作 | 时长 | 帧数 | 导出 GLB |
 | --- | ---: | ---: | --- |
@@ -30,7 +32,7 @@ node server.mjs
 
 以上三个旧文件是 24 骨骼流程样机与**程序编排的关键帧测试**，并非 fal / GVHMR 生成结果。旧样机还作为隐藏的标准动作驱动器，通过上游 `Rig → snapshot → Track → trackToClip` 生成动作，再重定向到新的自建人物。新人物手指有独立骨骼，但当前方案不生成精细指法。出杆为无球杆、无球桌的姿态样例，不是已校准的专业击球动作。
 
-可切换正面、侧面、3/4 视角，拖动旋转、缩放、暂停、逐时刻查看、调速、显示骨架；导出当前人物与动作 GLB，或统一动作方案 JSON。若浏览器缺少 WebGL，实验室自动用同一蒙皮和骨骼数据进行 Canvas CPU 预览，贴图作简化显示，导出保留真实贴图；原版视频提取页面仍依赖其 WebGL / MediaPipe 支持。
+可切换正面、侧面、3/4 视角，拖动旋转、缩放、暂停、逐时刻查看、调速、显示骨架；导出当前人物与动作 GLB，或统一动作方案 JSON。若浏览器缺少 WebGL，实验室自动用同一蒙皮和骨骼数据进行 Canvas CPU 预览，兼容模式支持深度和贴图，细节与速度仍不等同于 WebGL，导出保留真实贴图；原版视频提取页面仍依赖其 WebGL / MediaPipe 支持。
 
 ## 使用原版 AI / 视频动作提取
 
@@ -67,9 +69,9 @@ npm test
 node --experimental-loader ./tests/vendor-loader.mjs tools/export-samples.mjs
 ```
 
-第一条共 16 项，还检查自建人物拓扑、镜像、权重、动作接缝和导出坐标，以及减面属性、Meshopt 解码、原有动画、A/T 姿态与模拟 API。第二条重生成旧动作样本；新人物报告和静态样本用建模记录中的命令生成。原版录屏工具 `tools/capture.mjs` 需要先 `npm ci`，不属于零依赖实验室启动路径。
+第一条共 22 项，还检查自建人物拓扑、镜像、权重、动作接缝和导出坐标，以及减面属性、Meshopt 解码、原有动画、A/T 姿态与模拟 API。第二条重生成旧动作样本；新人物报告和静态样本用建模记录中的命令生成。原版录屏工具 `tools/capture.mjs` 需要先 `npm ci`，不属于零依赖实验室启动路径。
 
-主要文件：`public/lab/procedural-character.js` 是新自建人物与拓扑检查，`public/lab/character.js` 是旧标准驱动样机，`motions.js` 是初始动作，`motion-plan.js` 定义可复用动作协议，`assets.js` / `optimize.js` / `glb-codec.js` 负责导入、减面与压缩，`rig-adapter.js` 做骨架映射，`api.js` 调用提示词接口，`app.js` 是界面。`public/retarget.js` 保留上游实现。服务默认监听 `127.0.0.1`，仅开发预览参数 `--preview` 会监听全部接口。
+主要文件：`public/lab/teen-preset.js` 加载复用少年，`tools/build-charabuilder-boy.mjs` 重建分件资产，`public/lab/procedural-character.js` 是新自建人物与拓扑检查，`public/lab/character.js` 是旧标准驱动样机，`motions.js` 是初始动作，`motion-plan.js` 定义可复用动作协议，`assets.js` / `optimize.js` / `glb-codec.js` 负责导入、减面与压缩，`rig-adapter.js` 做骨架映射，`api.js` 调用提示词接口，`app.js` 是界面。`public/retarget.js` 保留上游实现。服务默认监听 `127.0.0.1`，仅开发预览参数 `--preview` 会监听全部接口。
 
 研究结论、已验证项和下一步见 [RESEARCH.md](docs/RESEARCH.md)。
 

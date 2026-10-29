@@ -119,24 +119,34 @@ export function createProceduralCharacter(){
 }
 
 export function getProceduralParts(root){return MODELS.get(root)?.parts||[];}
+// Imported prepared assets can use the same assembly inspector without changing
+// their bind geometry, authored proportions, UVs or skeleton.
+export function registerStudyModel(root){
+  const grey=new THREE.MeshStandardMaterial({color:0xb4b9b5,roughness:.9}),parts=[];
+  root.traverse(mesh=>{if(!mesh.isMesh)return;const id=mesh.userData.partId||mesh.name;
+    const overlay=/FaceBrow|Eyelash|Eyeline|EyeHighlight/.test(id),color=new THREE.Color().setHSL((parts.length*.117)%1,.24,.64);
+    parts.push({id,label:mesh.userData.partLabel||id,category:'prepared',mesh,geometry:mesh.geometry,rest:Float32Array.from(mesh.geometry.attributes.position.array),originalMaterial:mesh.material,material:new THREE.MeshStandardMaterial({color,roughness:.9}),offset:mesh.userData.explosionOffset||[0,.2,0],hideInClay:overlay});
+  });
+  MODELS.set(root,{parts,explosion:0,isolated:'all',surface:'original',wireframe:false,grey});return root;
+}
 export function proceduralSettings(root){const s=MODELS.get(root);return s?{explosion:s.explosion,isolated:s.isolated,surface:s.surface,wireframe:s.wireframe}:null;}
 
 export function setProceduralView(root,changes={}){
   const state=MODELS.get(root);if(!state)return;Object.assign(state,changes);state.explosion=THREE.MathUtils.clamp(state.explosion,0,1);
   const offsets={head:[0,.34,0],neck:[0,.17,0],chest:[0,.075,0],abdomen:[0,0,0],pelvis:[0,-.10,0],upperArm:[.16,0,0],forearm:[.32,0,0],palm:[.47,0,0],thigh:[.13,-.04,0],calf:[.20,-.15,0],foot:[.25,-.26,0],ear:[.17,.34,0]};
   for(const part of state.parts){
-    const sign=part.id.endsWith('_R')?-1:1,offset=offsets[part.category]||[.59,(part.category==='Pinky'?.055:part.category==='Index'?-.025:0),.025];
+    const sign=part.offset?1:part.id.endsWith('_R')?-1:1,offset=part.offset||offsets[part.category]||[.59,(part.category==='Pinky'?.055:part.category==='Index'?-.025:0),.025];
     const a=part.geometry.attributes.position;for(let i=0;i<a.count;i++)a.setXYZ(i,part.rest[i*3]+sign*offset[0]*state.explosion,part.rest[i*3+1]+offset[1]*state.explosion,part.rest[i*3+2]+offset[2]*state.explosion);a.needsUpdate=true;
-    part.mesh.visible=state.isolated==='all'||state.isolated===part.id;part.mesh.material=state.surface==='parts'?part.material:state.grey;part.mesh.material.wireframe=state.wireframe;
+    part.mesh.visible=(state.isolated==='all'||state.isolated===part.id)&&!(part.hideInClay&&state.surface!=='original');part.mesh.material=state.surface==='original'?(part.originalMaterial||part.material):state.surface==='parts'?part.material:state.grey;part.mesh.material.wireframe=state.wireframe;
     part.geometry.computeBoundingSphere();
   }
 }
 
-export function prepareProceduralExport(root){const state=proceduralSettings(root);if(!state)return ()=>{};setProceduralView(root,{explosion:0,isolated:'all',wireframe:false});return ()=>setProceduralView(root,state);}
+export function prepareProceduralExport(root){const state=proceduralSettings(root);if(!state)return ()=>{};const prepared=MODELS.get(root).parts.some(p=>p.originalMaterial);setProceduralView(root,{explosion:0,isolated:'all',wireframe:false,...(prepared?{surface:'original'}:{})});return ()=>setProceduralView(root,state);}
 export function createPartExport(root,id){
   const part=MODELS.get(root)?.parts.find(p=>p.id===id);if(!part)throw new Error('请先选择一个自建人物零件');
   const geometry=part.geometry.clone();geometry.setAttribute('position',new THREE.Float32BufferAttribute(part.rest,3));geometry.deleteAttribute('skinIndex');geometry.deleteAttribute('skinWeight');geometry.computeVertexNormals();
-  const material=part.mesh.material.clone();material.wireframe=false;const mesh=new THREE.Mesh(geometry,material);mesh.name=part.id;mesh.userData={part:part.id,coordinates:'original assembly space; no preview centering or explosion'};return mesh;
+  const material=(part.originalMaterial||part.mesh.material).clone();material.wireframe=false;const mesh=new THREE.Mesh(geometry,material);mesh.name=part.id;mesh.userData={part:part.id,coordinates:'original assembly space; no preview centering or explosion'};return mesh;
 }
 
 export function validateProceduralParts(parts=createProceduralParts()){

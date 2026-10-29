@@ -1,0 +1,771 @@
+{
+  "version": 1,
+  "source": {
+    "repository": "https://github.com/GioGyan90/CharaBuilder",
+    "commit": "6ff7fa5c7b451c7318cf445038f1514a646343ea",
+    "preset": "boy / vroid / sidepart / shirtPants",
+    "state": {
+      "craniumWidth": 50,
+      "craniumDepth": 50,
+      "facePlaneSoftness": 50,
+      "scmSternal": 50,
+      "scmClavicular": 50,
+      "clavicleContour": 50,
+      "supraclavicularFossa": 50,
+      "napeTransition": 50,
+      "throatVolume": 50,
+      "lowerTrapezius": 50,
+      "scapulaSpine": 50,
+      "scapulaAngle": 50,
+      "rearAxillary": 50,
+      "latTaper": 50,
+      "erectorSpinae": 50,
+      "muscleMass": 50,
+      "trapeziusRidge": 50,
+      "trapezius": 50,
+      "latWidth": 50,
+      "deltoid": 50,
+      "torsoLength": 50,
+      "shoulderSlope": 50,
+      "shoulderDepth": 50,
+      "chestDepth": 50,
+      "bustSize": 50,
+      "bustHeight": 50,
+      "backDepth": 50,
+      "waistHeight": 50,
+      "abdomen": 50,
+      "hipDepth": 50,
+      "hipHeight": 50,
+      "armLength": 50,
+      "upperArm": 50,
+      "forearm": 50,
+      "handSize": 50,
+      "thigh": 50,
+      "calf": 50,
+      "ankle": 50,
+      "footLength": 50,
+      "footWidth": 50,
+      "legSpace": 50,
+      "ribWidth": 50,
+      "pecVolume": 50,
+      "scapulaVolume": 50,
+      "gluteVolume": 50,
+      "thighDepth": 50,
+      "calfDepth": 50,
+      "kneeWidth": 50,
+      "eyeballDepth": 50,
+      "pupilSize": 50,
+      "gazeX": 50,
+      "gazeY": 50,
+      "browWidth": 50,
+      "upperLipThickness": 50,
+      "lowerLipThickness": 50,
+      "upperLipProjection": 50,
+      "lowerLipProjection": 50,
+      "zygomaticArchDepth": 50,
+      "jawCornerDepth": 50,
+      "chinSquareness": 50,
+      "mentolabialDepth": 50,
+      "noseBaseDepth": 50,
+      "upperLipWidth": 50,
+      "lowerLipWidth": 50,
+      "submentalDepth": 50,
+      "foreheadSlope": 50,
+      "midfaceSupport": 50,
+      "jawBodySupport": 50,
+      "muzzleDepth": 50,
+      "philtrumDepth": 50,
+      "philtrumLength": 50,
+      "jawRamus": 50,
+      "jawBase": 50,
+      "masseter": 50,
+      "neckForward": 50,
+      "neckTendon": 50,
+      "browSurfaceOffset": 50,
+      "headSize": 50,
+      "neckWidth": 50,
+      "chest": 50,
+      "waist": 50,
+      "hips": 50,
+      "legThickness": 50,
+      "templeWidth": 50,
+      "templeDepth": 50,
+      "maxillaWidth": 50,
+      "maxillaHeight": 50,
+      "maxillaDepth": 50,
+      "forehead": 50,
+      "chinLength": 50,
+      "noseProjection": 50,
+      "mouthHeight": 50,
+      "jawWidth": 45,
+      "jawDepth": 50,
+      "jawHeight": 50,
+      "jawAngle": 50,
+      "cheekboneWidth": 50,
+      "cheekboneHeight": 50,
+      "cheekboneDepth": 50,
+      "chinProjection": 50,
+      "cheekboneAngle": 50,
+      "jawTilt": 50,
+      "chinAngle": 50,
+      "chinSize": 50,
+      "midFaceLength": 50,
+      "lowerFaceLength": 50,
+      "cheekboneSharpness": 50,
+      "eyeDepth": 50,
+      "noseLength": 50,
+      "browRidgeHeight": 50,
+      "noseRootDepth": 50,
+      "noseBridgeWidth": 50,
+      "noseTipProjection": 50,
+      "noseTipAngle": 50,
+      "irisSize": 50,
+      "faceHeight": 50,
+      "cheek": 50,
+      "chinWidth": 50,
+      "eyeWidth": 50,
+      "eyeHeight": 50,
+      "eyeVertical": 50,
+      "eyeTilt": 50,
+      "browHeight": 50,
+      "browAngle": 50,
+      "browThickness": 50,
+      "browRidge": 50,
+      "noseWidth": 50,
+      "noseHeight": 50,
+      "mouthThickness": 50,
+      "mouthProjection": 50,
+      "mouthCorner": 50,
+      "frontHair": "sidepart",
+      "backHair": "sidepart",
+      "sideHair": "sidepart",
+      "braid": "none",
+      "frontLength": 50,
+      "backLength": 50,
+      "sideLength": 50,
+      "braidLength": 50,
+      "hairVolume": 50,
+      "hairlineHeight": 50,
+      "sideHairColor": "#929590",
+      "shirtLength": 50,
+      "sleeveLength": 0,
+      "shirtEase": 50,
+      "pantsWidth": 50,
+      "characterType": "boy",
+      "foundationRevision": 1,
+      "bodySource": "vroid",
+      "faceSource": "vroid",
+      "gender": "male",
+      "height": 50,
+      "weight": 45,
+      "shoulders": 45,
+      "legs": 50,
+      "faceWidth": 50,
+      "eyeSize": 50,
+      "eyeSpace": 50,
+      "nose": 50,
+      "mouth": 50,
+      "hair": "modular",
+      "clothes": "shirtPants",
+      "shoes": "shoes",
+      "expression": "neutral",
+      "skin": "#f1cbb2",
+      "hairColor": "#332821",
+      "eyeColor": "#497b93",
+      "shirt": "#f0ece0",
+      "pants": "#475569",
+      "shoeColor": "#f0ece0",
+      "stoneView": "skin"
+    },
+    "uniformScale": 0.7623685365941925,
+    "bodyProportionsChanged": false
+  },
+  "before": {
+    "triangles": 21011,
+    "vertices": 56796,
+    "meshes": 22,
+    "bones": 91
+  },
+  "compactedSource": {
+    "triangles": 21011,
+    "vertices": 13855,
+    "meshes": 33,
+    "bones": 91
+  },
+  "after": {
+    "triangles": 13132,
+    "vertices": 9383,
+    "meshes": 35,
+    "bones": 91
+  },
+  "sourceGLBBytes": 957736,
+  "modelGLBBytes": 807460,
+  "history": [
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_FaceBrow_00_FACE",
+      "before": 160,
+      "after": 160,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_FaceMouth_00_FACE",
+      "before": 496,
+      "after": 496,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_EyeIris_00_EYE",
+      "before": 192,
+      "after": 192,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_EyeHighlight_00_EYE",
+      "before": 192,
+      "after": 192,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_EyeWhite_00_EYE",
+      "before": 96,
+      "after": 96,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_Face_00_SKIN",
+      "before": 1022,
+      "after": 1022,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_FaceEyelash_00_FACE",
+      "before": 224,
+      "after": 224,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Face",
+      "material": "M00_000_00_FaceEyeline_00_FACE",
+      "before": 384,
+      "after": 384,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "FaceEars",
+      "material": "M00_000_00_Face_00_SKIN",
+      "before": 338,
+      "after": 338,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Body",
+      "material": "M00_001_01_Body_00_SKIN",
+      "before": 4708,
+      "after": 4708,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Body",
+      "material": "M00_001_01_Shoes_01_CLOTH",
+      "before": 540,
+      "after": 540,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Shirt",
+      "material": "M00_001_01_Tops_01_CLOTH",
+      "before": 2004,
+      "after": 2004,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "Pants",
+      "material": "M00_001_01_Bottoms_01_CLOTH",
+      "before": 9974,
+      "after": 9974,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "HairFront",
+      "material": "Micket_sidepart_HAIR",
+      "before": 61,
+      "after": 61,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "HairBack",
+      "material": "Micket_sidepart_HAIR",
+      "before": 88,
+      "after": 88,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "HairSide",
+      "material": "Micket_sidepart_HAIR",
+      "before": 52,
+      "after": 52,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "ShirtDetail",
+      "material": "ShirtButton",
+      "before": 80,
+      "after": 80,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "ShirtDetail",
+      "material": "ShirtButton",
+      "before": 80,
+      "after": 80,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "ShirtDetail",
+      "material": "ShirtButton",
+      "before": 80,
+      "after": 80,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "ShirtDetail",
+      "material": "ShirtButton",
+      "before": 80,
+      "after": 80,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "ShirtDetail",
+      "material": "ShirtButton",
+      "before": 80,
+      "after": 80,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
+      "part": "ShirtDetail",
+      "material": "ShirtButton",
+      "before": 80,
+      "after": 80,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_FaceBrow_00_FACE",
+      "before": 160,
+      "after": 160,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_FaceMouth_00_FACE",
+      "before": 496,
+      "after": 496,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_EyeIris_00_EYE",
+      "before": 192,
+      "after": 192,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_EyeHighlight_00_EYE",
+      "before": 192,
+      "after": 192,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_EyeWhite_00_EYE",
+      "before": 96,
+      "after": 96,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_Face_00_SKIN",
+      "before": 1022,
+      "after": 816,
+      "requestedRatio": 0.8
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_FaceEyelash_00_FACE",
+      "before": 224,
+      "after": 224,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "Face",
+      "material": "M00_000_00_FaceEyeline_00_FACE",
+      "before": 384,
+      "after": 384,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "reassembled",
+      "part": "FaceEars",
+      "material": "M00_000_00_Face_00_SKIN",
+      "before": 338,
+      "after": 290,
+      "requestedRatio": 0.8
+    },
+    {
+      "variant": "reassembled",
+      "part": "Body",
+      "material": "M00_001_01_Body_00_SKIN",
+      "before": 4708,
+      "after": 3560,
+      "requestedRatio": 0.52
+    },
+    {
+      "variant": "reassembled",
+      "part": "Body",
+      "material": "M00_001_01_Shoes_01_CLOTH",
+      "before": 540,
+      "after": 540,
+      "requestedRatio": 0.52
+    },
+    {
+      "variant": "reassembled",
+      "part": "Shirt",
+      "material": "M00_001_01_Tops_01_CLOTH",
+      "before": 2004,
+      "after": 1998,
+      "requestedRatio": 0.56
+    },
+    {
+      "variant": "reassembled",
+      "part": "Pants",
+      "material": "M00_001_01_Bottoms_01_CLOTH",
+      "before": 9974,
+      "after": 3190,
+      "requestedRatio": 0.32
+    },
+    {
+      "variant": "reassembled",
+      "part": "HairFront",
+      "material": "Micket_sidepart_HAIR",
+      "before": 61,
+      "after": 61,
+      "requestedRatio": 0.7
+    },
+    {
+      "variant": "reassembled",
+      "part": "HairBack",
+      "material": "Micket_sidepart_HAIR",
+      "before": 88,
+      "after": 88,
+      "requestedRatio": 0.7
+    },
+    {
+      "variant": "reassembled",
+      "part": "HairSide",
+      "material": "Micket_sidepart_HAIR",
+      "before": 52,
+      "after": 52,
+      "requestedRatio": 0.7
+    }
+  ],
+  "parts": [
+    {
+      "id": "Face_M00_000_00_FaceBrow_00_FACE",
+      "label": "眉毛",
+      "triangles": 160,
+      "vertices": 110,
+      "provenance": "source"
+    },
+    {
+      "id": "Face_M00_000_00_FaceMouth_00_FACE",
+      "label": "口腔",
+      "triangles": 496,
+      "vertices": 513,
+      "provenance": "source"
+    },
+    {
+      "id": "Face_M00_000_00_EyeIris_00_EYE",
+      "label": "虹膜",
+      "triangles": 192,
+      "vertices": 134,
+      "provenance": "source"
+    },
+    {
+      "id": "Face_M00_000_00_EyeHighlight_00_EYE",
+      "label": "眼睛高光",
+      "triangles": 192,
+      "vertices": 130,
+      "provenance": "source"
+    },
+    {
+      "id": "Face_M00_000_00_EyeWhite_00_EYE",
+      "label": "眼白",
+      "triangles": 96,
+      "vertices": 130,
+      "provenance": "source"
+    },
+    {
+      "id": "Face_M00_000_00_Face_00_SKIN",
+      "label": "头部皮肤",
+      "triangles": 816,
+      "vertices": 525,
+      "provenance": "source"
+    },
+    {
+      "id": "Face_M00_000_00_FaceEyelash_00_FACE",
+      "label": "睫毛",
+      "triangles": 224,
+      "vertices": 160,
+      "provenance": "source"
+    },
+    {
+      "id": "Face_M00_000_00_FaceEyeline_00_FACE",
+      "label": "眼线",
+      "triangles": 384,
+      "vertices": 266,
+      "provenance": "source"
+    },
+    {
+      "id": "FaceEars_M00_000_00_Face_00_SKIN",
+      "label": "耳部",
+      "triangles": 290,
+      "vertices": 208,
+      "provenance": "source"
+    },
+    {
+      "id": "neck_scalp",
+      "label": "颈部与后脑",
+      "triangles": 764,
+      "vertices": 515,
+      "provenance": "source"
+    },
+    {
+      "id": "arm_L",
+      "label": "左手臂",
+      "triangles": 909,
+      "vertices": 612,
+      "provenance": "source"
+    },
+    {
+      "id": "arm_R",
+      "label": "右手臂",
+      "triangles": 919,
+      "vertices": 617,
+      "provenance": "source"
+    },
+    {
+      "id": "ankle_L",
+      "label": "左脚踝",
+      "triangles": 303,
+      "vertices": 188,
+      "provenance": "source"
+    },
+    {
+      "id": "ankle_R",
+      "label": "右脚踝",
+      "triangles": 307,
+      "vertices": 190,
+      "provenance": "source"
+    },
+    {
+      "id": "hand_L",
+      "label": "左手部",
+      "triangles": 179,
+      "vertices": 125,
+      "provenance": "source"
+    },
+    {
+      "id": "hand_R",
+      "label": "右手部",
+      "triangles": 179,
+      "vertices": 125,
+      "provenance": "source"
+    },
+    {
+      "id": "shoe_L",
+      "label": "左鞋面",
+      "triangles": 270,
+      "vertices": 268,
+      "provenance": "source"
+    },
+    {
+      "id": "shoe_R",
+      "label": "右鞋面",
+      "triangles": 270,
+      "vertices": 268,
+      "provenance": "source"
+    },
+    {
+      "id": "sleeve_L",
+      "label": "左短袖",
+      "triangles": 123,
+      "vertices": 107,
+      "provenance": "source"
+    },
+    {
+      "id": "shirt_torso",
+      "label": "T 恤躯干",
+      "triangles": 1071,
+      "vertices": 791,
+      "provenance": "source"
+    },
+    {
+      "id": "sleeve_R",
+      "label": "右短袖",
+      "triangles": 123,
+      "vertices": 107,
+      "provenance": "source"
+    },
+    {
+      "id": "pants_L",
+      "label": "左裤腿",
+      "triangles": 1432,
+      "vertices": 857,
+      "provenance": "source"
+    },
+    {
+      "id": "pants_hip",
+      "label": "裤装腰胯",
+      "triangles": 294,
+      "vertices": 263,
+      "provenance": "source"
+    },
+    {
+      "id": "pants_R",
+      "label": "右裤腿",
+      "triangles": 1464,
+      "vertices": 878,
+      "provenance": "source"
+    },
+    {
+      "id": "HairFront",
+      "label": "前发",
+      "triangles": 21,
+      "vertices": 41,
+      "provenance": "source hair trimmed inside the cap"
+    },
+    {
+      "id": "HairBack",
+      "label": "后发",
+      "triangles": 73,
+      "vertices": 161,
+      "provenance": "source hair trimmed inside the cap"
+    },
+    {
+      "id": "HairSide",
+      "label": "侧发",
+      "triangles": 51,
+      "vertices": 115,
+      "provenance": "source hair trimmed inside the cap"
+    },
+    {
+      "id": "tee_yoke",
+      "label": "T 恤肩部补片",
+      "triangles": 810,
+      "vertices": 540,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "tee_neck",
+      "label": "T 恤圆领",
+      "triangles": 64,
+      "vertices": 64,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "cap_crown",
+      "label": "反戴帽 · 帽冠",
+      "triangles": 480,
+      "vertices": 242,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "cap_brim",
+      "label": "反戴帽 · 后帽檐",
+      "triangles": 28,
+      "vertices": 16,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "cap_strap",
+      "label": "反戴帽 · 前调节带",
+      "triangles": 12,
+      "vertices": 24,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "cap_button",
+      "label": "反戴帽 · 顶扣",
+      "triangles": 48,
+      "vertices": 45,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "sole_L",
+      "label": "左鞋底",
+      "triangles": 44,
+      "vertices": 24,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "sole_R",
+      "label": "右鞋底",
+      "triangles": 44,
+      "vertices": 24,
+      "provenance": "new accessory fitted to source preset"
+    }
+  ],
+  "added": [
+    "backwards cap crown, brim, strap, button",
+    "sneaker soles",
+    "crew-neck binding and shoulder yoke"
+  ],
+  "removed": [
+    "six generated shirt buttons",
+    "standing shirt collar",
+    "covered hair tips inside cap"
+  ],
+  "limits": [
+    "Material-separated parts can have open seams; this is not a new watertight retopology.",
+    "Facial expressions and the original character editor are not ported.",
+    "The source head/body proportions are retained; generated concept is an outfit reference only."
+  ]
+}

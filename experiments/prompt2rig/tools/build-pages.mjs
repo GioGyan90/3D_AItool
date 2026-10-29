@@ -21,6 +21,8 @@ const labFiles=(await fs.readdir(path.join(root,'public/lab'))).filter(f=>/\.(js
 const hash=createHash('sha256');
 for(const file of labFiles){hash.update(file);hash.update(await fs.readFile(path.join(root,'public/lab',file)));}
 hash.update(await fs.readFile(path.join(root,'public/retarget.js')));
+async function hashAssets(directory){for(const item of (await fs.readdir(directory,{withFileTypes:true})).sort((a,b)=>a.name.localeCompare(b.name))){const full=path.join(directory,item.name);if(item.isDirectory())await hashAssets(full);else{hash.update(path.relative(root,full));hash.update(await fs.readFile(full));}}}
+try{await hashAssets(path.join(root,'public/lab/characters'));}catch(error){if(error.code!=='ENOENT')throw error;}
 const revision=hash.digest('hex').slice(0,12);
 for(const file of labFiles.filter(f=>f.endsWith('.js'))){
   const target=path.join(destination,'lab',file);

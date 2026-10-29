@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Track, trackToClip } from '../retarget.js?v=05c2e9e16450';
+import { Track, trackToClip } from '../retarget.js?v=1cfe9af41ff0';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});

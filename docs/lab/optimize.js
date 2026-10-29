@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MeshoptSimplifier } from '../vendor/meshopt/meshopt_simplifier.module.js?v=05c2e9e16450';
+import { MeshoptSimplifier } from '../vendor/meshopt/meshopt_simplifier.module.js?v=1cfe9af41ff0';
 
 export function modelStats(root) {
   let triangles=0,vertices=0,meshes=0,bones=0;root.traverse(o=>{if(o.isBone)bones++;if(o.isMesh){meshes++;vertices+=o.geometry.attributes.position?.count||0;triangles+=(o.geometry.index?.count||o.geometry.attributes.position?.count||0)/3;}});return {triangles:Math.round(triangles),vertices,meshes,bones};
