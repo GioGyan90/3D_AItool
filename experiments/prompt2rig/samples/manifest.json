@@ -1,0 +1,41 @@
+{
+  "upstream": "fe3d3eec992772b538992374ca933020ed517938",
+  "motions": [
+    {
+      "id": "wave",
+      "name": "挥手致意",
+      "duration": 4,
+      "description": "抬起右手 → 挥手三次 → 放下",
+      "prompt": "raises the right hand, waves hello three times with an open palm, then lowers the arm",
+      "file": "luckybreak_wave.glb",
+      "frames": 121,
+      "bones": 24,
+      "bytes": 164580,
+      "source": "authored-keyframes"
+    },
+    {
+      "id": "victory",
+      "name": "胜利庆祝",
+      "duration": 5,
+      "description": "蓄势 → 双臂举高 → 握拳庆祝 → 还原",
+      "prompt": "celebrates winning a billiards match, raises both fists above the shoulders, makes two strong fist pumps, then relaxes",
+      "file": "luckybreak_victory.glb",
+      "frames": 151,
+      "bones": 24,
+      "bytes": 179432,
+      "source": "authored-keyframes"
+    },
+    {
+      "id": "billiards",
+      "name": "俯身出杆",
+      "duration": 6,
+      "description": "俯身瞄准 → 两次试杆 → 出杆 → 起身",
+      "prompt": "mimes a billiards shot without a cue or table, bends forward, extends the left bridge hand, makes two slow practice strokes with the right forearm, one final stroke, then stands upright",
+      "file": "luckybreak_billiards.glb",
+      "frames": 181,
+      "bones": 24,
+      "bytes": 194616,
+      "source": "authored-keyframes"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "luckybreak-prompt2rig-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prompt → fast video model (H3 Max Turbo / FLUX 3 Max on fal) → GVHMR motion → live retargeting onto Mixamo characters",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs --preview",
+    "test": "node --experimental-loader ./tests/vendor-loader.mjs --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}
