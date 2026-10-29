@@ -106,11 +106,13 @@ const original=await buildModel(false),modified=await buildModel(true);
 // Accessory construction is isolated from the retained author geometry.
 const {addBoyAccessories,removeCoveredBody}=await import('./teen-boy-accessories.mjs');
 const {buildFittedTee}=await import('./teen-shirt.mjs');
+const {tuckCoveredTrouserWaist}=await import('./teen-waist.mjs');
 const skinSource=uncoveredRoot.children.find(m=>m.isMesh&&m.userData.part==='Body'&&m.name.includes('_SKIN'));
 if(!skinSource)throw Error('Same-preset unmasked body was not found');
 const shirtTemplate=compact(skinSource.geometry,Array.from(skinSource.geometry.index.array)),tp=shirtTemplate.attributes.position,tn=shirtTemplate.attributes.normal,nm=new THREE.Matrix3().getNormalMatrix(skinSource.matrixWorld);
 for(let i=0;i<tp.count;i++){const p=new THREE.Vector3().fromBufferAttribute(tp,i).applyMatrix4(skinSource.matrixWorld).multiplyScalar(uniformScale),n=new THREE.Vector3().fromBufferAttribute(tn,i).applyMatrix3(nm).normalize();tp.setXYZ(i,...p.toArray());tn.setXYZ(i,...n.toArray());}
 modified.root.userData.shirtConstruction=buildFittedTee(modified,humanoid,shirtTemplate);
+modified.root.userData.shirtConstruction.waistFit=tuckCoveredTrouserWaist(modified,humanoid,modified.root.userData.shirtConstruction.hemY);
 const bodyCleanup=removeCoveredBody(modified,humanoid);
 addBoyAccessories(modified,humanoid);
 execFileSync('python',[fileURLToPath(new URL('./bake-character-textures.py',import.meta.url)),await (async()=>{const p=path.join(bakeDirectory,'texture-build.json');await fs.writeFile(p,JSON.stringify(textureRows));return p;})()],{stdio:'inherit'});

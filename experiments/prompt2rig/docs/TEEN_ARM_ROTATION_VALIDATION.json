@@ -1,0 +1,116 @@
+[
+  {
+    "motion": "wave",
+    "samples": 241,
+    "joints": {
+      "LeftForeArm": {
+        "maxStepDegrees": 0.012719265223981804,
+        "twistRangeDegrees": 0,
+        "minTwistDegrees": -90.6152095446079,
+        "maxTwistDegrees": -90.6152095446079,
+        "maxLocalAngleDegrees": 91.12079915205658,
+        "totalAngularTravelDegrees": 3.0526236537556213
+      },
+      "LeftHand": {
+        "maxStepDegrees": 0,
+        "twistRangeDegrees": 0,
+        "minTwistDegrees": 0.01858839513972252,
+        "maxTwistDegrees": 0.01858839513972252,
+        "maxLocalAngleDegrees": 7.345916405226729,
+        "totalAngularTravelDegrees": 0
+      },
+      "RightForeArm": {
+        "maxStepDegrees": 4.578200766257344,
+        "twistRangeDegrees": 9.68335106224987,
+        "minTwistDegrees": 90.40417251635691,
+        "maxTwistDegrees": 100.08752357860678,
+        "maxLocalAngleDegrees": 127.98050962642458,
+        "totalAngularTravelDegrees": 383.60526692106714
+      },
+      "RightHand": {
+        "maxStepDegrees": 1.284031443595229,
+        "twistRangeDegrees": 9.136703197969766,
+        "minTwistDegrees": -9.155290285810654,
+        "maxTwistDegrees": -0.018587087840889294,
+        "maxLocalAngleDegrees": 14.670265907842985,
+        "totalAngularTravelDegrees": 153.511972461435
+      }
+    }
+  },
+  {
+    "motion": "victory",
+    "samples": 301,
+    "joints": {
+      "LeftForeArm": {
+        "maxStepDegrees": 1.4315987144437847,
+        "twistRangeDegrees": 1.2486763938035126,
+        "minTwistDegrees": -91.8638859384114,
+        "maxTwistDegrees": -90.6152095446079,
+        "maxLocalAngleDegrees": 99.48923003226197,
+        "totalAngularTravelDegrees": 111.53668506322671
+      },
+      "LeftHand": {
+        "maxStepDegrees": 0,
+        "twistRangeDegrees": 1.782849987460995e-15,
+        "minTwistDegrees": 0.01858839513972247,
+        "maxTwistDegrees": 0.018588395139724254,
+        "maxLocalAngleDegrees": 7.3459177123707855,
+        "totalAngularTravelDegrees": 0
+      },
+      "RightForeArm": {
+        "maxStepDegrees": 1.4318946694557986,
+        "twistRangeDegrees": 1.232243613985129,
+        "minTwistDegrees": 90.61513659396664,
+        "maxTwistDegrees": 91.84738020795177,
+        "maxLocalAngleDegrees": 99.47502595722968,
+        "totalAngularTravelDegrees": 111.74716842807659
+      },
+      "RightHand": {
+        "maxStepDegrees": 0,
+        "twistRangeDegrees": 2.42672594983149e-14,
+        "minTwistDegrees": -0.01858708784091353,
+        "maxTwistDegrees": -0.018587087840889263,
+        "maxLocalAngleDegrees": 7.345960783986167,
+        "totalAngularTravelDegrees": 0
+      }
+    }
+  },
+  {
+    "motion": "billiards",
+    "samples": 361,
+    "joints": {
+      "LeftForeArm": {
+        "maxStepDegrees": 5.877304610826002,
+        "twistRangeDegrees": 72.81892988497904,
+        "minTwistDegrees": -97.53215339626303,
+        "maxTwistDegrees": -24.71322351128399,
+        "maxLocalAngleDegrees": 97.90618991064947,
+        "totalAngularTravelDegrees": 285.0536983152259
+      },
+      "LeftHand": {
+        "maxStepDegrees": 1.4096885037683815,
+        "twistRangeDegrees": 3.706533155223244,
+        "minTwistDegrees": -1.7840796809958737,
+        "maxTwistDegrees": 1.9224534742273702,
+        "maxLocalAngleDegrees": 17.412343053595936,
+        "totalAngularTravelDegrees": 93.61911939759763
+      },
+      "RightForeArm": {
+        "maxStepDegrees": 6.571924529932509,
+        "twistRangeDegrees": 83.9349286934765,
+        "minTwistDegrees": 6.680207900490146,
+        "maxTwistDegrees": 90.61513659396664,
+        "maxLocalAngleDegrees": 168.72443491413222,
+        "totalAngularTravelDegrees": 583.9238403598197
+      },
+      "RightHand": {
+        "maxStepDegrees": 0.3418140604780987,
+        "twistRangeDegrees": 0.9238737229740922,
+        "minTwistDegrees": -0.018587087840889294,
+        "maxTwistDegrees": 0.9052866351332028,
+        "maxLocalAngleDegrees": 16.344649064754904,
+        "totalAngularTravelDegrees": 28.58082203965349
+      }
+    }
+  }
+]

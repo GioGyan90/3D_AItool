@@ -9,7 +9,7 @@
 - 来源与参数：[`manifest.json`](../public/lab/characters/teen-boy/manifest.json)、[`preset-state.json`](../public/lab/characters/teen-boy/preset-state.json)、[许可记录](../public/lab/characters/teen-boy/SOURCES.md)。
 - 本次用户反馈“好多了”的实现基准：[2b3d0d9](https://github.com/GioGyan90/3D_AItool/commit/2b3d0d9ef745a726e18f54e9a18805da7eaed019)。继续工作先核对远程 main；此提交用于追溯，不要求退回旧版本。
 
-当前模型有 37 个网格零件、15,286 三角面、91 个实际骨骼节点，其中 52 个进入标准动作轨道。脸部、身体和骨骼比例沿用 CharaBuilder 少年预设。用户认可可作为下一阶段基准；这不替代尚未完成的本轮浏览器多视角视觉复查。具体数值与局限见 [制作记录](CHARABUILDER_BOY.md)。
+当前模型有 37 个网格零件、15,080 三角面、91 个实际骨骼节点，其中 52 个进入标准动作轨道。脸部、身体和骨骼比例沿用 CharaBuilder 少年预设。用户认可可作为下一阶段基准；这不替代尚未完成的本轮浏览器多视角视觉复查。具体数值与局限见 [制作记录](CHARABUILDER_BOY.md)。
 
 ## 服装：先确定覆盖，再做连续结构
 
@@ -18,7 +18,7 @@
 3. **肩、袖、腋窝连续处理。** 当前 T 恤从同一少年基础体的上身拓扑拟合，参考原衣长和袖口，放松躯干与上臂廓形，裁出领口、下摆和短袖。长边先做共享中点细分，计算权重和法线后再拆成衣身、左右袖、肩腋片，保留相同接缝位置和权重。不要分别简化新接缝。
 4. **把服装撑在实际身体外。** 使用平滑的躯干 / 肢体拟合场控制松量，检查肩峰、腋下、胸背和领口；不把皮肤每个细小凹凸沿原法线直接挤出，避免放大凹槽或产生翻折。领边沿实际开口建立，不能用一圈长三角面从袖口径向拉到领口代替整个肩部。
 
-   **同时校验衣物之间的层次。** 身体松量不等于内层衣物松量。外穿 T 恤需按实际裤腰截面建立外包轮廓，留间距，并细分下摆长边以免三角面弦线切进裤腰；交叠区域与裤腰协调骨盆权重，再平滑过渡到躯干。只检查单件法线不会发现衣裤穿模。
+   **同时校验衣物之间的层次。** 身体松量不等于内层衣物松量。保持已认可的服装外轮廓，优先将下摆遮住的内层裤腰收紧，留间距；只在被遮盖的腰部及短过渡带调整几何和权重，裤腿保留。必要时局部细分，并匹配内外衣物的变形。不要默认把上衣撑成宽松桶形来避让裤子。只检查单件法线不会发现衣裤穿模。
 5. **删除确定被遮挡的身体面。** 从装配体实际删去衣内的身体索引，而不是只设置不可见。保留领口、袖口、裤脚之外的皮肤；边界留少量衣内重叠，当前短袖约 9mm。身体遮罩必须随新服装的覆盖范围重算，不能把 T 恤遮罩直接沿用到背心或裸上身。
 6. **正确处理肩袖蒙皮。** 胸部、锁骨与上臂之间平滑分配影响，控制过渡范围，避免同一处同时混入互相冲突的权重。当前模型用现有肩骨随抬臂上提、随手臂前伸而前伸；骨长不变。`shoulderRhythm` 是该预设的适配开关，不应未经验证套给所有外来骨架。
 7. **法线跟随真实结构。** 全衣先计算面朝向和折角分组法线，再分件。腋窝两侧接近相反的面不能简单平均成向内的顶点法线。灰模、真实材质和实际变形都要检查；双面材质、阴影或贴图不能代替拓扑修复。
@@ -51,7 +51,7 @@
 
 1. **确定动作本身。** 记录动作、时长、是否循环、站立 / 位移、左右手、关键接触点与道具。未要求换角色时使用当前少年。一个动作尽量包含准备、主要动作、停留 / 反应和还原，差异体现在身体动作而非字幕。
 2. **按统一协议生成。** 使用 [WORKFLOW.md](WORKFLOW.md) 的聊天任务或 API 流程，输出 `motion-plan v1` JSON。标准驱动骨架是 T-pose，角色左侧 +X、向上 +Y、向前 +Z，局部 XYZ 欧拉角使用度，root 使用米；不要直接把目标 A-pose 骨架的角度抄进方案，也不要重复叠加肩部补偿。
-3. **烘焙并重定向。** `planToTake → applyRetarget / retargetTake` 将方案绑定到当前角色。保留掌面方向校正和当前少年的锁骨适配。关键关节和根位置都要产生可见的变化；手指精细动作、球杆接触、足底滑动和道具约束另行检查。
+3. **烘焙并重定向。** `planToTake → applyRetarget / retargetTake` 将方案绑定到当前角色。掌面朝向要与前臂协调，避免让手腕独自承担 A/T 姿态与轴向校正；给前伸动作明确掌面平面，避免沿前臂方向退化时绕轴翻转。保留当前少年的锁骨适配。关键关节和根位置都要产生可见的变化；手指精细动作、球杆接触、足底滑动和道具约束另行检查。
 4. **检查实际新动作。** 查看首尾、抬臂峰值、最大前伸、转身和接触时刻，覆盖正 / 侧 / 背 / 四分之三 / 斜前俯视 / 斜后俯视；发现问题后修正并复查。当前 `check-teen-deformation.mjs --sweep` 只覆盖内置挥手、庆祝、俯身三段，154 个采样不能证明任意新生成动作通过；新动作需追加对应采样检查。
 5. **导出并重新加载。** 导出完整人物与当前动作 GLB，或单独保存方案 JSON。用重新加载后的 AnimationMixer 确认肩骨、手掌、配饰跟随和时长；检查没有把灰模、孤立零件、线框或拆解位移写入成品。仅将 JSON 导入另一项目不代表该项目已实现同样的重定向与补偿。
 
@@ -68,8 +68,9 @@ cd experiments/prompt2rig
 npm test
 node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-deformation.mjs --sweep
 node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-waist.mjs --sweep
+node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-arms.mjs
 ```
 
-重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。28 项测试与 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json) 及 [衣裤间距报告](TEEN_WAIST_VALIDATION.json) 是当前基线，不替代新人物、新服装和新动作的实际验证。
+重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。30 项测试与 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json) 及 [衣裤间距报告](TEEN_WAIST_VALIDATION.json) 与 [手臂旋转报告](TEEN_ARM_ROTATION_VALIDATION.json) 是当前基线，不替代新人物、新服装和新动作的实际验证。
 
 公开预览：[GitHub Pages](https://giogyan90.github.io/3D_AItool/lab/)。修改运行时代码或模型后，从仓库根目录运行 `node experiments/prompt2rig/tools/build-pages.mjs`，连同根目录 `docs/` 输出提交并核对部署；只改本文等工程文档无需重新生成模型或网页资源。

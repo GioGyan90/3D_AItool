@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Track, trackToClip } from '../retarget.js?v=084c59061329';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=af2e03c23178';
 
 export const MOTIONS = [
   {id:'wave',name:'挥手致意',duration:4,description:'抬起右手 → 挥手三次 → 放下',prompt:'raises the right hand, waves hello three times with an open palm, then lowers the arm'},
@@ -44,6 +44,15 @@ export function applyMotion(rig, id, t) {
     rig.aim('LeftHand',new THREE.Vector3(0,-.1,1),e);
     rig.aim('RightArm',new THREE.Vector3(-.15,.05,-1),e);
     rig.aim('RightForeArm',new THREE.Vector3(0,-.7+stroke,1+stroke),e);
+    // Aim alone leaves an arbitrary inherited roll when the cue arm folds back.
+    // Give each forearm an explicit anatomical palm plane; fade from the relaxed
+    // pose with the same action envelope so entering/leaving the take is smooth.
+    for(const [side,palm]of [['Left',new THREE.Vector3(0,-1,0)],['Right',new THREE.Vector3(1,0,0)]]){
+      const name=side+'ForeArm',hand=side+'Hand',from=rig.rest[hand].wp.clone().sub(rig.rest[name].wp).normalize(),along=rig.bones[hand].getWorldPosition(new THREE.Vector3()).sub(rig.bones[name].getWorldPosition(new THREE.Vector3())).normalize(),rest=basisQuat(from,new THREE.Vector3(0,0,1)),hint=side==='Left'?new THREE.Vector3(0,0,1).lerp(new THREE.Vector3(-1,0,0),smooth(0,.45,e)).lerp(palm,smooth(.45,1,e)).normalize():new THREE.Vector3(0,0,1).lerp(palm,e).normalize(),desired=basisQuat(along,hint).multiply(rest.invert());
+      rig.setWorldQuat(name,desired);
+    }
+    const fore=rig.bones.LeftHand.getWorldPosition(new THREE.Vector3()).sub(rig.bones.LeftForeArm.getWorldPosition(new THREE.Vector3())).normalize(),along=fore.lerp(new THREE.Vector3(0,-.1,1).normalize(),e).normalize(),from=rig.rest.LeftHandMiddle1.wp.clone().sub(rig.rest.LeftHand.wp).normalize(),hint=new THREE.Vector3(0,0,1).lerp(new THREE.Vector3(-1,0,0),smooth(0,.45,e)).lerp(new THREE.Vector3(0,-1,0),smooth(.45,1,e)).normalize(),desired=basisQuat(along,hint).multiply(basisQuat(from,new THREE.Vector3(0,0,1)).invert());
+    rig.setWorldQuat('LeftHand',desired);
   }
   rig.model.updateMatrixWorld(true); rig.clampToFloor();
 }

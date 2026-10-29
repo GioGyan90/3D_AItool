@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Track, trackToClip, basisQuat } from '../retarget.js?v=084c59061329';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=af2e03c23178';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});
@@ -57,6 +57,13 @@ function orientRetargetedHand(driver,target,side,basis){
  const desired=basisQuat(along,palm).multiply(rest.q.clone().invert()).multiply(target.rest[name].wq);target.setWorldQuat(name,desired);
 }
 
+function orientRetargetedForearm(driver,target,side,basis){
+ const sourcePalm=restHandFrame(driver,side),targetPalm=restHandFrame(target,side),name=side+'ForeArm',hand=side+'Hand';if(!sourcePalm||!targetPalm||!driver.bones[name]||!target.bones[name])return;
+ const sourceAlong=driver.rest[hand].wp.clone().sub(driver.rest[name].wp).normalize(),targetAlong=target.rest[hand].wp.clone().sub(target.rest[name].wp).normalize(),delta=driver.bones[name].getWorldQuaternion(new THREE.Quaternion()).multiply(driver.rest[name].wq.clone().invert());
+ const along=sourceAlong.applyQuaternion(delta).applyQuaternion(basis),palm=sourcePalm.palm.clone().applyQuaternion(delta).applyQuaternion(basis),rest=basisQuat(targetAlong,targetPalm.palm);
+ target.setWorldQuat(name,basisQuat(along,palm).multiply(rest.invert()).multiply(target.rest[name].wq));
+}
+
 export function applyRetarget(driver,target){
   if(driver===target)return;
   target.reset();target.copyPoseFrom(driver);
@@ -74,7 +81,7 @@ export function applyRetarget(driver,target){
     const a=driver.bones[side+name],b=driver.bones[side+child];if(!a||!b||!target.bones[side+child])continue;
     const direction=b.getWorldPosition(new THREE.Vector3()).sub(a.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis);target.aim(side+name,direction);
   }
-  for(const side of ['Left','Right'])orientRetargetedHand(driver,target,side,basis);
+  for(const side of ['Left','Right']){orientRetargetedForearm(driver,target,side,basis);orientRetargetedHand(driver,target,side,basis);}
   target.clampToFloor();
 }
 

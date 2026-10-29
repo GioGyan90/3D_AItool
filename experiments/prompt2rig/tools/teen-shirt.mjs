@@ -1,14 +1,13 @@
 import * as THREE from 'three';
 import {clipGeometry} from './teen-boy-accessories.mjs';
-import {trouserEnvelope,fitShirtWaist} from './teen-waist.mjs';
 const smooth=(a,b,v)=>{const t=THREE.MathUtils.clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);};
 const vec=(g,i)=>new THREE.Vector3().fromBufferAttribute(g.attributes.position,i);
 function compact(g,indices){const used=[...new Set(indices)],map=new Map(used.map((id,i)=>[id,i])),out=new THREE.BufferGeometry();for(const [key,a]of Object.entries(g.attributes)){const values=new a.array.constructor(used.length*a.itemSize);for(let i=0;i<used.length;i++)for(let k=0;k<a.itemSize;k++)values[i*a.itemSize+k]=a.getComponent(used[i],k);out.setAttribute(key,new THREE.BufferAttribute(values,a.itemSize));}out.setIndex(indices.map(i=>map.get(i)));out.computeBoundingBox();out.computeBoundingSphere();return out;}
 // Split long edges once, sharing midpoint IDs with neighboring triangles.
-function refine(g,waistTop){
+export function refine(g,minY=1.23,maxLength=.035){
  const values=Object.fromEntries(Object.entries(g.attributes).map(([k,a])=>[k,Array.from(a.array)])),midpoints=new Map(),out=[];
  const edge=(a,b)=>a<b?a+','+b:b+','+a;
- for(let i=0;i<g.index.count;i+=3)for(let k=0;k<3;k++){const a=g.index.getX(i+k),b=g.index.getX(i+(k+1)%3),va=vec(g,a),vb=vec(g,b);const low=Math.min(va.y,vb.y)<waistTop+.04;if((Math.max(va.y,vb.y)<1.23&&!low)||va.distanceTo(vb)<(low?.022:.035))continue;const key=edge(a,b);if(midpoints.has(key))continue;const id=values.position.length/3;midpoints.set(key,id);for(const [name,attr]of Object.entries(g.attributes)){if(name==='skinIndex'||name==='skinWeight')continue;for(let c=0;c<attr.itemSize;c++)values[name].push((attr.getComponent(a,c)+attr.getComponent(b,c))/2);}const weights=new Map();for(const v of [a,b])for(let c=0;c<4;c++){const j=g.attributes.skinIndex.getComponent(v,c);weights.set(j,(weights.get(j)||0)+g.attributes.skinWeight.getComponent(v,c)/2);}const list=[...weights].sort((a,b)=>b[1]-a[1]).slice(0,4),sum=list.reduce((n,[,w])=>n+w,0);for(let c=0;c<4;c++){values.skinIndex.push(list[c]?.[0]||0);values.skinWeight.push((list[c]?.[1]||0)/sum);}}
+ for(let i=0;i<g.index.count;i+=3)for(let k=0;k<3;k++){const a=g.index.getX(i+k),b=g.index.getX(i+(k+1)%3),va=vec(g,a),vb=vec(g,b);if(Math.max(va.y,vb.y)<minY||va.distanceTo(vb)<maxLength)continue;const key=edge(a,b);if(midpoints.has(key))continue;const id=values.position.length/3;midpoints.set(key,id);for(const [name,attr]of Object.entries(g.attributes)){if(name==='skinIndex'||name==='skinWeight')continue;for(let c=0;c<attr.itemSize;c++)values[name].push((attr.getComponent(a,c)+attr.getComponent(b,c))/2);}const weights=new Map();for(const v of [a,b])for(let c=0;c<4;c++){const j=g.attributes.skinIndex.getComponent(v,c);weights.set(j,(weights.get(j)||0)+g.attributes.skinWeight.getComponent(v,c)/2);}const list=[...weights].sort((a,b)=>b[1]-a[1]).slice(0,4),sum=list.reduce((n,[,w])=>n+w,0);for(let c=0;c<4;c++){values.skinIndex.push(list[c]?.[0]||0);values.skinWeight.push((list[c]?.[1]||0)/sum);}}
  for(let i=0;i<g.index.count;i+=3){let ids=[0,1,2].map(k=>g.index.getX(i+k)),mids=ids.map((a,k)=>midpoints.get(edge(a,ids[(k+1)%3]))),count=mids.filter(i=>i!==undefined).length;if(!count){out.push(...ids);continue;}if(count===3){const[a,b,c]=ids,[ab,bc,ca]=mids;out.push(a,ab,ca,ab,b,bc,ca,bc,c,ab,bc,ca);continue;}let start=count===1?mids.findIndex(i=>i!==undefined):mids.findIndex((m,k)=>m!==undefined&&mids[(k+1)%3]!==undefined);ids=[...ids.slice(start),...ids.slice(0,start)];mids=[...mids.slice(start),...mids.slice(0,start)];const[a,b,c]=ids,[ab,bc]=mids;if(count===1)out.push(a,ab,c,ab,b,c);else out.push(b,bc,ab,a,ab,c,ab,bc,c);}
  const result=new THREE.BufferGeometry();for(const[name,a]of Object.entries(g.attributes))result.setAttribute(name,new THREE.BufferAttribute(new a.array.constructor(values[name]),a.itemSize));result.setIndex(out);return result;
 }
@@ -32,7 +31,7 @@ export function buildFittedTee(model,h,template){
  g=clipGeometry(g,p=>p[1]-hem);
  const top=neck.y+.006;g=clipGeometry(g,p=>top-p[1]);
  for(const side of ['L','R']){const sign=side==='L'?1:-1,origin=centers[side],axis=axes[side],torso=Math.abs(origin.x)+.014;g=clipGeometry(g,p=>Math.max(torso-sign*p[0],hems[side]-new THREE.Vector3(...p).sub(origin).dot(axis)));}
- const waistFit=trouserEnvelope(model,hem);g=refine(g,waistFit.top);g=refine(g,waistFit.top);g=fitShirtWaist(g,h.hips,waistFit);
+ g=refine(g);g=refine(g);
  // Preserve native body weighting below the shoulder band. Support the deltoid
  // by the clavicle rather than averaging one long panel between chest and arm.
  let pos=g.attributes.position;const si=g.attributes.skinIndex,sw=g.attributes.skinWeight;
@@ -57,5 +56,5 @@ export function buildFittedTee(model,h,template){
  for(let i=0;i<sectors;i++){const j=(i+1)%sectors;ci.push(i,j,i+sectors,j,j+sectors,i+sectors);}
  const rib=new THREE.BufferGeometry();rib.setAttribute('position',new THREE.Float32BufferAttribute(cp,3));rib.setIndex(ci);rib.computeVertexNormals();rib.computeBoundingBox();rib.computeBoundingSphere();const joints=new Uint16Array(cp.length/3*4),weights=new Float32Array(joints.length);for(let i=0;i<cp.length/3;i++){joints[i*4]=h.upperChest;weights[i*4]=1;}rib.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(joints,4));rib.setAttribute('skinWeight',new THREE.Float32BufferAttribute(weights,4));model.add(rib,new THREE.MeshStandardMaterial({name:'tee_neck',color:0x386e70,roughness:.9}),'T 恤圆领','tee_neck',[0,.07,.1],'ribbing fitted to the source body neckline');
  model.root.userData.shoulderRhythm=true;
- return {hemY:hem,neckY:top,continuousTemplate:true,waistFit,neckCenter:[neck.x,neck.z],neckRadius:Array.from({length:32},(_,i)=>radius(i/32*Math.PI*2))};
+ return {hemY:hem,neckY:top,continuousTemplate:true,neckCenter:[neck.x,neck.z],neckRadius:Array.from({length:32},(_,i)=>radius(i/32*Math.PI*2))};
 }

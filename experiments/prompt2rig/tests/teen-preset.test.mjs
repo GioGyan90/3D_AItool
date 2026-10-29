@@ -117,3 +117,18 @@ test('the shirt hem encloses the trousers through all three complete takes',()=>
  const result=JSON.parse(execFileSync(process.execPath,['--experimental-loader',loader,checker,'--sweep'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
  assert.equal(result.sampledPoses,154);assert.ok(result.radialSamples>200000);assert.deepEqual(result.failures,[]);assert.ok(Number.isFinite(result.minClearance)&&result.minClearance>.004,'trousers enter the overlapping shirt hem');
 });
+
+test('baked hand and forearm rotations remain bounded and continuous across complete takes',()=>{
+ const loader=fileURLToPath(new URL('./vendor-loader.mjs',import.meta.url)),checker=fileURLToPath(new URL('../tools/check-teen-arms.mjs',import.meta.url));
+ const result=JSON.parse(execFileSync(process.execPath,['--experimental-loader',loader,checker],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));assert.equal(result.reduce((n,r)=>n+r.samples,0),903);
+ for(const motion of result)for(const[name,joint]of Object.entries(motion.joints)){assert.ok(joint.maxStepDegrees<9,motion.motion+' '+name+' jumps between frames');assert.ok(joint.twistRangeDegrees<110,motion.motion+' '+name+' winds around its axis');if(name.endsWith('Hand'))assert.ok(joint.maxLocalAngleDegrees<25,motion.motion+' '+name+' carries the forearm alignment at the wrist');}
+});
+
+test('the shirt hem stays fitted while only the covered trouser waist is tucked',async()=>{
+ const source=await load('source-preset.glb'),root=await load('reassembled-boy.glb'),parts=meshes(root),fit=report.shirtConstruction.waistFit;assert.equal(fit.strategy,'tuck-covered-trouser-waist');assert.equal(fit.shirtExpanded,false);assert.equal(fit.modifiedPart,'pants_hip');
+ const hem=report.shirtConstruction.hemY,neck=prepareRig(root).rig.rest.Neck.wp;let count=0;
+ for(const mesh of parts.filter(m=>m.name==='shirt_torso')){const p=mesh.geometry.attributes.position;for(let i=0;i<p.count;i++)if(Math.abs(p.getY(i)-hem)<1e-5){count++;assert.ok(Math.abs(p.getX(i)-neck.x)<.17,'hem was expanded back into a loose cylinder');assert.ok(p.getZ(i)>-.11&&p.getZ(i)<.14);}}
+ assert.ok(count>10);
+ const sourcePositions=new Set();for(const m of meshes(source).filter(m=>m.name.startsWith('pants_')))for(let i=0;i<m.geometry.attributes.position.count;i++)sourcePositions.add(key(new THREE.Vector3().fromBufferAttribute(m.geometry.attributes.position,i)));
+ for(const m of parts.filter(m=>/^pants_[LR]$/.test(m.name)))for(let i=0;i<m.geometry.attributes.position.count;i++)assert.ok(sourcePositions.has(key(new THREE.Vector3().fromBufferAttribute(m.geometry.attributes.position,i))),'visible trouser leg was reshaped');
+});
