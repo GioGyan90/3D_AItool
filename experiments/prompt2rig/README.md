@@ -4,6 +4,10 @@
 
 ## 先看动作
 
+**在线查看：[GitHub Pages 动作实验室](https://giogyan90.github.io/3D_AItool/lab/)**。可直接播放、切换视角和导出动作；在线版不运行本地 AI 代理。
+
+本地运行：
+
 ```powershell
 git clone https://github.com/GioGyan90/3D_AItool.git
 cd 3D_AItool/experiments/prompt2rig
@@ -61,6 +65,16 @@ node --experimental-loader ./tests/vendor-loader.mjs tools/export-samples.mjs
 主要文件：`public/lab/character.js` 是样机，`motions.js` 是动作编排，`app.js` 是播放器和导出，`renderer.js` 是 WebGL / Canvas 预览。`public/retarget.js` 保留上游实现。服务默认监听 `127.0.0.1`，仅开发预览参数 `--preview` 会监听全部接口；不应直接公开部署带密钥的本地代理。
 
 研究结论、已验证项和下一步见 [RESEARCH.md](docs/RESEARCH.md)。
+
+## GitHub Pages 发布
+
+仓库 Pages 使用 `main` 分支的 `/docs` 目录。静态文件由以下命令生成并随代码提交：
+
+```powershell
+node experiments/prompt2rig/tools/build-pages.mjs
+```
+
+从仓库根目录执行该命令；调整实验室界面或动作后重新生成 `docs/`，一起提交。公开版只包含播放器、样机、动作和渲染依赖，保留本地服务与 AI 功能的说明链接。
 
 ## 许可
 
