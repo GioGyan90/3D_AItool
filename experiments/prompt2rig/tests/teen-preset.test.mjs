@@ -111,3 +111,9 @@ test('all three complete takes retain outward cloth normals and non-collapsed tr
  const result=JSON.parse(execFileSync(process.execPath,['--experimental-loader',loader,checker,'--sweep'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
  assert.equal(result.sampledPoses,154);assert.deepEqual(result.failures,[]);assert.ok(result.minNormalAlignment>.2,'cloth normals turn through the surface');assert.ok(result.minAreaRatio>.1,'cloth triangles collapse during motion');
 });
+
+test('the shirt hem encloses the trousers through all three complete takes',()=>{
+ const loader=fileURLToPath(new URL('./vendor-loader.mjs',import.meta.url)),checker=fileURLToPath(new URL('../tools/check-teen-waist.mjs',import.meta.url));
+ const result=JSON.parse(execFileSync(process.execPath,['--experimental-loader',loader,checker,'--sweep'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+ assert.equal(result.sampledPoses,154);assert.ok(result.radialSamples>200000);assert.deepEqual(result.failures,[]);assert.ok(Number.isFinite(result.minClearance)&&result.minClearance>.004,'trousers enter the overlapping shirt hem');
+});

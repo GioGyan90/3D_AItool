@@ -9,7 +9,7 @@
 - 来源与参数：[`manifest.json`](../public/lab/characters/teen-boy/manifest.json)、[`preset-state.json`](../public/lab/characters/teen-boy/preset-state.json)、[许可记录](../public/lab/characters/teen-boy/SOURCES.md)。
 - 本次用户反馈“好多了”的实现基准：[2b3d0d9](https://github.com/GioGyan90/3D_AItool/commit/2b3d0d9ef745a726e18f54e9a18805da7eaed019)。继续工作先核对远程 main；此提交用于追溯，不要求退回旧版本。
 
-当前模型有 37 个网格零件、13,992 三角面、91 个实际骨骼节点，其中 52 个进入标准动作轨道。脸部、身体和骨骼比例沿用 CharaBuilder 少年预设。用户认可可作为下一阶段基准；这不替代尚未完成的本轮浏览器多视角视觉复查。具体数值与局限见 [制作记录](CHARABUILDER_BOY.md)。
+当前模型有 37 个网格零件、15,286 三角面、91 个实际骨骼节点，其中 52 个进入标准动作轨道。脸部、身体和骨骼比例沿用 CharaBuilder 少年预设。用户认可可作为下一阶段基准；这不替代尚未完成的本轮浏览器多视角视觉复查。具体数值与局限见 [制作记录](CHARABUILDER_BOY.md)。
 
 ## 服装：先确定覆盖，再做连续结构
 
@@ -17,6 +17,8 @@
 2. **复用合适的现成服装。** 先看原服装的拓扑、裁片和权重。衣长、袖长、腰围、鞋面范围以真实模型为基准。原网格变形质量足够时直接保留；肩腋结构不适合时，允许使用同一基础体的连续拓扑重建相应服装区域，并准确记录改造范围。
 3. **肩、袖、腋窝连续处理。** 当前 T 恤从同一少年基础体的上身拓扑拟合，参考原衣长和袖口，放松躯干与上臂廓形，裁出领口、下摆和短袖。长边先做共享中点细分，计算权重和法线后再拆成衣身、左右袖、肩腋片，保留相同接缝位置和权重。不要分别简化新接缝。
 4. **把服装撑在实际身体外。** 使用平滑的躯干 / 肢体拟合场控制松量，检查肩峰、腋下、胸背和领口；不把皮肤每个细小凹凸沿原法线直接挤出，避免放大凹槽或产生翻折。领边沿实际开口建立，不能用一圈长三角面从袖口径向拉到领口代替整个肩部。
+
+   **同时校验衣物之间的层次。** 身体松量不等于内层衣物松量。外穿 T 恤需按实际裤腰截面建立外包轮廓，留间距，并细分下摆长边以免三角面弦线切进裤腰；交叠区域与裤腰协调骨盆权重，再平滑过渡到躯干。只检查单件法线不会发现衣裤穿模。
 5. **删除确定被遮挡的身体面。** 从装配体实际删去衣内的身体索引，而不是只设置不可见。保留领口、袖口、裤脚之外的皮肤；边界留少量衣内重叠，当前短袖约 9mm。身体遮罩必须随新服装的覆盖范围重算，不能把 T 恤遮罩直接沿用到背心或裸上身。
 6. **正确处理肩袖蒙皮。** 胸部、锁骨与上臂之间平滑分配影响，控制过渡范围，避免同一处同时混入互相冲突的权重。当前模型用现有肩骨随抬臂上提、随手臂前伸而前伸；骨长不变。`shoulderRhythm` 是该预设的适配开关，不应未经验证套给所有外来骨架。
 7. **法线跟随真实结构。** 全衣先计算面朝向和折角分组法线，再分件。腋窝两侧接近相反的面不能简单平均成向内的顶点法线。灰模、真实材质和实际变形都要检查；双面材质、阴影或贴图不能代替拓扑修复。
@@ -65,8 +67,9 @@ git status -sb
 cd experiments/prompt2rig
 npm test
 node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-deformation.mjs --sweep
+node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-waist.mjs --sweep
 ```
 
-重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。27 项测试与 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json) 是当前基线，不替代新人物、新服装和新动作的实际验证。
+重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。28 项测试与 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json) 及 [衣裤间距报告](TEEN_WAIST_VALIDATION.json) 是当前基线，不替代新人物、新服装和新动作的实际验证。
 
 公开预览：[GitHub Pages](https://giogyan90.github.io/3D_AItool/lab/)。修改运行时代码或模型后，从仓库根目录运行 `node experiments/prompt2rig/tools/build-pages.mjs`，连同根目录 `docs/` 输出提交并核对部署；只改本文等工程文档无需重新生成模型或网页资源。

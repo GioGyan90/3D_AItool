@@ -267,6 +267,21 @@
     "hemY": 0.9505846500396729,
     "neckY": 1.4046894427784784,
     "continuousTemplate": true,
+    "waistFit": {
+      "center": [
+        -0.0004899786820157376,
+        0.012667350471019745
+      ],
+      "radii": [
+        0.17583325214694293,
+        0.12381435391038728
+      ],
+      "padding": 0.012,
+      "top": 1.068880558013916,
+      "bottom": 0.9205846500396728,
+      "fullyFittedThrough": 1.083880558013916,
+      "blendThrough": 1.1788805580139161
+    },
     "neckCenter": [
       -0.0004888667222299482,
       -0.007861351046381446
@@ -330,13 +345,13 @@
     "bones": 91
   },
   "after": {
-    "triangles": 13992,
-    "vertices": 10080,
+    "triangles": 15286,
+    "vertices": 10752,
     "meshes": 37,
     "bones": 91
   },
   "sourceGLBBytes": 1023448,
-  "modelGLBBytes": 825952,
+  "modelGLBBytes": 847440,
   "history": [
     {
       "variant": "source",
@@ -845,8 +860,8 @@
     {
       "id": "shirt_torso",
       "label": "T 恤躯干",
-      "triangles": 1232,
-      "vertices": 754,
+      "triangles": 2526,
+      "vertices": 1426,
       "provenance": "same source body topology fitted as a continuous shirt"
     },
     {
