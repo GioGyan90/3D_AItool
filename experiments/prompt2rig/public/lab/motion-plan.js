@@ -63,6 +63,13 @@ export function applyRetarget(driver,target){
   // Correct A-pose/T-pose and bone-axis differences using measured limb
   // directions, rather than adding a T-pose rotation to an A-pose rest.
   const basis=target.restHipBasis.clone().multiply(driver.restHipBasis.clone().invert());
+  if(target.model.userData.shoulderRhythm){
+    const up=new THREE.Vector3(0,1,0).applyQuaternion(target.bones.Spine2.getWorldQuaternion(new THREE.Quaternion())).normalize(),forward=new THREE.Vector3(0,0,1).applyQuaternion(target.bones.Spine2.getWorldQuaternion(new THREE.Quaternion())).normalize();
+    for(const side of ['Left','Right']){const arm=driver.bones[side+'Arm'],fore=driver.bones[side+'ForeArm'],shoulder=target.bones[side+'Shoulder'];if(!arm||!fore||!shoulder)continue;
+      const direction=fore.getWorldPosition(new THREE.Vector3()).sub(arm.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis).normalize(),elevation=Math.acos(THREE.MathUtils.clamp(-direction.dot(up),-1,1)),lift=THREE.MathUtils.clamp((elevation-Math.PI/3)*.35,0,.38);
+      const protraction=THREE.MathUtils.clamp(direction.dot(forward)*.5,-.2,.5),q=new THREE.Quaternion().setFromAxisAngle(up,protraction*(side==='Left'?-1:1)).multiply(new THREE.Quaternion().setFromAxisAngle(forward,lift*(side==='Left'?1:-1))).multiply(shoulder.getWorldQuaternion(new THREE.Quaternion()));target.setWorldQuat(side+'Shoulder',q);
+    }
+  }
   for(const side of ['Left','Right'])for(const [name,child] of [['Arm','ForeArm'],['ForeArm','Hand'],['UpLeg','Leg'],['Leg','Foot']]){
     const a=driver.bones[side+name],b=driver.bones[side+child];if(!a||!b||!target.bones[side+child])continue;
     const direction=b.getWorldPosition(new THREE.Vector3()).sub(a.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis);target.aim(side+name,direction);

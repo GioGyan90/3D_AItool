@@ -19,6 +19,7 @@ export function detectBones(root,overrides={}){
 }
 
 export function prepareRig(root,overrides={}){
+  root.traverse(o=>{if(o.userData.preset==='charabuilder-boy'&&o.userData.shoulderRhythm)root.userData.shoulderRhythm=true;});
   const detection=detectBones(root,overrides);if(detection.missing.length)return {...detection,rig:null};
   const entries=Object.entries(detection.map),names=entries.map(([,b])=>b.name);
   if(new Set(entries.map(([,b])=>b)).size!==entries.length)throw new Error('同一根骨骼不能重复映射到多个部位');

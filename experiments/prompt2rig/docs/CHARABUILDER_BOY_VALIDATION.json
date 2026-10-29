@@ -195,8 +195,8 @@
         -0.9036909840682165,
         0.007053116960355782
       ],
-      "cut": 0.11844112641309519,
-      "hem": 0.12744112641309518,
+      "cut": 0.12028518065077999,
+      "hem": 0.12928518065077999,
       "overlap": 0.009
     },
     {
@@ -213,56 +213,110 @@
         -0.9036907595520284,
         0.007051949761594791
       ],
-      "cut": 0.11843392654528163,
-      "hem": 0.12743392654528163,
+      "cut": 0.12028251331509442,
+      "hem": 0.1292825133150944,
       "overlap": 0.009
     },
     {
       "part": "neck_scalp",
       "before": 764,
-      "after": 339,
+      "after": 344,
       "cutY": 1.3896894427784785,
       "aperture": [
-        0.0468816282209196,
-        0.038826441214226674,
-        0.03582368010584846,
-        0.03443370667394191,
-        0.03467464428939356,
-        0.03592976952245555,
-        0.03319740606755069,
-        0.03073635811689107,
-        0.030444167766390293,
-        0.030736460620375182,
-        0.03319653947117288,
-        0.0359299837614199,
-        0.03467093319876966,
-        0.034429582129027914,
-        0.03582104936639048,
-        0.03882563839530336,
-        0.04688209267890073,
-        0.07197453849778801,
-        0.07229324392952745,
-        0.0671590346673477,
-        0.05893464882805498,
-        0.05337902060483026,
-        0.04974298547028902,
-        0.04836598192008225,
-        0.04933029085058167,
-        0.048365533756326635,
-        0.04974268704972114,
-        0.05337868548040534,
-        0.0589341017698903,
-        0.06716056378622817,
-        0.0722940191871204,
-        0.07197142517266555
+        0.08306200895274066,
+        0.0625282196274905,
+        0.04316572873800026,
+        0.04006461778986631,
+        0.039617464375237596,
+        0.041849744834886723,
+        0.04545794100530175,
+        0.04062718021903895,
+        0.040462149087009874,
+        0.04062732463940605,
+        0.04545775929371349,
+        0.04184523058824421,
+        0.03961356098961733,
+        0.040062065790769694,
+        0.04316474350404582,
+        0.06252356175841396,
+        0.08306290181910611,
+        0.08195021648038697,
+        0.06803110219411769,
+        0.05549930951578374,
+        0.04528278835838204,
+        0.0394592634776536,
+        0.03622872727089035,
+        0.034894147953597826,
+        0.03440439229864076,
+        0.03489381750630331,
+        0.03622838801789692,
+        0.03945889632266696,
+        0.04528235720405077,
+        0.05549858210606725,
+        0.06803297398017735,
+        0.0819478932877971
       ],
       "center": [
         -0.0004888667222299482,
-        0.006138648953618554
+        -0.007861351046381446
       ],
       "clearAbove": 1.4136894427784783
     }
   ],
+  "shirtConstruction": {
+    "hemY": 0.9505846500396729,
+    "neckY": 1.4046894427784784,
+    "continuousTemplate": true,
+    "neckCenter": [
+      -0.0004888667222299482,
+      -0.007861351046381446
+    ],
+    "neckRadius": [
+      0.0890620067769302,
+      0.06852822202940646,
+      0.04916572742877683,
+      0.04606461895829646,
+      0.04561746452698733,
+      0.04784974490966769,
+      0.05145794159400407,
+      0.04662717859678688,
+      0.046462147859873536,
+      0.046627324657141915,
+      0.05145776076787802,
+      0.047845230939584926,
+      0.045613560460948874,
+      0.04606206463523199,
+      0.04916474216343174,
+      0.06852356512804901,
+      0.0890629040085776,
+      0.08795021779513858,
+      0.07403110313628784,
+      0.06149930940699086,
+      0.051282789178189105,
+      0.0454592633703796,
+      0.04222872797754296,
+      0.04089414892493279,
+      0.040404391435307205,
+      0.040893818594565826,
+      0.04222838686685657,
+      0.04545889616442115,
+      0.05128235824987206,
+      0.06149858326273985,
+      0.0740329756920829,
+      0.0879478954480307
+    ]
+  },
+  "capOpening": {
+    "base": 1.6234315128326415,
+    "center": [
+      -0.0004888411097676554,
+      0.0010218472750002866
+    ],
+    "halfAngle": 0.46,
+    "height": 0.045,
+    "hairFront": 0.1365787386894226,
+    "strapFront": 0.14457873868942261
+  },
   "before": {
     "triangles": 23922,
     "vertices": 58658,
@@ -276,13 +330,13 @@
     "bones": 91
   },
   "after": {
-    "triangles": 13573,
-    "vertices": 9794,
-    "meshes": 36,
+    "triangles": 13992,
+    "vertices": 10080,
+    "meshes": 37,
     "bones": 91
   },
   "sourceGLBBytes": 1023448,
-  "modelGLBBytes": 817804,
+  "modelGLBBytes": 825952,
   "history": [
     {
       "variant": "source",
@@ -672,8 +726,8 @@
     {
       "id": "neck_scalp",
       "label": "颈部与后脑",
-      "triangles": 339,
-      "vertices": 256,
+      "triangles": 344,
+      "vertices": 262,
       "provenance": "source neck skin clipped inside crew neck"
     },
     {
@@ -733,27 +787,6 @@
       "provenance": "source"
     },
     {
-      "id": "sleeve_L",
-      "label": "左短袖",
-      "triangles": 123,
-      "vertices": 107,
-      "provenance": "source"
-    },
-    {
-      "id": "shirt_torso",
-      "label": "T 恤躯干",
-      "triangles": 1071,
-      "vertices": 791,
-      "provenance": "source"
-    },
-    {
-      "id": "sleeve_R",
-      "label": "右短袖",
-      "triangles": 123,
-      "vertices": 107,
-      "provenance": "source"
-    },
-    {
       "id": "pants_L",
       "label": "左裤腿",
       "triangles": 1432,
@@ -777,44 +810,65 @@
     {
       "id": "HairScalp_M00_000_HairBack_00_HAIR",
       "label": "帽内发底",
-      "triangles": 352,
-      "vertices": 236,
-      "provenance": "source hair trimmed inside the cap"
+      "triangles": 364,
+      "vertices": 248,
+      "provenance": "source hair retained behind the cap adjustment opening"
     },
     {
       "id": "HairFront_F00_000_Hair_00_HAIR_01",
       "label": "前发",
-      "triangles": 561,
-      "vertices": 479,
-      "provenance": "source hair trimmed inside the cap"
+      "triangles": 932,
+      "vertices": 823,
+      "provenance": "source hair retained behind the cap adjustment opening"
     },
     {
       "id": "HairBack_Micket_sidepart_HAIR",
       "label": "后发",
-      "triangles": 73,
-      "vertices": 161,
-      "provenance": "source hair trimmed inside the cap"
+      "triangles": 71,
+      "vertices": 155,
+      "provenance": "source hair retained behind the cap adjustment opening"
     },
     {
       "id": "HairSide_Micket_sidepart_HAIR",
       "label": "侧发",
       "triangles": 51,
       "vertices": 115,
-      "provenance": "source hair trimmed inside the cap"
+      "provenance": "source hair retained behind the cap adjustment opening"
     },
     {
       "id": "tee_yoke",
-      "label": "T 恤肩部补片",
-      "triangles": 810,
-      "vertices": 540,
-      "provenance": "new accessory fitted to source preset"
+      "label": "连续肩腋补片",
+      "triangles": 500,
+      "vertices": 381,
+      "provenance": "same source body topology fitted as a continuous shirt"
+    },
+    {
+      "id": "shirt_torso",
+      "label": "T 恤躯干",
+      "triangles": 1232,
+      "vertices": 754,
+      "provenance": "same source body topology fitted as a continuous shirt"
+    },
+    {
+      "id": "sleeve_L",
+      "label": "左短袖",
+      "triangles": 140,
+      "vertices": 96,
+      "provenance": "same source body topology fitted as a continuous shirt"
+    },
+    {
+      "id": "sleeve_R",
+      "label": "右短袖",
+      "triangles": 140,
+      "vertices": 96,
+      "provenance": "same source body topology fitted as a continuous shirt"
     },
     {
       "id": "tee_neck",
       "label": "T 恤圆领",
       "triangles": 64,
       "vertices": 64,
-      "provenance": "new accessory fitted to source preset"
+      "provenance": "ribbing fitted to the source body neckline"
     },
     {
       "id": "cap_crown",
@@ -832,9 +886,16 @@
     },
     {
       "id": "cap_strap",
-      "label": "反戴帽 · 前调节带",
-      "triangles": 12,
-      "vertices": 24,
+      "label": "反戴帽 · 青绿调节带",
+      "triangles": 100,
+      "vertices": 52,
+      "provenance": "new accessory fitted to source preset"
+    },
+    {
+      "id": "cap_buckle",
+      "label": "反戴帽 · 黄铜带扣",
+      "triangles": 60,
+      "vertices": 120,
       "provenance": "new accessory fitted to source preset"
     },
     {
@@ -860,9 +921,9 @@
     }
   ],
   "added": [
-    "backwards cap crown, brim, strap, button",
+    "backwards cap crown, brim, contrasting strap, brass buckle, button",
     "sneaker soles",
-    "crew-neck binding and shoulder yoke"
+    "continuous fitted shirt from the same source body topology and crew-neck ribbing"
   ],
   "removed": [
     "six generated shirt buttons",

@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import * as THREE from 'three';
 import {readGLB,writeGLB} from '../public/lab/glb-codec.js';
 import {parseCharacter,exportCharacter} from '../public/lab/assets.js';
@@ -13,7 +15,7 @@ import {applyRetarget,retargetTake} from '../public/lab/motion-plan.js';
 const directory=new URL('../public/lab/characters/teen-boy/',import.meta.url);
 const report=JSON.parse(await fs.readFile(new URL('manifest.json',directory),'utf8'));
 globalThis.FileReader=class{readAsArrayBuffer(blob){blob.arrayBuffer().then(x=>{this.result=x;this.onloadend?.();});}};
-async function load(name){const bytes=new Uint8Array(await fs.readFile(new URL(name,directory))),{json,bin}=readGLB(bytes);for(const m of json.materials||[])delete m.pbrMetallicRoughness.baseColorTexture;json.images=[];json.textures=[];const gltf=await parseCharacter(writeGLB(json,bin));gltf.scene.updateMatrixWorld(true);return gltf.scene;}
+async function load(name){const bytes=new Uint8Array(await fs.readFile(new URL(name,directory))),{json,bin}=readGLB(bytes);for(const m of json.materials||[])delete m.pbrMetallicRoughness.baseColorTexture;json.images=[];json.textures=[];const gltf=await parseCharacter(writeGLB(json,bin));const metadata=[];gltf.scene.traverse(o=>{if(o.userData.preset)metadata.push(o.userData);});Object.assign(gltf.scene.userData,metadata[0]);gltf.scene.updateMatrixWorld(true);return gltf.scene;}
 function meshes(root){const list=[];root.traverse(o=>{if(o.isMesh)list.push(o);});return list;}
 const key=v=>v.toArray().map(x=>Math.round(x*1e5)).join(',');
 
@@ -85,4 +87,27 @@ test('fixed outfit has unique part IDs and removes the previously exposed should
 
  // Exposed hands, lower arms and ankles must survive the clothing cut.
  for(const id of ['hand_L','hand_R','arm_L','arm_R','ankle_L','ankle_R'])assert.ok(parts.find(m=>m.name===id)?.geometry.index.count>50,id+' was deleted with the hidden skin');
+});
+
+test('cap window shows source hair above a visible contrasting strap and brass buckle',async()=>{
+ const root=await load('reassembled-boy.glb'),parts=meshes(root),cap=report.capOpening,[cx,cz]=cap.center;
+ for(const x of [-.018,0,.018]){const ray=new THREE.Raycaster(new THREE.Vector3(cx+x,cap.base+.027,cz+1),new THREE.Vector3(0,0,-1)),hit=ray.intersectObject(root,true)[0];assert.ok(hit?.object.name.startsWith('Hair'),'adjustment opening shows skin or crown instead of hair');}
+ const strap=parts.find(m=>m.name==='cap_strap'),buckle=parts.find(m=>m.name==='cap_buckle'),crown=parts.find(m=>m.name==='cap_crown');assert.ok(strap&&buckle);assert.ok(new THREE.Vector3(...strap.material.color.toArray()).distanceTo(new THREE.Vector3(...crown.material.color.toArray()))>.35);
+ const ray=new THREE.Raycaster(new THREE.Vector3(cx,cap.base+.003,cz+1),new THREE.Vector3(0,0,-1));assert.equal(ray.intersectObject(root,true)[0]?.object.name,'cap_strap','hair hides the adjustment strap');assert.ok(cap.strapFront>cap.hairFront+.005);
+});
+
+test('raised arm lifts the clavicle while the continuous shirt retains shoulder coverage',async()=>{
+ const root=await load('reassembled-boy.glb'),target=prepareRig(root).rig,driver=new Rig(createCharacter()),take=bakeMotion(driver,MOTIONS[0]);assert.equal(root.userData.shoulderRhythm,true);
+ driver.applySnapshot(take.track.sample(1.6));applyRetarget(driver,target);root.updateMatrixWorld(true);
+ const shoulder=target.bones.RightShoulder.getWorldPosition(new THREE.Vector3()),arm=target.bones.RightArm.getWorldPosition(new THREE.Vector3()),up=arm.y-target.rest.RightArm.wp.y;assert.ok(up>.025&&up<.075,'shoulder pivot did not rise with the arm');
+ const cloth=meshes(root).filter(m=>/^(shirt_torso|sleeve_[LR]|tee_yoke)$/.test(m.name));
+ for(const t of [.65,.8]){const p=shoulder.clone().lerp(arm,t),ray=new THREE.Raycaster(new THREE.Vector3(p.x,p.y+.3,p.z),new THREE.Vector3(0,-1,0)),hit=ray.intersectObjects(cloth,true)[0];assert.ok(hit,'shoulder ridge opened a hole');assert.ok(hit.point.y>=p.y+.004,'shoulder surface collapsed below the clavicle');}
+ const expected=arm.clone(),clip=retargetTake(driver,target,{...MOTIONS[0],...take}),mixer=new THREE.AnimationMixer(root);mixer.clipAction(clip).play();mixer.setTime(1.6);root.updateMatrixWorld(true);assert.ok(target.bones.RightArm.getWorldPosition(new THREE.Vector3()).distanceTo(expected)<2e-6,'baked animation lost the clavicle correction');
+});
+
+
+test('all three complete takes retain outward cloth normals and non-collapsed triangle areas',()=>{
+ const loader=fileURLToPath(new URL('./vendor-loader.mjs',import.meta.url)),checker=fileURLToPath(new URL('../tools/check-teen-deformation.mjs',import.meta.url));
+ const result=JSON.parse(execFileSync(process.execPath,['--experimental-loader',loader,checker,'--sweep'],{encoding:'utf8',stdio:['ignore','pipe','pipe']}));
+ assert.equal(result.sampledPoses,154);assert.deepEqual(result.failures,[]);assert.ok(result.minNormalAlignment>.2,'cloth normals turn through the surface');assert.ok(result.minAreaRatio>.1,'cloth triangles collapse during motion');
 });
