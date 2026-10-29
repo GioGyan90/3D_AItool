@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "name": "轻点头并挥手",
+  "duration": 4,
+  "loop": true,
+  "frames": [
+    {
+      "t": 0,
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "rotations": []
+    },
+    {
+      "t": 0.8,
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "RightArm",
+          "degrees": [
+            0,
+            0,
+            -25
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            0,
+            0,
+            -85
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.4,
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "RightArm",
+          "degrees": [
+            0,
+            0,
+            -25
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            0,
+            0,
+            -65
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2,
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "RightArm",
+          "degrees": [
+            0,
+            0,
+            -25
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            0,
+            0,
+            -105
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.6,
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "RightArm",
+          "degrees": [
+            0,
+            0,
+            -25
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            0,
+            0,
+            -65
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.1,
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "RightArm",
+          "degrees": [
+            0,
+            0,
+            -25
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            0,
+            0,
+            -85
+          ]
+        }
+      ]
+    },
+    {
+      "t": 4,
+      "root": [
+        0,
+        0,
+        0
+      ],
+      "rotations": []
+    }
+  ]
+}

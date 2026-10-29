@@ -16,7 +16,6 @@ await fs.copyFile(path.join(root,'public','retarget.js'),path.join(destination,'
 for(const file of ['LICENSE','NOTICE'])await fs.copyFile(path.join(root,file),path.join(destination,file));
 let html=await fs.readFile(path.join(destination,'lab','index.html'),'utf8');
 html=html.replace('<a href="../index.html">打开原版 AI / 视频动作提取 ↗</a>','<a href="https://github.com/GioGyan90/3D_AItool/blob/main/experiments/prompt2rig/README.md" target="_blank" rel="noreferrer">本地 AI / 视频提取说明 ↗</a>');
-html=html.replace('AI 生成视频需要配置 FAL_KEY；高质量提取另需本地 NVIDIA GPU。可在原版页面导入真人视频进行提取。','此公开页面支持动作播放与导出。AI 视频生成和视频动作提取，请按仓库说明在本地运行。');
 await fs.writeFile(path.join(destination,'lab','index.html'),html);
 await fs.writeFile(path.join(destination,'index.html'),'<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=./lab/"><title>Lucky Break · Motion Lab</title></head><body><a href="./lab/">打开人物动作实验室</a></body></html>\n');
 await fs.writeFile(path.join(destination,'.nojekyll'),'');

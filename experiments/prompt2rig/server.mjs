@@ -22,7 +22,7 @@ const portIndex = process.argv.indexOf('--port');
 const PORT = Number(portIndex >= 0 ? process.argv[portIndex + 1] : process.env.PORT || 5177);
 const HOST = process.argv.includes('--preview') ? '0.0.0.0' : (process.env.HOST || '127.0.0.1');
 const HQ_URL = process.env.HQ_URL || 'http://127.0.0.1:5178';
-if (!FAL_KEY) console.warn('[prompt2rig] FAL_KEY is not set — generation will fail. Put it in .env');
+if (!FAL_KEY) console.warn('[prompt2rig] FAL_KEY is not set — original fal video generation is unavailable. The lab supports GLB import, motion plans, and its own API settings.');
 
 const VIDEO_MODELS = {
   // MiniMax H3 Max Turbo — faster than real time (~0.5s GPU for 5s @ 480P)
@@ -86,7 +86,7 @@ function send(res, status, body) {
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css',
-  '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.svg': 'image/svg+xml',
+  '.json': 'application/json', '.glb': 'model/gltf-binary', '.png': 'image/png', '.svg': 'image/svg+xml', '.wasm': 'application/wasm',
 };
 
 const server = http.createServer(async (req, res) => {

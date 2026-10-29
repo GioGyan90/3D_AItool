@@ -4,7 +4,9 @@
 
 ## 先看动作
 
-**在线查看：[GitHub Pages 动作实验室](https://giogyan90.github.io/3D_AItool/lab/)**。可直接播放、切换视角和导出动作；在线版不运行本地 AI 代理。
+**在线查看：[GitHub Pages 动作实验室](https://giogyan90.github.io/3D_AItool/lab/)**。支持导入 GLB、自动减面压缩、提示词制作动作、骨骼映射、动作方案导入和人物动画导出。API 设置默认 OpenAI，也支持自定义兼容接口。
+
+新增流程：**导入人物 → 自动优化 → 输入提示词 / 导入聊天方案 → 绑定动作 → 导出 GLB**。详见 [可复用工作流](docs/WORKFLOW.md)。
 
 本地运行：
 
@@ -14,7 +16,7 @@ cd 3D_AItool/experiments/prompt2rig
 node server.mjs
 ```
 
-浏览器打开 <http://localhost:5177/lab/>。Node.js 18+；动作实验室无需 `npm install`、密钥、GPU 或外部模型下载。Three.js r169 和预览所需模块已随工程保留 MIT 许可。请通过 HTTP 打开，不要双击 HTML。
+浏览器打开 <http://localhost:5177/lab/>。Node.js 18+；查看、导入、优化与方案绑定无需 `npm install`、密钥或 GPU，在线提示词生成需要自己的 API Key。依赖随工程保留对应许可。请通过 HTTP 打开，不要双击 HTML。
 
 ![动作实验室](docs/victory-preview.jpg)
 
@@ -26,7 +28,7 @@ node server.mjs
 
 以上是原创低模骨骼样机与**程序编排的关键帧测试**，并非 fal / GVHMR 生成结果。使用上游的 `Rig → snapshot → Track → trackToClip`，验证骨骼动作、采样、播放和导出。人物有 24 根骨骼、真实 `SkinnedMesh`，部件采用刚性权重，适合验证流程，不作为成品人物美术。出杆为无球杆、无球桌的姿态样例，不是已校准的专业击球动作；手指尚未单独绑定。
 
-可切换正面、侧面、3/4 视角，拖动旋转、缩放、暂停、逐时刻查看、调速、显示骨架；导出当前人物与动作 GLB，或动画 JSON。若浏览器缺少 WebGL，实验室自动用同一蒙皮和骨骼数据进行 Canvas CPU 预览；原版视频提取页面仍依赖其 WebGL / MediaPipe 支持。
+可切换正面、侧面、3/4 视角，拖动旋转、缩放、暂停、逐时刻查看、调速、显示骨架；导出当前人物与动作 GLB，或统一动作方案 JSON。若浏览器缺少 WebGL，实验室自动用同一蒙皮和骨骼数据进行 Canvas CPU 预览，贴图作简化显示，导出保留真实贴图；原版视频提取页面仍依赖其 WebGL / MediaPipe 支持。
 
 ## 使用原版 AI / 视频动作提取
 
@@ -44,14 +46,17 @@ node server.mjs
 GLB 已包含人物、骨骼、蒙皮和一个动画，加载后用 AnimationMixer 播放：
 
 ```js
-const gltf = await new GLTFLoader().loadAsync('/assets/luckybreak_victory.glb');
+// Meshopt 压缩导出需要配置解码器；通用 GLB 不需要此扩展。
+import { MeshoptDecoder } from 'meshoptimizer';
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+const gltf = await loader.loadAsync('/assets/luckybreak_victory.glb');
 scene.add(gltf.scene);
 const mixer = new THREE.AnimationMixer(gltf.scene);
 mixer.clipAction(gltf.animations[0]).play();
 // 在你的主循环中调用：mixer.update(deltaSeconds);
 ```
 
-动画 JSON 绑定本样机的骨骼名称，不能直接套到任意角色。向 Lucky Break 正式角色迁移时先做映射和重定向。球杆应单独建模、挂在手部插槽并校准握持，而非随头部变化；本实验尚未制作球杆或接入现有游戏。
+新的 motion-plan JSON 使用统一骨架空间，经过工具重定向到导入角色；其他游戏内要使用导出的实际 GLB 动画，或实现相同映射。球杆应单独建模、挂在手部插槽并校准握持，而非随头部变化；本实验尚未制作球杆或接入现有游戏。
 
 ## 检查与继续开发
 
@@ -60,9 +65,9 @@ npm test
 node --experimental-loader ./tests/vendor-loader.mjs tools/export-samples.mjs
 ```
 
-第一条检查三段动作、真实 AnimationMixer 播放、脚部高度、循环首尾、四元数、GLB 骨骼/蒙皮/动画通道，以及本地服务路由和缺少密钥的失败反馈。第二条重生成 `samples/`。原版录屏工具 `tools/capture.mjs` 需要先 `npm ci`，不属于零依赖实验室启动路径。
+第一条还检查减面保留 UV / 蒙皮 / morph、Meshopt 解码逐字节一致、导入导出后原有动画与新动作、A/T 姿态适配，以及模拟 API 响应和错误。第二条重生成 `samples/`。原版录屏工具 `tools/capture.mjs` 需要先 `npm ci`，不属于零依赖实验室启动路径。
 
-主要文件：`public/lab/character.js` 是样机，`motions.js` 是动作编排，`app.js` 是播放器和导出，`renderer.js` 是 WebGL / Canvas 预览。`public/retarget.js` 保留上游实现。服务默认监听 `127.0.0.1`，仅开发预览参数 `--preview` 会监听全部接口；不应直接公开部署带密钥的本地代理。
+主要文件：`public/lab/character.js` 是样机，`motions.js` 是初始动作，`motion-plan.js` 定义可复用动作协议，`assets.js` / `optimize.js` / `glb-codec.js` 负责导入、减面与压缩，`rig-adapter.js` 做骨架映射，`api.js` 调用提示词接口，`app.js` 是界面。`public/retarget.js` 保留上游实现。服务默认监听 `127.0.0.1`，仅开发预览参数 `--preview` 会监听全部接口。
 
 研究结论、已验证项和下一步见 [RESEARCH.md](docs/RESEARCH.md)。
 
@@ -74,10 +79,10 @@ node --experimental-loader ./tests/vendor-loader.mjs tools/export-samples.mjs
 node experiments/prompt2rig/tools/build-pages.mjs
 ```
 
-从仓库根目录执行该命令；调整实验室界面或动作后重新生成 `docs/`，一起提交。公开版只包含播放器、样机、动作和渲染依赖，保留本地服务与 AI 功能的说明链接。
+从仓库根目录执行该命令；调整实验室界面或动作后重新生成 `docs/`，一起提交。公开版在浏览器本地处理 GLB，通过用户设置的 API 制作动作方案；不托管 Node / fal / HQ 代理。
 
 ## 许可
 
-保留上游 Apache-2.0 的 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)，Three.js MIT 许可见 `public/vendor/THREE-LICENSE.txt`。新增样机、动作与实验代码随本目录采用 Apache-2.0。
+保留上游 Apache-2.0 的 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)，Three.js MIT 许可见 `public/vendor/THREE-LICENSE.txt`，Meshoptimizer MIT 许可见 `public/vendor/meshopt/LICENSE.md`，Draco Apache-2.0 许可见 `public/vendor/draco/LICENSE`。新增样机、动作与实验代码随本目录采用 Apache-2.0。
 
 上游明确注明：GVHMR、SMPL-X、WiLoR、MANO 涉及研究 / 非商用限制，YOLO 涉及 AGPL 或商业授权。**上游代码开源并不意味着完整 HQ 链路可直接用于商业游戏。** 本次程序样例不调用这些模型；后续真实提取链路的使用与产物授权需要按相关组件条款进一步确认。

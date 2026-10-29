@@ -23,3 +23,10 @@ loads components under their own licenses, including some that are NON-COMMERCIA
     model provider's terms.
 
 See the "License" section of README.md for what this means for commercial use.
+
+Lucky Break Motion Lab additions (2026): browser GLB optimization, motion-plan v1,
+API configuration, and static GitHub Pages player. Additional bundled libraries:
+  - meshoptimizer 0.24.0, Copyright Arseny Kapoulkine, MIT (public/vendor/meshopt/LICENSE.md).
+  - Draco WebAssembly decoder distributed with three.js r169, Copyright Google,
+    Apache-2.0 (public/vendor/draco/LICENSE).
+These modules do not include the non-commercial HQ model weights listed above.

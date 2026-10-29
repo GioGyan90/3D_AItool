@@ -1,5 +1,7 @@
 # Prompt2Rig 研究与测试记录
 
+后续已新增 GLB 导入、减面/压缩、提示词动作方案和 API 设置，当前使用方式与验证边界以 [WORKFLOW.md](WORKFLOW.md) 为准。下文保留初次研究记录。
+
 日期：2026-10-29。上游：[blendi-remade/prompt2rig](https://github.com/blendi-remade/prompt2rig)，提交 `fe3d3eec992772b538992374ca933020ed517938`。宿主仓库原始 main：`98e9b345c9f309e59263cbc36fb4fc596e741dcb`。本记录的技术判断来自读取该版本源码，不是对营销演示的推测。
 
 ## 它实际做什么

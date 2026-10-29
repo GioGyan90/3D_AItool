@@ -1,0 +1,110 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "name": {
+      "type": "string"
+    },
+    "duration": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 20
+    },
+    "loop": {
+      "type": "boolean"
+    },
+    "frames": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "t": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20
+          },
+          "root": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "rotations": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "joint": {
+                  "type": "string",
+                  "enum": [
+                    "Hips",
+                    "Spine",
+                    "Spine1",
+                    "Spine2",
+                    "Neck",
+                    "Head",
+                    "LeftShoulder",
+                    "LeftArm",
+                    "LeftForeArm",
+                    "LeftHand",
+                    "RightShoulder",
+                    "RightArm",
+                    "RightForeArm",
+                    "RightHand",
+                    "LeftUpLeg",
+                    "LeftLeg",
+                    "LeftFoot",
+                    "RightUpLeg",
+                    "RightLeg",
+                    "RightFoot"
+                  ]
+                },
+                "degrees": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                }
+              },
+              "required": [
+                "joint",
+                "degrees"
+              ]
+            }
+          }
+        },
+        "required": [
+          "t",
+          "root",
+          "rotations"
+        ]
+      }
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "duration",
+    "loop",
+    "frames"
+  ]
+}

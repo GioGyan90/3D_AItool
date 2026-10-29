@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 export function createRenderer() {
   const canvas=document.createElement('canvas');
-  const context=canvas.getContext('webgl2');
+  const context=canvas.getContext('webgl2',{antialias:true});
   if(context) {
     const renderer=new THREE.WebGLRenderer({canvas,context,antialias:true});
     renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true;
@@ -22,20 +22,24 @@ export function createRenderer() {
       scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
       ctx.fillStyle='#e9eee5';ctx.fillRect(0,0,width,height);
       ctx.strokeStyle='#d4ddd0';ctx.lineWidth=.6;
-      for(let i=-6;i<=6;i++){for(const line of [[[-6,0,i],[6,0,i]],[[i,0,-6],[i,0,6]]]){const p=line.map(x=>project(new THREE.Vector3(...x),camera));ctx.beginPath();ctx.moveTo(...p[0].slice(0,2));ctx.lineTo(...p[1].slice(0,2));ctx.stroke();}}
+      for(let i=-3;i<=3;i++){for(const line of [[[-3,0,i],[3,0,i]],[[i,0,-3],[i,0,3]]]){const p=line.map(x=>project(new THREE.Vector3(...x),camera));if(p.some(x=>x[2]>1||x[2]<-1))continue;ctx.beginPath();ctx.moveTo(...p[0].slice(0,2));ctx.lineTo(...p[1].slice(0,2));ctx.stroke();}}
       const ground=project(new THREE.Vector3(0,0,0),camera);ctx.fillStyle='#b2bdae66';ctx.beginPath();ctx.ellipse(ground[0],ground[1],width*.095,height*.025,0,0,Math.PI*2);ctx.fill();
       const triangles=[];
       scene.traverse(mesh=>{
-        if(!mesh.isSkinnedMesh||!mesh.visible)return;
+        if(!mesh.isMesh||!mesh.visible)return;
+        let parent=mesh;while(parent&&!parent.userData.motionCharacter)parent=parent.parent;if(!parent)return;
         const g=mesh.geometry,points=[],projected=[];
+        if(!g.attributes.position)return;
         for(let i=0;i<g.attributes.position.count;i++){
-          v.fromBufferAttribute(g.attributes.position,i);mesh.applyBoneTransform(i,v);v.applyMatrix4(mesh.matrixWorld);
+          mesh.getVertexPosition(i,v);v.applyMatrix4(mesh.matrixWorld);
           points.push(v.clone());projected.push(project(v,camera));
         }
-        for(const group of g.groups){
-          const color=mesh.material[group.materialIndex].color;
+        const groups=g.groups.length?g.groups:[{start:0,count:g.index?.count||g.attributes.position.count,materialIndex:0}];
+        for(const group of groups){
+          const material=Array.isArray(mesh.material)?mesh.material[group.materialIndex]:mesh.material;
+          const color=material?.color||new THREE.Color(0xcccccc);
           for(let j=group.start;j<group.start+group.count;j+=3){
-            const ids=[g.index.getX(j),g.index.getX(j+1),g.index.getX(j+2)];
+            const ids=g.index?[g.index.getX(j),g.index.getX(j+1),g.index.getX(j+2)]:[j,j+1,j+2];if(ids[2]>=points.length)continue;
             a.subVectors(points[ids[1]],points[ids[0]]);b.subVectors(points[ids[2]],points[ids[0]]);normal.crossVectors(a,b).normalize();
             const c=color.clone().multiplyScalar(.65+.35*Math.max(0,normal.dot(sun)));
             const p=ids.map(i=>projected[i]);if(p.some(x=>x[2]>1||x[2]<-1))continue;
