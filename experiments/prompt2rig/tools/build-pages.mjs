@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 
 // Build a public, static preview without publishing the local API proxy.
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -14,7 +15,20 @@ await fs.mkdir(destination,{recursive:true});
 for(const folder of ['lab','vendor'])await fs.cp(path.join(root,'public',folder),path.join(destination,folder),{recursive:true});
 await fs.copyFile(path.join(root,'public','retarget.js'),path.join(destination,'retarget.js'));
 for(const file of ['LICENSE','NOTICE'])await fs.copyFile(path.join(root,file),path.join(destination,file));
+// Use one revision for the local module graph. Pages/CDN caches can otherwise
+// combine a new HTML document with an older app or dependency after deployment.
+const labFiles=(await fs.readdir(path.join(root,'public/lab'))).filter(f=>/\.(js|css|html)$/.test(f)).sort();
+const hash=createHash('sha256');
+for(const file of labFiles){hash.update(file);hash.update(await fs.readFile(path.join(root,'public/lab',file)));}
+hash.update(await fs.readFile(path.join(root,'public/retarget.js')));
+const revision=hash.digest('hex').slice(0,12);
+for(const file of labFiles.filter(f=>f.endsWith('.js'))){
+  const target=path.join(destination,'lab',file);
+  const source=await fs.readFile(target,'utf8');
+  await fs.writeFile(target,source.replace(/((?:from\s*|import\s*)['"])(\.{1,2}\/[^'"]+\.js)(['"])/g,`$1$2?v=${revision}$3`));
+}
 let html=await fs.readFile(path.join(destination,'lab','index.html'),'utf8');
+html=html.replace(/((?:src|href)="\.\/[^"?]+\.(?:js|css))"/g,`$1?v=${revision}"`);
 html=html.replace('<a href="../index.html">打开原版 AI / 视频动作提取 ↗</a>','<a href="https://github.com/GioGyan90/3D_AItool/blob/main/experiments/prompt2rig/README.md" target="_blank" rel="noreferrer">本地 AI / 视频提取说明 ↗</a>');
 await fs.writeFile(path.join(destination,'lab','index.html'),html);
 await fs.writeFile(path.join(destination,'index.html'),'<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=./lab/"><title>Lucky Break · Motion Lab</title></head><body><a href="./lab/">打开人物动作实验室</a></body></html>\n');

@@ -1,15 +1,15 @@
 import * as THREE from 'three';
-import { OrbitControls } from '../vendor/controls/OrbitControls.js';
-import { Rig } from '../retarget.js';
-import { createCharacter } from './character.js';
-import { MOTIONS, bakeMotion } from './motions.js';
-import { createRenderer } from './renderer.js';
-import { importCharacter, exportCharacter } from './assets.js';
-import { modelStats } from './optimize.js';
-import { prepareRig, detectBones, MAPPABLE, REQUIRED } from './rig-adapter.js';
-import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, PLAN_JOINTS } from './motion-plan.js';
-import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js';
-import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js';
+import { OrbitControls } from '../vendor/controls/OrbitControls.js?v=05c2e9e16450';
+import { Rig } from '../retarget.js?v=05c2e9e16450';
+import { createCharacter } from './character.js?v=05c2e9e16450';
+import { MOTIONS, bakeMotion } from './motions.js?v=05c2e9e16450';
+import { createRenderer } from './renderer.js?v=05c2e9e16450';
+import { importCharacter, exportCharacter } from './assets.js?v=05c2e9e16450';
+import { modelStats } from './optimize.js?v=05c2e9e16450';
+import { prepareRig, detectBones, MAPPABLE, REQUIRED } from './rig-adapter.js?v=05c2e9e16450';
+import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, PLAN_JOINTS } from './motion-plan.js?v=05c2e9e16450';
+import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js?v=05c2e9e16450';
+import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js?v=05c2e9e16450';
 
 const $=s=>document.querySelector(s),viewport=$('#viewport'),status=text=>$('#status').textContent=text;
 const bytes=n=>n>=1048576?(n/1048576).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';
