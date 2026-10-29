@@ -1,0 +1,116 @@
+[
+  {
+    "motion": "wave",
+    "samples": 241,
+    "joints": {
+      "LeftForeArm": {
+        "maxStepDegrees": 0.03537293964332447,
+        "twistRangeDegrees": 0,
+        "minTwistDegrees": -94.18125898092487,
+        "maxTwistDegrees": -94.18125898092487,
+        "maxLocalAngleDegrees": 94.69598018071828,
+        "totalAngularTravelDegrees": 8.489505514397903
+      },
+      "LeftHand": {
+        "maxStepDegrees": 0,
+        "twistRangeDegrees": 0,
+        "minTwistDegrees": 0.17721556185160844,
+        "maxTwistDegrees": 0.17721556185160844,
+        "maxLocalAngleDegrees": 7.078228309308841,
+        "totalAngularTravelDegrees": 0
+      },
+      "RightForeArm": {
+        "maxStepDegrees": 4.568759928406848,
+        "twistRangeDegrees": 4.922534671409044,
+        "minTwistDegrees": 91.73894721453496,
+        "maxTwistDegrees": 96.661481885944,
+        "maxLocalAngleDegrees": 127.20344946983303,
+        "totalAngularTravelDegrees": 383.30301051449106
+      },
+      "RightHand": {
+        "maxStepDegrees": 1.2839579065492284,
+        "twistRangeDegrees": 8.760987692590637,
+        "minTwistDegrees": -8.93821365577526,
+        "maxTwistDegrees": -0.17722596318462255,
+        "maxLocalAngleDegrees": 17.649889130195145,
+        "totalAngularTravelDegrees": 153.55993835644264
+      }
+    }
+  },
+  {
+    "motion": "victory",
+    "samples": 301,
+    "joints": {
+      "LeftForeArm": {
+        "maxStepDegrees": 1.4316633564127612,
+        "twistRangeDegrees": 4.87923903299984,
+        "minTwistDegrees": -94.18125898092487,
+        "maxTwistDegrees": -89.30201994792502,
+        "maxLocalAngleDegrees": 99.10243251052661,
+        "totalAngularTravelDegrees": 112.43955741652563
+      },
+      "LeftHand": {
+        "maxStepDegrees": 0,
+        "twistRangeDegrees": 1.9182720422576836e-14,
+        "minTwistDegrees": 0.17721556185160844,
+        "maxTwistDegrees": 0.17721556185162762,
+        "maxLocalAngleDegrees": 7.07826996745872,
+        "totalAngularTravelDegrees": 0
+      },
+      "RightForeArm": {
+        "maxStepDegrees": 1.4317048897546603,
+        "twistRangeDegrees": 4.906627018067748,
+        "minTwistDegrees": 89.27483401958044,
+        "maxTwistDegrees": 94.18146103764818,
+        "maxLocalAngleDegrees": 99.1297264093211,
+        "totalAngularTravelDegrees": 112.31009606606996
+      },
+      "RightHand": {
+        "maxStepDegrees": 0.0000017075472925031877,
+        "twistRangeDegrees": 4.9447686063378114e-15,
+        "minTwistDegrees": -0.1772259631846275,
+        "maxTwistDegrees": -0.17722596318462255,
+        "maxLocalAngleDegrees": 7.078379033547098,
+        "totalAngularTravelDegrees": 0.000006830189170012751
+      }
+    }
+  },
+  {
+    "motion": "billiards",
+    "samples": 361,
+    "joints": {
+      "LeftForeArm": {
+        "maxStepDegrees": 5.778276426537805,
+        "twistRangeDegrees": 86.90392101486897,
+        "minTwistDegrees": -98.57567701543033,
+        "maxTwistDegrees": -11.671756000561347,
+        "maxLocalAngleDegrees": 98.77306055505967,
+        "totalAngularTravelDegrees": 283.3794925699078
+      },
+      "LeftHand": {
+        "maxStepDegrees": 1.4101104018115707,
+        "twistRangeDegrees": 3.816268086172305,
+        "minTwistDegrees": -1.0439303683227943,
+        "maxTwistDegrees": 2.7723377178495108,
+        "maxLocalAngleDegrees": 19.439848989347006,
+        "totalAngularTravelDegrees": 88.87133746291194
+      },
+      "RightForeArm": {
+        "maxStepDegrees": 6.571973438191786,
+        "twistRangeDegrees": 83.22837241120823,
+        "minTwistDegrees": 10.953088626439955,
+        "maxTwistDegrees": 94.18146103764818,
+        "maxLocalAngleDegrees": 164.89425663247522,
+        "totalAngularTravelDegrees": 575.8304209064863
+      },
+      "RightHand": {
+        "maxStepDegrees": 0.34053527576657294,
+        "twistRangeDegrees": 0.40583002955855085,
+        "minTwistDegrees": -0.17722596318462255,
+        "maxTwistDegrees": 0.22860406637392836,
+        "maxLocalAngleDegrees": 20.8767818417826,
+        "totalAngularTravelDegrees": 33.38572670626045
+      }
+    }
+  }
+]

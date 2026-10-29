@@ -71,10 +71,11 @@ export function applyRetarget(driver,target){
   // directions, rather than adding a T-pose rotation to an A-pose rest.
   const basis=target.restHipBasis.clone().multiply(driver.restHipBasis.clone().invert());
   if(target.model.userData.shoulderRhythm){
+    const rhythm=target.model.userData.shoulderRhythm,settings=typeof rhythm==='object'?rhythm:{gain:.35,maxLift:.38,protractionGain:.5,maxProtraction:.5,minProtraction:-.2},threshold=settings.threshold??Math.PI/3;
     const up=new THREE.Vector3(0,1,0).applyQuaternion(target.bones.Spine2.getWorldQuaternion(new THREE.Quaternion())).normalize(),forward=new THREE.Vector3(0,0,1).applyQuaternion(target.bones.Spine2.getWorldQuaternion(new THREE.Quaternion())).normalize();
     for(const side of ['Left','Right']){const arm=driver.bones[side+'Arm'],fore=driver.bones[side+'ForeArm'],shoulder=target.bones[side+'Shoulder'];if(!arm||!fore||!shoulder)continue;
-      const direction=fore.getWorldPosition(new THREE.Vector3()).sub(arm.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis).normalize(),elevation=Math.acos(THREE.MathUtils.clamp(-direction.dot(up),-1,1)),lift=THREE.MathUtils.clamp((elevation-Math.PI/3)*.35,0,.38);
-      const protraction=THREE.MathUtils.clamp(direction.dot(forward)*.5,-.2,.5),q=new THREE.Quaternion().setFromAxisAngle(up,protraction*(side==='Left'?-1:1)).multiply(new THREE.Quaternion().setFromAxisAngle(forward,lift*(side==='Left'?1:-1))).multiply(shoulder.getWorldQuaternion(new THREE.Quaternion()));target.setWorldQuat(side+'Shoulder',q);
+      const direction=fore.getWorldPosition(new THREE.Vector3()).sub(arm.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis).normalize(),elevation=Math.acos(THREE.MathUtils.clamp(-direction.dot(up),-1,1)),lift=THREE.MathUtils.clamp((elevation-threshold)*settings.gain,0,settings.maxLift);
+      const protraction=THREE.MathUtils.clamp(direction.dot(forward)*settings.protractionGain,settings.minProtraction,settings.maxProtraction),q=new THREE.Quaternion().setFromAxisAngle(up,protraction*(side==='Left'?-1:1)).multiply(new THREE.Quaternion().setFromAxisAngle(forward,lift*(side==='Left'?1:-1))).multiply(shoulder.getWorldQuaternion(new THREE.Quaternion()));target.setWorldQuat(side+'Shoulder',q);
     }
   }
   for(const side of ['Left','Right'])for(const [name,child] of [['Arm','ForeArm'],['ForeArm','Hand'],['UpLeg','Leg'],['Leg','Foot']]){
@@ -82,6 +83,17 @@ export function applyRetarget(driver,target){
     const direction=b.getWorldPosition(new THREE.Vector3()).sub(a.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis);target.aim(side+name,direction);
   }
   for(const side of ['Left','Right']){orientRetargetedForearm(driver,target,side,basis);orientRetargetedHand(driver,target,side,basis);}
+  // Long sleeves need a separate bend-following surface near the elbow. The
+  // wrist keeps the anatomical palm direction, while the sleeve acquires axial
+  // twist progressively toward the wrist. These helpers are baked as tracks.
+  for(const entry of target.model.userData.forearmTwist||[]){
+    const {bone,arm,forearm,hand}=entry;if(!target.bones[bone]||!target.rest[hand]||!target.rest[forearm]||!target.rest[arm])continue;
+    const parentDelta=target.bones[arm].getWorldQuaternion(new THREE.Quaternion()).multiply(target.rest[arm].wq.clone().invert()),from=target.rest[hand].wp.clone().sub(target.rest[forearm].wp).normalize().applyQuaternion(parentDelta),to=target.bones[hand].getWorldPosition(new THREE.Vector3()).sub(target.bones[forearm].getWorldPosition(new THREE.Vector3())).normalize();
+    const swingDelta=new THREE.Quaternion().setFromUnitVectors(from,to),fullSwing=swingDelta.clone().multiply(parentDelta),full=target.bones[forearm].getWorldQuaternion(new THREE.Quaternion()),axial=full.clone().multiply(fullSwing.clone().invert());
+    const partialSwing=new THREE.Quaternion().slerp(swingDelta,THREE.MathUtils.clamp(entry.swingFraction??1,0,1)).multiply(parentDelta).multiply(target.rest[bone].wq),partialTwist=new THREE.Quaternion().slerp(axial,THREE.MathUtils.clamp(entry.fraction||0,0,1));
+    const desired=partialTwist.multiply(partialSwing);target.setWorldQuat(bone,desired);
+    if(target.bones[entry.middleBone])target.setWorldQuat(entry.middleBone,desired.clone().slerp(full,.5));
+  }
   target.clampToFloor();
 }
 

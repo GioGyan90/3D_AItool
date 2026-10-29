@@ -1,0 +1,20 @@
+{
+  "sampledPoses": 154,
+  "garmentParts": [
+    "trouser_waist",
+    "trouser_L",
+    "trouser_R",
+    "jacket_body",
+    "jacket_sleeve_R",
+    "jacket_sleeve_L",
+    "shirt_front",
+    "collar",
+    "cuff_R",
+    "cuff_L",
+    "tie"
+  ],
+  "minNormalAlignment": 0.1478451280565038,
+  "minAreaRatio": 0.10898311663070423,
+  "maxEdgeStretch": 1.8754124853413032,
+  "failures": []
+}

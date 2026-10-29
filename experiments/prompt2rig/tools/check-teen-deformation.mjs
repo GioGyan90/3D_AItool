@@ -10,7 +10,8 @@ import {applyRetarget} from '../public/lab/motion-plan.js';
 const filename=process.argv.slice(2).find(p=>!p.startsWith('--'))||new URL('../public/lab/characters/teen-boy/reassembled-boy.glb',import.meta.url),{json,bin}=readGLB(new Uint8Array(await fs.readFile(filename)));
 for(const m of json.materials||[])delete m.pbrMetallicRoughness.baseColorTexture;json.images=[];json.textures=[];
 const {scene}=await parseCharacter(writeGLB(json,bin)),metadata=[];scene.traverse(o=>{if(o.userData.preset)metadata.push(o.userData);});Object.assign(scene.userData,metadata[0]);
-const rig=prepareRig(scene).rig,driver=new Rig(createCharacter()),parts=[];scene.traverse(m=>{if(m.isMesh&&/^(shirt_torso|sleeve_[LR]|tee_yoke)$/.test(m.name))parts.push(m);});
+const rig=prepareRig(scene).rig,driver=new Rig(createCharacter()),parts=[],garments=scene.userData.preset==='quaternius-suit-man'?/^(jacket_|trouser_|shirt_front$|collar$|cuff_|tie$)/:/^(shirt_torso|sleeve_[LR]|tee_yoke)$/;
+scene.traverse(m=>{if(m.isMesh&&garments.test(m.name))parts.push(m);});if(!parts.length)throw Error('No recognized garment parts to validate');
 const sweep=process.argv.includes('--sweep'),samples=sweep?[['rest',0],...[['wave',4],['victory',5],['billiards',6]].flatMap(([id,duration])=>Array.from({length:Math.round(duration*10)+1},(_,i)=>[id,i/10]))]:[['rest',0],['wave',1.1],['wave',1.6],['wave',2.5],['victory',1.6],['victory',2.5],['billiards',2]];
 const result=[];for(const [motion,time]of samples){
  if(motion==='rest')rig.reset();else{applyMotion(driver,motion,time);applyRetarget(driver,rig);}scene.updateMatrixWorld(true);

@@ -6,7 +6,9 @@
 
 **在线查看：[GitHub Pages 人物动作实验室](https://giogyan90.github.io/3D_AItool/lab/)**。默认装配评审版来自你的 CharaBuilder 少年预设，拆解和减面后重新装配，补反戴帽、T 恤领肩和鞋底；脸部、头身和骨骼比例保留。约 2.39 万面 → 1.51 万面，52 根映射动作骨骼，37 个网格零件。详见 [制作记录和视觉检查](docs/CHARABUILDER_BOY.md)。
 
-“人物方案”可以切换原始少年和上一版截面灰模，保留同一视角做对比；支持原始材质 / 灰模 / 分部颜色、线框、单件与拆解，以及多视角和动作检查。静态装配文件见 [reassembled-boy.glb](public/lab/characters/teen-boy/reassembled-boy.glb)，来源、许可和逐件面数一起保存。
+新增独立人物：[青年男士 · 西装 / 领带](https://giogyan90.github.io/3D_AItool/lab/?model=suit)。以 Quaternius 的 CC0 Business Man 为成年结构基准，保留原头身和西装廓形，修骨架、长袖权重并分为 19 件，制作记录见 [SUIT_MAN.md](docs/SUIT_MAN.md)。
+
+“人物方案”可以切换青年西装、其源形体、原始少年和上一版截面灰模，保留同一视角做对比；支持原始材质 / 灰模 / 分部颜色、线框、单件与拆解，以及多视角和动作检查。静态装配文件见 [reassembled-boy.glb](public/lab/characters/teen-boy/reassembled-boy.glb)，来源、许可和逐件面数一起保存。
 
 后续任务约定：**只做新动作时直接复用当前少年；需要新人物时按 [人物、服装、配饰与动作生产约定](docs/CHARACTER_PRODUCTION.md) 制作独立模型。** 其中包含衣内删面、连续肩腋、法线与权重、帽口发层和帽带、配饰骨骼归属及新动作验证要求。
 
@@ -71,7 +73,7 @@ npm test
 node --experimental-loader ./tests/vendor-loader.mjs tools/export-samples.mjs
 ```
 
-第一条共 30 项，还检查自建人物拓扑、镜像、权重、动作接缝和导出坐标，以及减面属性、Meshopt 解码、原有动画、A/T 姿态与模拟 API。第二条重生成旧动作样本；新人物报告和静态样本用建模记录中的命令生成。原版录屏工具 `tools/capture.mjs` 需要先 `npm ci`，不属于零依赖实验室启动路径。
+第一条共 36 项，还检查自建人物拓扑、镜像、权重、动作接缝和导出坐标，以及减面属性、Meshopt 解码、原有动画、A/T 姿态与模拟 API。第二条重生成旧动作样本；新人物报告和静态样本用建模记录中的命令生成。原版录屏工具 `tools/capture.mjs` 需要先 `npm ci`，不属于零依赖实验室启动路径。
 
 主要文件：`public/lab/teen-preset.js` 加载复用少年，`tools/build-charabuilder-boy.mjs` 重建分件资产，`public/lab/procedural-character.js` 是新自建人物与拓扑检查，`public/lab/character.js` 是旧标准驱动样机，`motions.js` 是初始动作，`motion-plan.js` 定义可复用动作协议，`assets.js` / `optimize.js` / `glb-codec.js` 负责导入、减面与压缩，`rig-adapter.js` 做骨架映射，`api.js` 调用提示词接口，`app.js` 是界面。`public/retarget.js` 保留上游实现。服务默认监听 `127.0.0.1`，仅开发预览参数 `--preview` 会监听全部接口。
 

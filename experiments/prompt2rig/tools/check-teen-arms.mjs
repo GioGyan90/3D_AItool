@@ -7,7 +7,8 @@ import {createCharacter} from '../public/lab/character.js';
 import {Rig} from '../public/retarget.js';
 import {MOTIONS,bakeMotion} from '../public/lab/motions.js';
 import {applyRetarget,retargetTake} from '../public/lab/motion-plan.js';
-const {json,bin}=readGLB(new Uint8Array(await fs.readFile(new URL('../public/lab/characters/teen-boy/reassembled-boy.glb',import.meta.url))));for(const m of json.materials||[])delete m.pbrMetallicRoughness.baseColorTexture;json.images=[];json.textures=[];const{scene}=await parseCharacter(writeGLB(json,bin)),rig=prepareRig(scene).rig,driver=new Rig(createCharacter()),report=[];
+const filename=process.argv.slice(2).find(p=>!p.startsWith('--'))||new URL('../public/lab/characters/teen-boy/reassembled-boy.glb',import.meta.url);
+const {json,bin}=readGLB(new Uint8Array(await fs.readFile(filename)));for(const m of json.materials||[])delete m.pbrMetallicRoughness.baseColorTexture;json.images=[];json.textures=[];const{scene}=await parseCharacter(writeGLB(json,bin)),rig=prepareRig(scene).rig,driver=new Rig(createCharacter()),report=[];
 const deg=180/Math.PI,wrap=a=>Math.atan2(Math.sin(a),Math.cos(a));
 for(const motion of MOTIONS){const take={...motion,...bakeMotion(driver,motion)},stats={};for(const side of ['Left','Right'])for(const part of ['ForeArm','Hand']){const joint=side+part,next=side+(part==='Hand'?'HandMiddle1':'Hand'),axis=rig.rest[next].wp.clone().sub(rig.rest[joint].wp).normalize();stats[joint]={axis,maxStep:0,minTwist:Infinity,maxTwist:-Infinity,maxWristAngle:0,travel:0,previous:null,previousTwist:null,unwrapped:0};}
  const clip=retargetTake(driver,rig,take),mixer=new T.AnimationMixer(scene),action=mixer.clipAction(clip);action.setLoop(T.LoopOnce,1);action.clampWhenFinished=true;action.play();

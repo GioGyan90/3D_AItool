@@ -11,8 +11,9 @@ The universal-modder logos in public/brand and docs/media are the brand assets o
 used here by the universal-modder team. The fonts in public/brand/fonts (Geist Pixel, Instrument Sans,
 Sometype Mono) are licensed under the SIL Open Font License 1.1; their license files sit next to them.
 
-Apart from those, this repository does not include third-party models or assets. At runtime it downloads or
-loads components under their own licenses, including some that are NON-COMMERCIAL or copyleft:
+The upstream distribution does not bundle third-party character models. This experimental fork adds
+the separately licensed character assets listed below. Other runtime components retain their own
+licenses, including some that are NON-COMMERCIAL or copyleft:
 
   - GVHMR (zju3dv) and the `gvhmr` package: educational, research and non-profit use only.
   - SMPL-X body model (MPI-IS): non-commercial license; obtained separately by each user.
@@ -30,3 +31,11 @@ API configuration, and static GitHub Pages player. Additional bundled libraries:
   - Draco WebAssembly decoder distributed with three.js r169, Copyright Google,
     Apache-2.0 (public/vendor/draco/LICENSE).
 These modules do not include the non-commercial HQ model weights listed above.
+
+Bundled Motion Lab character assets have separate provenance and licenses:
+  - CharaBuilder boy: pixiv VRoid CC0 sample assets and Micket CC0 hairstyle;
+    see public/lab/characters/teen-boy/SOURCES.md.
+  - Business Man, Ultimate Modular Men Pack, by Quaternius, CC0-1.0;
+    see public/lab/characters/suit-man/SOURCES.md for the exact asset license,
+    pinned source file, hash, and adaptation scope.
+These character additions do not include the non-commercial HQ model weights.

@@ -1,0 +1,1055 @@
+{
+  "version": 1,
+  "source": {
+    "author": "Quaternius",
+    "asset": "Business Man",
+    "pack": "Ultimate Modular Men Pack",
+    "authorURL": "https://quaternius.com/packs/ultimatemodularcharacters.html",
+    "assetURL": "https://poly.pizza/m/JFrLIKqvCH",
+    "license": "CC0-1.0",
+    "mirrorRepository": "https://github.com/nishit47/Blender-Pre-vis-Pipeline---Screenplay-to-Animatic",
+    "mirrorCommit": "6d6de54a1d7143cf5487462d147bbef039de4837",
+    "mirrorPath": "assets/Ultimate Modular Men Pack-glb/Business Man.glb",
+    "sha256": "82b81257c1e94cd9ee48cb1dcbe5ff506e81c9ce67cd0c5af542d8712dca546e",
+    "bytes": 1529248,
+    "sourceHeight": 1.8569281534291804,
+    "uniformScale": 0.9693428346573068,
+    "translationBeforeScale": [
+      -2.9802322387695312e-8,
+      0.0012994245626032352,
+      0
+    ],
+    "bodyProportionsChanged": false,
+    "originalAnimations": 24
+  },
+  "before": {
+    "triangles": 6634,
+    "vertices": 13335,
+    "meshes": 10,
+    "bones": 62
+  },
+  "compactedSource": {
+    "triangles": 6634,
+    "vertices": 13383,
+    "meshes": 19,
+    "bones": 70
+  },
+  "after": {
+    "triangles": 8184,
+    "vertices": 18737,
+    "meshes": 19,
+    "bones": 70
+  },
+  "sourceGLBBytes": 1529248,
+  "comparisonGLBBytes": 428332,
+  "modelGLBBytes": 572756,
+  "rig": {
+    "canonicalBones": 52,
+    "motionTracks": 56,
+    "forearmTwist": [
+      {
+        "bone": "Suit_LeftForearmTwist",
+        "middleBone": "Suit_LeftForearmMid",
+        "arm": "LeftArm",
+        "forearm": "LeftForeArm",
+        "hand": "LeftHand",
+        "fraction": 0.25,
+        "swingFraction": 0.5
+      },
+      {
+        "bone": "Suit_RightForearmTwist",
+        "middleBone": "Suit_RightForearmMid",
+        "arm": "RightArm",
+        "forearm": "RightForeArm",
+        "hand": "RightHand",
+        "fraction": 0.25,
+        "swingFraction": 0.5
+      }
+    ],
+    "sourceJoints": 62,
+    "totalJoints": 70,
+    "reparented": [
+      {
+        "joint": "FootL",
+        "from": "Root",
+        "to": "LowerLegL",
+        "pivotPreserved": true
+      },
+      {
+        "joint": "FootR",
+        "from": "Root",
+        "to": "LowerLegR",
+        "pivotPreserved": true
+      }
+    ],
+    "rest": "author bind pose, common world coordinates, identity rest rotations",
+    "fingerMapping": "Source Index/Middle/Ring/Pinky 2..4 map to canonical 1..3; source 1 is a palm helper.",
+    "shoulderRhythm": {
+      "gain": 0.3,
+      "maxLift": 0.32,
+      "protractionGain": 0.35,
+      "maxProtraction": 0.35,
+      "minProtraction": -0.16
+    },
+    "joints": [
+      {
+        "source": "Root",
+        "name": "Suit_Root",
+        "parent": null,
+        "position": [
+          -2.8888670650029315e-8,
+          0.0012595973037964267,
+          0.07007248529969697
+        ]
+      },
+      {
+        "source": "Body",
+        "name": "mixamorigHips",
+        "parent": "Suit_Root",
+        "position": [
+          0.0004392855840568516,
+          0.8401302289495723,
+          0.02586483558926997
+        ]
+      },
+      {
+        "source": "Hips",
+        "name": "Suit_Hips",
+        "parent": "mixamorigHips",
+        "position": [
+          -0.0003332650134351462,
+          0.8679454933650624,
+          0.05792576637062139
+        ]
+      },
+      {
+        "source": "Abdomen",
+        "name": "mixamorigSpine",
+        "parent": "Suit_Hips",
+        "position": [
+          -0.0003332650725601038,
+          0.9698054475566845,
+          0.04367836856839075
+        ]
+      },
+      {
+        "source": "Torso",
+        "name": "mixamorigSpine1",
+        "parent": "mixamorigSpine",
+        "position": [
+          -0.00033326509212120743,
+          1.126694975647174,
+          0.03686960136405566
+        ]
+      },
+      {
+        "source": "Chest",
+        "name": "mixamorigSpine2",
+        "parent": "mixamorigSpine1",
+        "position": [
+          -0.00033326514827018483,
+          1.3363412956700584,
+          0.03931613667226915
+        ]
+      },
+      {
+        "source": "Neck",
+        "name": "mixamorigNeck",
+        "parent": "mixamorigSpine2",
+        "position": [
+          -0.00033326516416625043,
+          1.465483728231208,
+          0.04176266753787382
+        ]
+      },
+      {
+        "source": "Head",
+        "name": "mixamorigHead",
+        "parent": "mixamorigNeck",
+        "position": [
+          -0.000333265209466161,
+          1.5398600557239872,
+          0.041762667260747295
+        ]
+      },
+      {
+        "source": "ShoulderL",
+        "name": "mixamorigLeftShoulder",
+        "parent": "mixamorigSpine2",
+        "position": [
+          0.09538105872616369,
+          1.3536974057062776,
+          0.06173060900039385
+        ]
+      },
+      {
+        "source": "UpperArmL",
+        "name": "mixamorigLeftArm",
+        "parent": "mixamorigLeftShoulder",
+        "position": [
+          0.1478667679902148,
+          1.3894600995540944,
+          0.057997017700609395
+        ]
+      },
+      {
+        "source": "LowerArmL",
+        "name": "mixamorigLeftForeArm",
+        "parent": "mixamorigLeftArm",
+        "position": [
+          0.3241602007088886,
+          1.3894602706222314,
+          0.05434639870423426
+        ]
+      },
+      {
+        "source": "WristL",
+        "name": "mixamorigLeftHand",
+        "parent": "mixamorigLeftForeArm",
+        "position": [
+          0.5504293758586142,
+          1.3894601458314497,
+          0.08292594991999742
+        ]
+      },
+      {
+        "source": "Index1L",
+        "name": "Suit_Index1L",
+        "parent": "mixamorigLeftHand",
+        "position": [
+          0.5775709690797074,
+          1.390057011197958,
+          0.08420824892728133
+        ]
+      },
+      {
+        "source": "Index2L",
+        "name": "mixamorigLeftHandIndex1",
+        "parent": "Suit_Index1L",
+        "position": [
+          0.6948643630086727,
+          1.3895033983759666,
+          0.11205412290375515
+        ]
+      },
+      {
+        "source": "Index3L",
+        "name": "mixamorigLeftHandIndex2",
+        "parent": "mixamorigLeftHandIndex1",
+        "position": [
+          0.726054568359384,
+          1.3946531000984537,
+          0.11500016901664906
+        ]
+      },
+      {
+        "source": "Index4L",
+        "name": "mixamorigLeftHandIndex3",
+        "parent": "mixamorigLeftHandIndex2",
+        "position": [
+          0.7543811369020884,
+          1.398426875022327,
+          0.1166811617656144
+        ]
+      },
+      {
+        "source": "Middle1L",
+        "name": "Suit_Middle1L",
+        "parent": "mixamorigLeftHand",
+        "position": [
+          0.5775709395133332,
+          1.390057137038947,
+          0.08420824585308039
+        ]
+      },
+      {
+        "source": "Middle2L",
+        "name": "mixamorigLeftHandMiddle1",
+        "parent": "Suit_Middle1L",
+        "position": [
+          0.6973129384682163,
+          1.398911910803303,
+          0.08587819779454799
+        ]
+      },
+      {
+        "source": "Middle3L",
+        "name": "mixamorigLeftHandMiddle2",
+        "parent": "mixamorigLeftHandMiddle1",
+        "position": [
+          0.7362942882381083,
+          1.4025977262234506,
+          0.08575852344849781
+        ]
+      },
+      {
+        "source": "Middle4L",
+        "name": "mixamorigLeftHandMiddle3",
+        "parent": "mixamorigLeftHandMiddle2",
+        "position": [
+          0.7753555384899279,
+          1.4049792690582603,
+          0.08584265394858541
+        ]
+      },
+      {
+        "source": "Ring1L",
+        "name": "Suit_Ring1L",
+        "parent": "mixamorigLeftHand",
+        "position": [
+          0.5775709739460474,
+          1.3900570613929666,
+          0.08420826826056658
+        ]
+      },
+      {
+        "source": "Ring2L",
+        "name": "mixamorigLeftHandRing1",
+        "parent": "Suit_Ring1L",
+        "position": [
+          0.6940227870737509,
+          1.394165120755061,
+          0.05940416886161095
+        ]
+      },
+      {
+        "source": "Ring3L",
+        "name": "mixamorigLeftHandRing2",
+        "parent": "mixamorigLeftHandRing1",
+        "position": [
+          0.7263606311125503,
+          1.3974562984945198,
+          0.05433147533103656
+        ]
+      },
+      {
+        "source": "Ring4L",
+        "name": "mixamorigLeftHandRing3",
+        "parent": "mixamorigLeftHandRing2",
+        "position": [
+          0.7580270965860655,
+          1.4013746364324011,
+          0.05030845310496674
+        ]
+      },
+      {
+        "source": "Pinky1L",
+        "name": "Suit_Pinky1L",
+        "parent": "mixamorigLeftHand",
+        "position": [
+          0.5775709451755936,
+          1.390057191626266,
+          0.08420826295716635
+        ]
+      },
+      {
+        "source": "Pinky2L",
+        "name": "mixamorigLeftHandPinky1",
+        "parent": "Suit_Pinky1L",
+        "position": [
+          0.6837020713979709,
+          1.3940261089627268,
+          0.03797902224327096
+        ]
+      },
+      {
+        "source": "Pinky3L",
+        "name": "mixamorigLeftHandPinky2",
+        "parent": "mixamorigLeftHandPinky1",
+        "position": [
+          0.708342785853397,
+          1.3966754732144722,
+          0.030989451168906675
+        ]
+      },
+      {
+        "source": "Pinky4L",
+        "name": "mixamorigLeftHandPinky3",
+        "parent": "mixamorigLeftHandPinky2",
+        "position": [
+          0.7336687387879262,
+          1.3999178305197335,
+          0.023053671804747808
+        ]
+      },
+      {
+        "source": "Thumb1L",
+        "name": "Suit_Thumb1L",
+        "parent": "mixamorigLeftHand",
+        "position": [
+          0.5775710339958703,
+          1.3900569960656342,
+          0.08420823675171103
+        ]
+      },
+      {
+        "source": "Thumb2L",
+        "name": "mixamorigLeftHandThumb1",
+        "parent": "Suit_Thumb1L",
+        "position": [
+          0.6280761327109127,
+          1.3670363414470954,
+          0.14152427447338098
+        ]
+      },
+      {
+        "source": "Thumb3L",
+        "name": "mixamorigLeftHandThumb2",
+        "parent": "mixamorigLeftHandThumb1",
+        "position": [
+          0.6516066537607725,
+          1.361590392107801,
+          0.16111148961900038
+        ]
+      },
+      {
+        "source": "ShoulderR",
+        "name": "mixamorigRightShoulder",
+        "parent": "mixamorigSpine2",
+        "position": [
+          -0.09538109933365332,
+          1.3536974477486314,
+          0.06173065657901335
+        ]
+      },
+      {
+        "source": "UpperArmR",
+        "name": "mixamorigRightArm",
+        "parent": "mixamorigRightShoulder",
+        "position": [
+          -0.14786682026235606,
+          1.3894602702348198,
+          0.05799697795867999
+        ]
+      },
+      {
+        "source": "LowerArmR",
+        "name": "mixamorigRightForeArm",
+        "parent": "mixamorigRightArm",
+        "position": [
+          -0.32416024604871185,
+          1.3894603535637788,
+          0.05434639145156048
+        ]
+      },
+      {
+        "source": "WristR",
+        "name": "mixamorigRightHand",
+        "parent": "mixamorigRightForeArm",
+        "position": [
+          -0.550429287681031,
+          1.3894598950689312,
+          0.08292593653582737
+        ]
+      },
+      {
+        "source": "Index1R",
+        "name": "Suit_Index1R",
+        "parent": "mixamorigRightHand",
+        "position": [
+          -0.577571050932961,
+          1.3900572268537454,
+          0.08420821898677486
+        ]
+      },
+      {
+        "source": "Index2R",
+        "name": "mixamorigRightHandIndex1",
+        "parent": "Suit_Index1R",
+        "position": [
+          -0.694864394422031,
+          1.3895033590326171,
+          0.11205408183200312
+        ]
+      },
+      {
+        "source": "Index3R",
+        "name": "mixamorigRightHandIndex2",
+        "parent": "mixamorigRightHandIndex1",
+        "position": [
+          -0.7260546354447984,
+          1.3946532019743278,
+          0.11500019419843904
+        ]
+      },
+      {
+        "source": "Index4R",
+        "name": "mixamorigRightHandIndex3",
+        "parent": "mixamorigRightHandIndex2",
+        "position": [
+          -0.7543810971582807,
+          1.3984268855430666,
+          0.1166811817190163
+        ]
+      },
+      {
+        "source": "Middle1R",
+        "name": "Suit_Middle1R",
+        "parent": "mixamorigRightHand",
+        "position": [
+          -0.5775710808114928,
+          1.3900571705982538,
+          0.08420823500325747
+        ]
+      },
+      {
+        "source": "Middle2R",
+        "name": "mixamorigRightHandMiddle1",
+        "parent": "Suit_Middle1R",
+        "position": [
+          -0.697312858450325,
+          1.398911940924554,
+          0.08587816472489733
+        ]
+      },
+      {
+        "source": "Middle3R",
+        "name": "mixamorigRightHandMiddle2",
+        "parent": "mixamorigRightHandMiddle1",
+        "position": [
+          -0.736294141343239,
+          1.4025976909975255,
+          0.08575851654648976
+        ]
+      },
+      {
+        "source": "Middle4R",
+        "name": "mixamorigRightHandMiddle3",
+        "parent": "mixamorigRightHandMiddle2",
+        "position": [
+          -0.775355519853448,
+          1.404979174298181,
+          0.08584263725595186
+        ]
+      },
+      {
+        "source": "Ring1R",
+        "name": "Suit_Ring1R",
+        "parent": "mixamorigRightHand",
+        "position": [
+          -0.5775710285435091,
+          1.3900572127192785,
+          0.08420822277495131
+        ]
+      },
+      {
+        "source": "Ring2R",
+        "name": "mixamorigRightHandRing1",
+        "parent": "Suit_Ring1R",
+        "position": [
+          -0.6940228593377122,
+          1.3941650821757594,
+          0.05940410564788156
+        ]
+      },
+      {
+        "source": "Ring3R",
+        "name": "mixamorigRightHandRing2",
+        "parent": "mixamorigRightHandRing1",
+        "position": [
+          -0.7263608363957441,
+          1.3974560422365467,
+          0.05433148390421235
+        ]
+      },
+      {
+        "source": "Ring4R",
+        "name": "mixamorigRightHandRing3",
+        "parent": "mixamorigRightHandRing2",
+        "position": [
+          -0.7580270901826254,
+          1.4013747245080725,
+          0.05030850069860392
+        ]
+      },
+      {
+        "source": "Pinky1R",
+        "name": "Suit_Pinky1R",
+        "parent": "mixamorigRightHand",
+        "position": [
+          -0.5775710002119043,
+          1.3900569364028839,
+          0.08420824372604115
+        ]
+      },
+      {
+        "source": "Pinky2R",
+        "name": "mixamorigRightHandPinky1",
+        "parent": "Suit_Pinky1R",
+        "position": [
+          -0.6837023245417396,
+          1.3940263093434895,
+          0.03797902563452791
+        ]
+      },
+      {
+        "source": "Pinky3R",
+        "name": "mixamorigRightHandPinky2",
+        "parent": "mixamorigRightHandPinky1",
+        "position": [
+          -0.7083428983949259,
+          1.396675531649951,
+          0.030989423116222603
+        ]
+      },
+      {
+        "source": "Pinky4R",
+        "name": "mixamorigRightHandPinky3",
+        "parent": "mixamorigRightHandPinky2",
+        "position": [
+          -0.73366880420566,
+          1.399918172480504,
+          0.023053719307142312
+        ]
+      },
+      {
+        "source": "Thumb1R",
+        "name": "Suit_Thumb1R",
+        "parent": "mixamorigRightHand",
+        "position": [
+          -0.5775710432100214,
+          1.3900572474104156,
+          0.08420822728864738
+        ]
+      },
+      {
+        "source": "Thumb2R",
+        "name": "mixamorigRightHandThumb1",
+        "parent": "Suit_Thumb1R",
+        "position": [
+          -0.6280763925635692,
+          1.3670359753626424,
+          0.14152418734016747
+        ]
+      },
+      {
+        "source": "Thumb3R",
+        "name": "mixamorigRightHandThumb2",
+        "parent": "mixamorigRightHandThumb1",
+        "position": [
+          -0.6516067117899964,
+          1.361590776140102,
+          0.16111163445039783
+        ]
+      },
+      {
+        "source": "UpperLegL",
+        "name": "mixamorigLeftUpLeg",
+        "parent": "mixamorigHips",
+        "position": [
+          0.11689446155759019,
+          0.9358521020102581,
+          0.04368216497003602
+        ]
+      },
+      {
+        "source": "LowerLegL",
+        "name": "mixamorigLeftLeg",
+        "parent": "mixamorigLeftUpLeg",
+        "position": [
+          0.11689448106532604,
+          0.5181576935512312,
+          0.08471697863052792
+        ]
+      },
+      {
+        "source": "UpperLegR",
+        "name": "mixamorigRightUpLeg",
+        "parent": "mixamorigHips",
+        "position": [
+          -0.11689452455218698,
+          0.9358521047315754,
+          0.043682192655337924
+        ]
+      },
+      {
+        "source": "LowerLegR",
+        "name": "mixamorigRightLeg",
+        "parent": "mixamorigRightUpLeg",
+        "position": [
+          -0.11689453406231606,
+          0.5181577285167575,
+          0.08471696882016944
+        ]
+      },
+      {
+        "source": "FootL",
+        "name": "mixamorigLeftFoot",
+        "parent": "mixamorigLeftLeg",
+        "position": [
+          0.11689446938481979,
+          0.02331382659770458,
+          0.06019181195434587
+        ]
+      },
+      {
+        "source": "PTL",
+        "name": "Suit_PTL",
+        "parent": "Suit_Root",
+        "position": [
+          0.11689446601737637,
+          0.45380557530253457,
+          0.7345017440223631
+        ]
+      },
+      {
+        "source": "FootR",
+        "name": "mixamorigRightFoot",
+        "parent": "mixamorigRightLeg",
+        "position": [
+          -0.1168945237519972,
+          0.023313826525402963,
+          0.060191807297036146
+        ]
+      },
+      {
+        "source": "PTR",
+        "name": "Suit_PTR",
+        "parent": "Suit_Root",
+        "position": [
+          -0.11689452493796185,
+          0.45380557500446755,
+          0.7345017440238797
+        ]
+      },
+      {
+        "source": "FootL_end",
+        "name": "mixamorigLeftToeBase",
+        "parent": "mixamorigLeftFoot",
+        "position": [
+          0.11689447425592872,
+          0.024233102909519164,
+          0.23208917685811842
+        ]
+      },
+      {
+        "source": "Thumb3L_end",
+        "name": "mixamorigLeftHandThumb3",
+        "parent": "mixamorigLeftHandThumb2",
+        "position": [
+          0.6785716748168052,
+          1.3578415777161659,
+          0.17795819641553803
+        ]
+      },
+      {
+        "source": "FootR_end",
+        "name": "mixamorigRightToeBase",
+        "parent": "mixamorigRightFoot",
+        "position": [
+          -0.11689451887731404,
+          0.02423310283694508,
+          0.23208917220081018
+        ]
+      },
+      {
+        "source": "Thumb3R_end",
+        "name": "mixamorigRightHandThumb3",
+        "parent": "mixamorigRightHandThumb2",
+        "position": [
+          -0.6785717305537959,
+          1.3578419624299887,
+          0.17795834751931333
+        ]
+      },
+      {
+        "source": null,
+        "name": "Suit_LeftForearmTwist",
+        "parent": "mixamorigLeftArm",
+        "position": [
+          0.3241602007088886,
+          1.3894602706222314,
+          0.05434639870423426
+        ]
+      },
+      {
+        "source": null,
+        "name": "Suit_LeftForearmMid",
+        "parent": "mixamorigLeftArm",
+        "position": [
+          0.3241602007088886,
+          1.3894602706222314,
+          0.05434639870423426
+        ]
+      },
+      {
+        "source": null,
+        "name": "Suit_RightForearmTwist",
+        "parent": "mixamorigRightArm",
+        "position": [
+          -0.32416024604871185,
+          1.3894603535637788,
+          0.05434639145156048
+        ]
+      },
+      {
+        "source": null,
+        "name": "Suit_RightForearmMid",
+        "parent": "mixamorigRightArm",
+        "position": [
+          -0.32416024604871185,
+          1.3894603535637788,
+          0.05434639145156048
+        ]
+      }
+    ]
+  },
+  "outfit": {
+    "construction": "Retain authored jacket, shirt, tie, trousers, shoes and exposed hands/head; no invented torso under the jacket.",
+    "palette": {
+      "Suit": "#293d53",
+      "Black": "#24262b",
+      "White": "#f3f0e7",
+      "Tie": "#893e52",
+      "Skin": "#dbb497",
+      "Hair": "#29252b",
+      "Eyebrows": "#29252b",
+      "Eye": "#292b32"
+    },
+    "shoulderElbow": "Shared midpoint refinement and an anatomical weight field on the original jacket/shirt surface; four auxiliary elbow/forearm bones distribute bend and forearm twist. No global expansion.",
+    "layering": "Authored shirt front and cuffs are retained. Skin in the body mesh consists of hands, not a hidden torso; no duplicate full body is added.",
+    "fit": "Source suit proportions retained; no global jacket expansion or trouser-leg resizing."
+  },
+  "history": [
+    {
+      "sourceMesh": "Suit_Legs",
+      "material": "Suit",
+      "before": 734,
+      "afterSimplify": 682,
+      "after": 682,
+      "requestedRatio": 0.78
+    },
+    {
+      "sourceMesh": "Suit_Feet",
+      "material": "Black",
+      "before": 528,
+      "afterSimplify": 526,
+      "after": 526,
+      "requestedRatio": 0.72
+    },
+    {
+      "sourceMesh": "Suit_Body_1",
+      "material": "Suit",
+      "before": 872,
+      "afterSimplify": 872,
+      "after": 2718,
+      "requestedRatio": 0.85
+    },
+    {
+      "sourceMesh": "Suit_Body_2",
+      "material": "White",
+      "before": 202,
+      "afterSimplify": 202,
+      "after": 230,
+      "requestedRatio": 1
+    },
+    {
+      "sourceMesh": "Suit_Body_3",
+      "material": "Tie",
+      "before": 16,
+      "afterSimplify": 16,
+      "after": 16,
+      "requestedRatio": 1
+    },
+    {
+      "sourceMesh": "Suit_Body_4",
+      "material": "Skin",
+      "before": 1826,
+      "afterSimplify": 1756,
+      "after": 1756,
+      "requestedRatio": 0.75
+    },
+    {
+      "sourceMesh": "Suit_Head_1",
+      "material": "Skin",
+      "before": 448,
+      "afterSimplify": 448,
+      "after": 448,
+      "requestedRatio": 1
+    },
+    {
+      "sourceMesh": "Suit_Head_2",
+      "material": "Hair",
+      "before": 1960,
+      "afterSimplify": 1760,
+      "after": 1760,
+      "requestedRatio": 0.42
+    },
+    {
+      "sourceMesh": "Suit_Head_3",
+      "material": "Eyebrows",
+      "before": 24,
+      "afterSimplify": 24,
+      "after": 24,
+      "requestedRatio": 1
+    },
+    {
+      "sourceMesh": "Suit_Head_4",
+      "material": "Eye",
+      "before": 24,
+      "afterSimplify": 24,
+      "after": 24,
+      "requestedRatio": 1
+    }
+  ],
+  "parts": [
+    {
+      "id": "trouser_waist",
+      "label": "西裤腰胯",
+      "triangles": 238,
+      "vertices": 691,
+      "sourceMesh": "Suit_Legs",
+      "material": "Suit"
+    },
+    {
+      "id": "trouser_L",
+      "label": "左西裤腿",
+      "triangles": 222,
+      "vertices": 666,
+      "sourceMesh": "Suit_Legs",
+      "material": "Suit"
+    },
+    {
+      "id": "trouser_R",
+      "label": "右西裤腿",
+      "triangles": 222,
+      "vertices": 666,
+      "sourceMesh": "Suit_Legs",
+      "material": "Suit"
+    },
+    {
+      "id": "shoe_R",
+      "label": "右皮鞋",
+      "triangles": 264,
+      "vertices": 786,
+      "sourceMesh": "Suit_Feet",
+      "material": "Black"
+    },
+    {
+      "id": "shoe_L",
+      "label": "左皮鞋",
+      "triangles": 262,
+      "vertices": 782,
+      "sourceMesh": "Suit_Feet",
+      "material": "Black"
+    },
+    {
+      "id": "jacket_body",
+      "label": "西装衣身",
+      "triangles": 938,
+      "vertices": 1436,
+      "sourceMesh": "Suit_Body_1",
+      "material": "Suit"
+    },
+    {
+      "id": "jacket_sleeve_R",
+      "label": "右西装衣袖",
+      "triangles": 889,
+      "vertices": 845,
+      "sourceMesh": "Suit_Body_1",
+      "material": "Suit"
+    },
+    {
+      "id": "jacket_sleeve_L",
+      "label": "左西装衣袖",
+      "triangles": 891,
+      "vertices": 847,
+      "sourceMesh": "Suit_Body_1",
+      "material": "Suit"
+    },
+    {
+      "id": "shirt_front",
+      "label": "内搭衬衫",
+      "triangles": 28,
+      "vertices": 60,
+      "sourceMesh": "Suit_Body_2",
+      "material": "White"
+    },
+    {
+      "id": "collar",
+      "label": "衬衫领口",
+      "triangles": 168,
+      "vertices": 322,
+      "sourceMesh": "Suit_Body_2",
+      "material": "White"
+    },
+    {
+      "id": "cuff_R",
+      "label": "右衬衫袖口",
+      "triangles": 17,
+      "vertices": 35,
+      "sourceMesh": "Suit_Body_2",
+      "material": "White"
+    },
+    {
+      "id": "cuff_L",
+      "label": "左衬衫袖口",
+      "triangles": 17,
+      "vertices": 35,
+      "sourceMesh": "Suit_Body_2",
+      "material": "White"
+    },
+    {
+      "id": "tie",
+      "label": "酒红领带",
+      "triangles": 16,
+      "vertices": 36,
+      "sourceMesh": "Suit_Body_3",
+      "material": "Tie"
+    },
+    {
+      "id": "hand_R",
+      "label": "右手部",
+      "triangles": 875,
+      "vertices": 2625,
+      "sourceMesh": "Suit_Body_4",
+      "material": "Skin"
+    },
+    {
+      "id": "hand_L",
+      "label": "左手部",
+      "triangles": 881,
+      "vertices": 2643,
+      "sourceMesh": "Suit_Body_4",
+      "material": "Skin"
+    },
+    {
+      "id": "head",
+      "label": "头颈",
+      "triangles": 448,
+      "vertices": 886,
+      "sourceMesh": "Suit_Head_1",
+      "material": "Skin"
+    },
+    {
+      "id": "hair",
+      "label": "侧分短发",
+      "triangles": 1760,
+      "vertices": 5280,
+      "sourceMesh": "Suit_Head_2",
+      "material": "Hair"
+    },
+    {
+      "id": "brows",
+      "label": "眉毛",
+      "triangles": 24,
+      "vertices": 48,
+      "sourceMesh": "Suit_Head_3",
+      "material": "Eyebrows"
+    },
+    {
+      "id": "eyes",
+      "label": "眼睛",
+      "triangles": 24,
+      "vertices": 48,
+      "sourceMesh": "Suit_Head_4",
+      "material": "Eye"
+    }
+  ],
+  "limits": [
+    "A low-poly adult adaptation of an existing CC0 asset, not a newly sculpted or scanned person.",
+    "Source reference has normalized bind pose and the same foot hierarchy repair as the assembled model; exact untouched source is linked and hash-pinned separately.",
+    "Native 24 animations are kept in the untouched source mirror, not carried into the remapped asset. Motion Lab generates and retargets its own clips.",
+    "No complete naked body, facial expression rig, cloth simulation, or visual browser acceptance is claimed."
+  ]
+}

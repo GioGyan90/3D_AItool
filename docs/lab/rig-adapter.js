@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Rig, BONES } from '../retarget.js?v=af2e03c23178';
+import { Rig, BONES } from '../retarget.js?v=7a1a5f3a1429';
 
 export const REQUIRED=['Hips','Spine','Neck','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg','LeftFoot','RightFoot'];
 export const MAPPABLE=BONES.filter(n=>!/Hand(Thumb|Index|Middle|Ring|Pinky)/.test(n));
@@ -20,10 +20,13 @@ export function detectBones(root,overrides={}){
 
 export function prepareRig(root,overrides={}){
   root.traverse(o=>{if(o.userData.preset==='charabuilder-boy'&&o.userData.shoulderRhythm)root.userData.shoulderRhythm=true;});
+  root.traverse(o=>{if(o.userData.preset==='quaternius-suit-man'&&Array.isArray(o.userData.forearmTwist))root.userData.forearmTwist=o.userData.forearmTwist;});
+  root.traverse(o=>{if(o.userData.preset==='quaternius-suit-man'&&o.userData.shoulderRhythm)root.userData.shoulderRhythm=o.userData.shoulderRhythm;});
   const detection=detectBones(root,overrides);if(detection.missing.length)return {...detection,rig:null};
   const entries=Object.entries(detection.map),names=entries.map(([,b])=>b.name);
   if(new Set(entries.map(([,b])=>b)).size!==entries.length)throw new Error('同一根骨骼不能重复映射到多个部位');
   let rig;try{entries.forEach(([n,b])=>b.name='mixamorig'+n);rig=new Rig(root);}finally{entries.forEach(([,b],i)=>b.name=names[i]);}
+  for(const entry of root.userData.forearmTwist||[])for(const name of [entry.bone,entry.middleBone])if(rig.bones[name]&&!rig.order.includes(name))rig.order.push(name);
   if(!Number.isFinite(rig.legLength)||rig.legLength<1e-5)throw new Error('腿部骨架长度异常，请检查骨骼映射');
   return {...detection,rig};
 }
