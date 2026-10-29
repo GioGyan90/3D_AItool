@@ -1,6 +1,8 @@
-# 自建人物优先 → 提示词动作：可复用工作流
+# 现有人物复用 → 提示词动作：可复用工作流
 
 在线入口：https://giogyan90.github.io/3D_AItool/lab/
+
+服装与配饰结构、衣内删面、帽口发层、骨骼归属和新人物生产方法统一见 [CHARACTER_PRODUCTION.md](CHARACTER_PRODUCTION.md)。仅提出新动作时默认使用当前装配少年；要求新造型或新角色时，再按该约定制作独立模型。
 
 ## 先选已有人物，再检查装配
 
@@ -48,11 +50,13 @@ API Key 只保留当前页面内存，刷新清空；非密钥设置保存在浏
 
 这是提示词到程序关键帧的链路。上游 fal → 视频 → MediaPipe / GVHMR 链路继续保留在本地原版入口，与本功能分别使用；API 设置中的 OpenAI Key 不替代 fal Key。
 
-## 本次验证
+## 验证范围
 
-- 22 项 Node 检查通过：新增自建人物拓扑、镜像、权重、动作接缝、拆解导出与单件坐标检查；原有检查包括无损压缩/解码、减面属性保留、GLB 导入导出、原有与新动画、Mixer 播放、A/T 姿态修正、动作校验、默认 OpenAI 请求和模拟错误。
-- 浏览器实际导入带骨架 GLB，减面后骨架仍匹配；将示例 JSON 绑定后可观察挥手；无密钥时正确打开 API 设置。
+- 当前基线为 27 项 Node 检查通过，包含人物比例、权重、接缝、帽口发层 / 帽带可见性、锁骨与导出动画、无损压缩 / 解码、GLB 导入导出、A/T 姿态、动作校验及模拟 API。内置三段动作共 154 个姿势的变形检查通过，详见 [报告](TEEN_DEFORMATION_VALIDATION.json)。这些结果不覆盖任意新生成动作。
+- 早期浏览器验证曾实际导入带骨架 GLB，减面后骨架仍匹配；将示例 JSON 绑定后可观察挥手；无密钥时正确打开 API 设置。
 - 用临时贴图测试 GLB 检查了不透明/透明材质处理，约 6.88 MB 输入处理为约 1.92 MB。此为测试数据，不是其他人物的压缩承诺。
 - 没有使用真实 API Key 调用付费模型；API 请求与解析用模拟响应验证，实际模型服务、账号额度和 CORS 需用自己的配置验证。
+
+- 当前帽带 / 连续肩腋版本的浏览器多视角复查尚未完成，上一轮浏览器自动审批限制仍需遵守；本次用户已反馈外观改善。新动作和新模型仍需独立视觉复查。
 
 参考：[OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)、[Meshoptimizer](https://github.com/zeux/meshoptimizer)、[EXT_meshopt_compression](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Vendor/EXT_meshopt_compression)。
