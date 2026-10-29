@@ -1,16 +1,16 @@
 import * as THREE from 'three';
-import { OrbitControls } from '../vendor/controls/OrbitControls.js?v=1cfe9af41ff0';
-import { Rig } from '../retarget.js?v=1cfe9af41ff0';
-import { createCharacter } from './character.js?v=1cfe9af41ff0';
-import { MOTIONS, bakeMotion } from './motions.js?v=1cfe9af41ff0';
-import { createRenderer } from './renderer.js?v=1cfe9af41ff0';
-import { importCharacter, exportCharacter } from './assets.js?v=1cfe9af41ff0';
-import { modelStats } from './optimize.js?v=1cfe9af41ff0';
-import { prepareRig, detectBones, MAPPABLE, REQUIRED } from './rig-adapter.js?v=1cfe9af41ff0';
-import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, PLAN_JOINTS } from './motion-plan.js?v=1cfe9af41ff0';
-import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js?v=1cfe9af41ff0';
-import { loadTeenPreset } from './teen-preset.js?v=1cfe9af41ff0';
-import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js?v=1cfe9af41ff0';
+import { OrbitControls } from '../vendor/controls/OrbitControls.js?v=c95109fde78d';
+import { Rig } from '../retarget.js?v=c95109fde78d';
+import { createCharacter } from './character.js?v=c95109fde78d';
+import { MOTIONS, bakeMotion } from './motions.js?v=c95109fde78d';
+import { createRenderer } from './renderer.js?v=c95109fde78d';
+import { importCharacter, exportCharacter } from './assets.js?v=c95109fde78d';
+import { modelStats } from './optimize.js?v=c95109fde78d';
+import { prepareRig, detectBones, MAPPABLE, REQUIRED } from './rig-adapter.js?v=c95109fde78d';
+import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, PLAN_JOINTS } from './motion-plan.js?v=c95109fde78d';
+import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js?v=c95109fde78d';
+import { loadTeenPreset } from './teen-preset.js?v=c95109fde78d';
+import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js?v=c95109fde78d';
 
 const $=s=>document.querySelector(s),viewport=$('#viewport'),status=text=>$('#status').textContent=text;
 const bytes=n=>n>=1048576?(n/1048576).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';

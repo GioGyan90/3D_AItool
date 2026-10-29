@@ -2,18 +2,19 @@ import * as THREE from 'three';
 function geometry(p,ix){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));let volume=0;for(let i=0;i<ix.length;i+=3){const a=new THREE.Vector3().fromArray(p,ix[i]*3),b=new THREE.Vector3().fromArray(p,ix[i+1]*3),c=new THREE.Vector3().fromArray(p,ix[i+2]*3);volume+=a.dot(b.cross(c))/6;}if(volume<0)for(let i=0;i<ix.length;i+=3)[ix[i+1],ix[i+2]]=[ix[i+2],ix[i+1]];g.setIndex(ix);g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();return g;}
 function add(model,g,bone,color,label,id,offset){const count=g.attributes.position.count,si=new Uint16Array(count*4),sw=new Float32Array(count*4);if(bone!==null){for(let i=0;i<count;i++){si[i*4]=bone;sw[i*4]=1;}g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(sw,4));}g.computeBoundingBox();g.computeBoundingSphere();return model.add(g,new THREE.MeshStandardMaterial({name:id,color,roughness:.9}),label,id,offset,'new accessory fitted to source preset');}
 // Keep original lower-shirt vertices; interpolate cuts and bone weights at the removed collar.
-function cropTop(g,top){const attrs=['position','normal','uv','skinIndex','skinWeight'].filter(k=>g.attributes[k]),vertices=[],ix=[],cache=new Map();
+function clipGeometry(g,distance){const attrs=['position','normal','uv','skinIndex','skinWeight'].filter(k=>g.attributes[k]),vertices=[],ix=[],cache=new Map();
  const read=id=>Object.fromEntries(attrs.map(k=>[k,Array.from({length:g.attributes[k].itemSize},(_,j)=>g.attributes[k].getComponent(id,j))]));
  const lerp=(a,b,t)=>{const out={};for(const k of attrs)if(!['skinIndex','skinWeight'].includes(k))out[k]=a[k].map((v,j)=>v+(b[k][j]-v)*t);const weights=new Map();for(const [v,f]of [[a,1-t],[b,t]])for(let j=0;j<4;j++)weights.set(v.skinIndex[j],(weights.get(v.skinIndex[j])||0)+v.skinWeight[j]*f);const sorted=[...weights].sort((a,b)=>b[1]-a[1]).slice(0,4),sum=sorted.reduce((n,[,w])=>n+w,0);out.skinIndex=Array.from({length:4},(_,j)=>sorted[j]?.[0]||0);out.skinWeight=Array.from({length:4},(_,j)=>(sorted[j]?.[1]||0)/sum);return out;};
  const vertex=v=>{const key=attrs.flatMap(k=>v[k]).map(x=>Math.round(x*1e7)).join(',');if(!cache.has(key)){cache.set(key,vertices.length);vertices.push(v);}return cache.get(key);};
- for(let i=0;i<g.index.count;i+=3){const tri=[0,1,2].map(j=>read(g.index.getX(i+j))),polygon=[];for(let j=0;j<3;j++){const a=tri[j],b=tri[(j+1)%3],ia=a.position[1]<=top,ib=b.position[1]<=top;if(ia)polygon.push(a);if(ia!==ib)polygon.push(lerp(a,b,(top-a.position[1])/(b.position[1]-a.position[1])));}for(let j=1;j<polygon.length-1;j++)ix.push(vertex(polygon[0]),vertex(polygon[j]),vertex(polygon[j+1]));}
+ for(let i=0;i<g.index.count;i+=3){const tri=[0,1,2].map(j=>read(g.index.getX(i+j))),polygon=[];for(let j=0;j<3;j++){const a=tri[j],b=tri[(j+1)%3],da=distance(a.position),db=distance(b.position),ia=da>=0,ib=db>=0;if(ia)polygon.push(a);if(ia!==ib)polygon.push(lerp(a,b,da/(da-db)));}for(let j=1;j<polygon.length-1;j++)ix.push(vertex(polygon[0]),vertex(polygon[j]),vertex(polygon[j+1]));}
  const out=new THREE.BufferGeometry();for(const k of attrs){const a=g.attributes[k];out.setAttribute(k,new THREE.BufferAttribute(new a.array.constructor(vertices.flatMap(v=>v[k])),a.itemSize));}out.setIndex(ix);out.computeVertexNormals();out.computeBoundingBox();out.computeBoundingSphere();return out;}
+const cropTop=(g,top)=>clipGeometry(g,p=>top-p[1]);
 export function convertShirtToTee(model,h){
  const neck=model.bones[h.neck].getWorldPosition(new THREE.Vector3()),shoulder=model.bones[h.leftUpperArm].getWorldPosition(new THREE.Vector3()),cutY=shoulder.y-.02,cx=neck.x,cz=neck.z+.014,top=neck.y+.012,edges=new Map(),vertices=new Map();
  const skinTriangles=[];
  for(const m of model.parts.filter(m=>m.name==='neck_scalp'||m.name.startsWith('arm_'))){const g=m.geometry,p=g.attributes.position;for(let i=0;i<g.index.count;i+=3){const tri=[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(p,g.index.getX(i+j)));if(Math.min(...tri.map(v=>v.y))<top+.04&&Math.max(...tri.map(v=>v.y))>cutY-.02)skinTriangles.push(tri);}}
  function neckRadius(angle,y){const ux=Math.cos(angle),uz=Math.sin(angle),hits=[];for(const tri of skinTriangles){const points=[];for(let j=0;j<3;j++){const a=tri[j],b=tri[(j+1)%3];if((a.y<y)!==(b.y<y)){const t=(y-a.y)/(b.y-a.y);points.push([a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t]);}}if(points.length!==2)continue;const [[ax,az],[bx,bz]]=points,dx=bx-ax,dz=bz-az,den=ux*dz-uz*dx;if(Math.abs(den)<1e-9)continue;const r=((ax-cx)*dz-(az-cz)*dx)/den,t=((ax-cx)*uz-(az-cz)*ux)/den;if(r>0&&t>=0&&t<=1)hits.push(r);}return hits.length?Math.max(...hits):.055;}
- function surfaceY(x,z){let hit=-Infinity;for(const [a,b,c]of skinTriangles){const den=(b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z);if(Math.abs(den)<1e-10)continue;const u=((b.z-c.z)*(x-c.x)+(c.x-b.x)*(z-c.z))/den,v=((c.z-a.z)*(x-c.x)+(a.x-c.x)*(z-c.z))/den,w=1-u-v;if(u>=0&&v>=0&&w>=0){const y=u*a.y+v*b.y+w*c.y;if(y<top+.035)hit=Math.max(hit,y);}}return hit;}
+
  const key=p=>p.map(x=>Math.round(x*1e6)).join(',');
  for(const m of model.parts.filter(m=>m.name.startsWith('shirt_')||m.name.startsWith('sleeve_'))){
   m.geometry=cropTop(m.geometry,cutY);const g=m.geometry,p=g.attributes.position;
@@ -30,12 +31,35 @@ export function convertShirtToTee(model,h){
  if(loop.length<12)throw Error('Insufficient shoulder contour');
  console.log('shirt shoulder contour',loop.length,'open placket endpoints',[...adjacency.values()].filter(a=>a.length===1).length);
  const n=loop.length,p=[],ix=[],joints=[],weights=[];
- for(const t of [0,.35,.7,1])for(const v of loop){const a=Math.atan2(v.p[2]-cz,v.p[0]-cx),innerY=top-.012*Math.max(0,Math.sin(a)),radius=neckRadius(a,innerY)+.009,inner=[cx+radius*Math.cos(a),innerY,cz+radius*Math.sin(a)],x=v.p[0]+(inner[0]-v.p[0])*t,z=v.p[2]+(inner[2]-v.p[2])*t,y=cutY+(inner[1]-cutY)*Math.sin(t*Math.PI/2);p.push(x,t===0?y:Math.max(y,surfaceY(x,z)+.006),z);
+ for(const t of [0,.35,.7,1])for(const v of loop){const a=Math.atan2(v.p[2]-cz,v.p[0]-cx),innerY=top-.012*Math.max(0,Math.sin(a)),radius=neckRadius(a,innerY)+.009,inner=[cx+radius*Math.cos(a),innerY,cz+radius*Math.sin(a)],x=v.p[0]+(inner[0]-v.p[0])*t,z=v.p[2]+(inner[2]-v.p[2])*t,y=cutY+(inner[1]-cutY)*Math.sin(t*Math.PI/2);p.push(x,y,z);
   const w=new Map();for(let k=0;k<4;k++)w.set(v.indices[k],(w.get(v.indices[k])||0)+v.weights[k]*(1-t));w.set(h.upperChest,(w.get(h.upperChest)||0)+t);const list=[...w].sort((a,b)=>b[1]-a[1]).slice(0,4),sum=list.reduce((s,[,v])=>s+v,0);for(let k=0;k<4;k++){joints.push(list[k]?.[0]||0);weights.push((list[k]?.[1]||0)/sum);}
  }
  for(let r=0;r<3;r++)for(let s=0;s<n;s++){const a=r*n+s,b=r*n+(s+1)%n;ix.push(a,b,a+n,b,b+n,a+n);}
  const g=geometry(p,ix);let ny=0;for(let i=0;i<g.attributes.normal.count;i++)ny+=g.attributes.normal.getY(i);if(ny<0){const a=g.index.array;for(let i=0;i<a.length;i+=3)[a[i+1],a[i+2]]=[a[i+2],a[i+1]];g.computeVertexNormals();}g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(joints,4));g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(weights,4));add(model,g,null,0xf0ece0,'T 恤肩部补片','tee_yoke',[0,.07,.1]);
  const cp=[],ci=[],sectors=32;for(const outer of [false,true])for(let s=0;s<sectors;s++){const a=s/sectors*Math.PI*2,y=top-.012*Math.max(0,Math.sin(a)),radius=neckRadius(a,y)+(outer?.012:.004);cp.push(cx+radius*Math.cos(a),y+.001,cz+radius*Math.sin(a));}for(let s=0;s<sectors;s++){const a=s,b=(s+1)%sectors;ci.push(a,b,a+sectors,b,b+sectors,a+sectors);}add(model,geometry(cp,ci),h.upperChest,0x386e70,'T 恤圆领','tee_neck',[0,.07,.1]);
+}
+// Remove geometry under this fixed outfit, retaining a narrow overlap inside each hem.
+// The cut follows the actual A-pose upper-arm axis, not a horizontal world-space crop.
+export function removeCoveredBody(model,h){
+ const rows=[],neck=model.bones[h.neck].getWorldPosition(new THREE.Vector3());
+ for(const side of ['L','R']){
+  const prefix=side==='L'?'left':'right',origin=model.bones[h[prefix+'UpperArm']].getWorldPosition(new THREE.Vector3()),axis=model.bones[h[prefix+'LowerArm']].getWorldPosition(new THREE.Vector3()).sub(origin).normalize();
+  const sleeve=model.parts.find(m=>m.name==='sleeve_'+side),p=sleeve.geometry.attributes.position;
+  let hem=-Infinity;for(let i=0;i<p.count;i++)hem=Math.max(hem,new THREE.Vector3().fromBufferAttribute(p,i).sub(origin).dot(axis));
+  const cut=hem-.009;
+  for(const mesh of model.parts.filter(m=>m.name==='arm_'+side)){
+   const before=mesh.geometry.index.count/3;mesh.geometry=clipGeometry(mesh.geometry,p=>new THREE.Vector3(...p).sub(origin).dot(axis)-cut);
+   mesh.userData.provenance='source skin clipped inside sleeve';rows.push({part:mesh.name,before,after:mesh.geometry.index.count/3,origin:origin.toArray(),axis:axis.toArray(),cut,hem,overlap:.009});
+  }
+ }
+ const mesh=model.parts.find(m=>m.name==='neck_scalp'),before=mesh.geometry.index.count/3;
+ // Neck opening is lowest at the front; overlap is below the entire ribbing.
+ const cut=neck.y-.009,collar=model.parts.find(m=>m.name==='tee_neck').geometry.attributes.position,cx=neck.x,cz=neck.z+.014;
+ const aperture=Array.from({length:32},(_,i)=>Math.hypot(collar.getX(i)-cx,collar.getZ(i)-cz));
+ const neckDistance=p=>{const a=((Math.atan2(p[2]-cz,p[0]-cx)/(Math.PI*2))%1+1)%1*32,i=Math.floor(a),t=a-i,r=aperture[i]*(1-t)+aperture[(i+1)%32]*t-.002;return Math.min(p[1]-cut,Math.max(p[1]-(neck.y+.015),r-Math.hypot(p[0]-cx,p[2]-cz)));};
+ mesh.geometry=clipGeometry(mesh.geometry,neckDistance);mesh.userData.provenance='source neck skin clipped inside crew neck';
+ rows.push({part:mesh.name,before,after:mesh.geometry.index.count/3,cutY:cut,aperture:aperture.map(r=>r-.002),center:[cx,cz],clearAbove:neck.y+.015});
+ return rows;
 }
 export function addBoyAccessories(model,h){const head=model.bones[h.head].getWorldPosition(new THREE.Vector3()),box=new THREE.Box3();for(const m of model.parts.filter(m=>m.name.startsWith('Hair')))box.union(m.geometry.boundingBox);const cx=head.x,cz=head.z-.005,base=box.max.y-.078,rx=Math.max(Math.abs(box.min.x-cx),Math.abs(box.max.x-cx))+.012,rz=.113;
  for(const hair of model.parts.filter(m=>m.name.startsWith('Hair'))){hair.geometry=cropTop(hair.geometry,base+.014);hair.userData.provenance='source hair trimmed inside the cap';}

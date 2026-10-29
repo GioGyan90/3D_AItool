@@ -3,7 +3,7 @@
   "source": {
     "repository": "https://github.com/GioGyan90/CharaBuilder",
     "commit": "6ff7fa5c7b451c7318cf445038f1514a646343ea",
-    "preset": "boy / vroid / sidepart / shirtPants",
+    "preset": "boy / vroid / swept fringe / shirtPants",
     "state": {
       "craniumWidth": 50,
       "craniumDepth": 50,
@@ -136,7 +136,7 @@
       "mouthThickness": 50,
       "mouthProjection": 50,
       "mouthCorner": 50,
-      "frontHair": "sidepart",
+      "frontHair": "swept",
       "backHair": "sidepart",
       "sideHair": "sidepart",
       "braid": "none",
@@ -145,7 +145,7 @@
       "sideLength": 50,
       "braidLength": 50,
       "hairVolume": 50,
-      "hairlineHeight": 50,
+      "hairlineHeight": 35,
       "sideHairColor": "#929590",
       "shirtLength": 50,
       "sleeveLength": 0,
@@ -180,26 +180,109 @@
     "uniformScale": 0.7623685365941925,
     "bodyProportionsChanged": false
   },
+  "bodyCleanup": [
+    {
+      "part": "arm_L",
+      "before": 909,
+      "after": 896,
+      "origin": [
+        0.14148460306910768,
+        1.3489514065008548,
+        0.004055177911461466
+      ],
+      "axis": [
+        0.4281271526719161,
+        -0.9036909840682165,
+        0.007053116960355782
+      ],
+      "cut": 0.11844112641309519,
+      "hem": 0.12744112641309518,
+      "overlap": 0.009
+    },
+    {
+      "part": "arm_R",
+      "before": 919,
+      "after": 906,
+      "origin": [
+        -0.1424623289533683,
+        1.3489514065008548,
+        0.004055162405123799
+      ],
+      "axis": [
+        -0.42812764580769347,
+        -0.9036907595520284,
+        0.007051949761594791
+      ],
+      "cut": 0.11843392654528163,
+      "hem": 0.12743392654528163,
+      "overlap": 0.009
+    },
+    {
+      "part": "neck_scalp",
+      "before": 764,
+      "after": 339,
+      "cutY": 1.3896894427784785,
+      "aperture": [
+        0.0468816282209196,
+        0.038826441214226674,
+        0.03582368010584846,
+        0.03443370667394191,
+        0.03467464428939356,
+        0.03592976952245555,
+        0.03319740606755069,
+        0.03073635811689107,
+        0.030444167766390293,
+        0.030736460620375182,
+        0.03319653947117288,
+        0.0359299837614199,
+        0.03467093319876966,
+        0.034429582129027914,
+        0.03582104936639048,
+        0.03882563839530336,
+        0.04688209267890073,
+        0.07197453849778801,
+        0.07229324392952745,
+        0.0671590346673477,
+        0.05893464882805498,
+        0.05337902060483026,
+        0.04974298547028902,
+        0.04836598192008225,
+        0.04933029085058167,
+        0.048365533756326635,
+        0.04974268704972114,
+        0.05337868548040534,
+        0.0589341017698903,
+        0.06716056378622817,
+        0.0722940191871204,
+        0.07197142517266555
+      ],
+      "center": [
+        -0.0004888667222299482,
+        0.006138648953618554
+      ],
+      "clearAbove": 1.4136894427784783
+    }
+  ],
   "before": {
-    "triangles": 21011,
-    "vertices": 56796,
-    "meshes": 22,
+    "triangles": 23922,
+    "vertices": 58658,
+    "meshes": 23,
     "bones": 91
   },
   "compactedSource": {
-    "triangles": 21011,
-    "vertices": 13855,
-    "meshes": 33,
+    "triangles": 23922,
+    "vertices": 16045,
+    "meshes": 34,
     "bones": 91
   },
   "after": {
-    "triangles": 13132,
-    "vertices": 9383,
-    "meshes": 35,
+    "triangles": 13573,
+    "vertices": 9794,
+    "meshes": 36,
     "bones": 91
   },
-  "sourceGLBBytes": 957736,
-  "modelGLBBytes": 807460,
+  "sourceGLBBytes": 1023448,
+  "modelGLBBytes": 817804,
   "history": [
     {
       "variant": "source",
@@ -307,10 +390,18 @@
     },
     {
       "variant": "source",
+      "part": "HairScalp",
+      "material": "M00_000_HairBack_00_HAIR",
+      "before": 408,
+      "after": 408,
+      "requestedRatio": 1
+    },
+    {
+      "variant": "source",
       "part": "HairFront",
-      "material": "Micket_sidepart_HAIR",
-      "before": 61,
-      "after": 61,
+      "material": "F00_000_Hair_00_HAIR_01",
+      "before": 2564,
+      "after": 2564,
       "requestedRatio": 1
     },
     {
@@ -483,11 +574,19 @@
     },
     {
       "variant": "reassembled",
+      "part": "HairScalp",
+      "material": "M00_000_HairBack_00_HAIR",
+      "before": 408,
+      "after": 392,
+      "requestedRatio": 0.22
+    },
+    {
+      "variant": "reassembled",
       "part": "HairFront",
-      "material": "Micket_sidepart_HAIR",
-      "before": 61,
-      "after": 61,
-      "requestedRatio": 0.7
+      "material": "F00_000_Hair_00_HAIR_01",
+      "before": 2564,
+      "after": 916,
+      "requestedRatio": 0.22
     },
     {
       "variant": "reassembled",
@@ -495,7 +594,7 @@
       "material": "Micket_sidepart_HAIR",
       "before": 88,
       "after": 88,
-      "requestedRatio": 0.7
+      "requestedRatio": 0.22
     },
     {
       "variant": "reassembled",
@@ -503,7 +602,7 @@
       "material": "Micket_sidepart_HAIR",
       "before": 52,
       "after": 52,
-      "requestedRatio": 0.7
+      "requestedRatio": 0.22
     }
   ],
   "parts": [
@@ -573,23 +672,23 @@
     {
       "id": "neck_scalp",
       "label": "颈部与后脑",
-      "triangles": 764,
-      "vertices": 515,
-      "provenance": "source"
+      "triangles": 339,
+      "vertices": 256,
+      "provenance": "source neck skin clipped inside crew neck"
     },
     {
       "id": "arm_L",
       "label": "左手臂",
-      "triangles": 909,
-      "vertices": 612,
-      "provenance": "source"
+      "triangles": 896,
+      "vertices": 610,
+      "provenance": "source skin clipped inside sleeve"
     },
     {
       "id": "arm_R",
       "label": "右手臂",
-      "triangles": 919,
-      "vertices": 617,
-      "provenance": "source"
+      "triangles": 906,
+      "vertices": 615,
+      "provenance": "source skin clipped inside sleeve"
     },
     {
       "id": "ankle_L",
@@ -676,21 +775,28 @@
       "provenance": "source"
     },
     {
-      "id": "HairFront",
-      "label": "前发",
-      "triangles": 21,
-      "vertices": 41,
+      "id": "HairScalp_M00_000_HairBack_00_HAIR",
+      "label": "帽内发底",
+      "triangles": 352,
+      "vertices": 236,
       "provenance": "source hair trimmed inside the cap"
     },
     {
-      "id": "HairBack",
+      "id": "HairFront_F00_000_Hair_00_HAIR_01",
+      "label": "前发",
+      "triangles": 561,
+      "vertices": 479,
+      "provenance": "source hair trimmed inside the cap"
+    },
+    {
+      "id": "HairBack_Micket_sidepart_HAIR",
       "label": "后发",
       "triangles": 73,
       "vertices": 161,
       "provenance": "source hair trimmed inside the cap"
     },
     {
-      "id": "HairSide",
+      "id": "HairSide_Micket_sidepart_HAIR",
       "label": "侧发",
       "triangles": 51,
       "vertices": 115,
@@ -761,7 +867,8 @@
   "removed": [
     "six generated shirt buttons",
     "standing shirt collar",
-    "covered hair tips inside cap"
+    "covered hair tips inside cap",
+    "body skin concealed inside shirt and sleeves"
   ],
   "limits": [
     "Material-separated parts can have open seams; this is not a new watertight retopology.",

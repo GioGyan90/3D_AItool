@@ -49,3 +49,40 @@ test('assembled export restores UV/materials and keeps the inspection state afte
  const original=getProceduralParts(root).map(p=>({id:p.id,position:Float32Array.from(p.rest)}));setProceduralView(root,{surface:'grey',isolated:'cap_brim',explosion:.75,wireframe:true});const before=proceduralSettings(root),result=await exportCharacter(root,[clip]);assert.deepEqual(proceduralSettings(root),before);
  const loaded=await parseCharacter(result),reloaded=meshes(loaded.scene);assert.equal(reloaded.length,original.length);assert.equal(loaded.animations.length,1);for(const part of original){const actual=reloaded.find(p=>p.name===part.id);assert.deepEqual(actual.geometry.attributes.position.array,part.position);assert.equal(actual.material.wireframe,false);}
 });
+
+test('wave retarget preserves the hand direction and presents the anatomical palm forward',async()=>{
+ const root=await load('reassembled-boy.glb'),target=prepareRig(root).rig,driver=new Rig(createCharacter()),take=bakeMotion(driver,MOTIONS[0]);
+ for(const t of [1.1,1.6,2.2,2.8]){
+  driver.applySnapshot(take.track.sample(t));applyRetarget(driver,target);
+  for(const side of ['Left','Right']){
+   const at=n=>target.bones[side+n].getWorldPosition(new THREE.Vector3()),hand=at('Hand'),along=at('HandMiddle1').sub(hand).normalize();
+   const palm=along.clone().cross(at('HandIndex1').sub(at('HandPinky1'))).multiplyScalar(side==='Left'?1:-1).normalize();
+   const delta=driver.bones[side+'Hand'].getWorldQuaternion(new THREE.Quaternion()).multiply(driver.rest[side+'Hand'].wq.clone().invert());
+   const expected=new THREE.Vector3(0,0,1).applyQuaternion(delta);
+   assert.ok(palm.dot(expected)>.99,side+' palm is edge-on or reversed');
+   const wanted=driver.bones[side+'HandMiddle1'].getWorldPosition(new THREE.Vector3()).sub(driver.bones[side+'Hand'].getWorldPosition(new THREE.Vector3())).normalize();
+   assert.ok(along.dot(wanted)>.999,side+' fingers point away from the authored hand direction');
+  }
+ }
+ const clip=retargetTake(driver,target,{...MOTIONS[0],...take}),mixer=new THREE.AnimationMixer(root);mixer.clipAction(clip).play();mixer.setTime(1.6);root.updateMatrixWorld(true);
+ const wrist=target.bones.RightHand.getWorldPosition(new THREE.Vector3()),along=target.bones.RightHandMiddle1.getWorldPosition(new THREE.Vector3()).sub(wrist).normalize(),across=target.bones.RightHandIndex1.getWorldPosition(new THREE.Vector3()).sub(target.bones.RightHandPinky1.getWorldPosition(new THREE.Vector3()));
+ assert.ok(along.cross(across).negate().normalize().z>.9,'baked wave lost its forward-facing palm');
+});
+
+test('fixed outfit has unique part IDs and removes the previously exposed shoulder skin',async()=>{
+ const root=await load('reassembled-boy.glb'),parts=meshes(root);assert.equal(new Set(parts.map(m=>m.name)).size,parts.length);assert.equal(report.source.state.frontHair,'swept');
+ const shoulder=parts.find(m=>m.name==='neck_scalp'),p=shoulder.geometry.attributes.position,cut=report.bodyCleanup.find(r=>r.part==='neck_scalp');
+ for(let i=0;i<p.count;i++){
+  assert.ok(p.getY(i)>=cut.cutY-1e-6);
+  if(p.getY(i)<cut.clearAbove-.003){const [x,z]=cut.center,angle=((Math.atan2(p.getZ(i)-z,p.getX(i)-x)/(Math.PI*2))%1+1)%1*32,j=Math.floor(angle),t=angle-j,r=cut.aperture[j]*(1-t)+cut.aperture[(j+1)%32]*t;
+   assert.ok(Math.hypot(p.getX(i)-x,p.getZ(i)-z)<=r+.002,'shoulder skin survives outside the neck opening');}
+ }
+ assert.ok(cut.after<cut.before*.7,'covered shoulder skin was not removed');
+ const target=prepareRig(root).rig,driver=new Rig(createCharacter()),take=bakeMotion(driver,MOTIONS[0]);driver.applySnapshot(take.track.sample(1.6));applyRetarget(driver,target);root.updateMatrixWorld(true);
+ // The collar trim must retain the exposed throat under a tilted chin.
+ const neckY=target.bones.Neck.getWorldPosition(new THREE.Vector3()).y;
+ for(const x of [-.003,0,.003]){const ray=new THREE.Raycaster(new THREE.Vector3(x,neckY+.046,1),new THREE.Vector3(0,0,-1));assert.ok(ray.intersectObject(shoulder).length>0,'neck trim opened a hole below the chin');}
+
+ // Exposed hands, lower arms and ankles must survive the clothing cut.
+ for(const id of ['hand_L','hand_R','arm_L','arm_R','ankle_L','ankle_R'])assert.ok(parts.find(m=>m.name===id)?.geometry.index.count>50,id+' was deleted with the hidden skin');
+});

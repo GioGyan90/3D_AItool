@@ -22,9 +22,10 @@ const {loadHumanAssets,ensureHumanPresets,createHuman}=await load('anime.js');
 const {parameterDefaults}=await load('parameters.js');
 const {hairDefaults,filterHairForGender}=await load('hair.js');
 const {wardrobeDefaults}=await load('wardrobe.js');
-const state=filterHairForGender({...parameterDefaults,...hairDefaults,...wardrobeDefaults,characterType:'boy',foundationRevision:1,bodySource:'vroid',faceSource:'vroid',gender:'male',height:50,weight:45,shoulders:45,legs:50,faceWidth:50,jawWidth:45,eyeSize:50,eyeSpace:50,nose:50,mouth:50,hair:'modular',clothes:'shirtPants',shoes:'shoes',expression:'neutral',skin:'#f1cbb2',hairColor:'#332821',eyeColor:'#497b93',shirt:'#f0ece0',pants:'#475569',shoeColor:'#f0ece0',stoneView:'skin',sleeveLength:0,shirtLength:50});
+const state=filterHairForGender({...parameterDefaults,...hairDefaults,...wardrobeDefaults,characterType:'boy',foundationRevision:1,bodySource:'vroid',faceSource:'vroid',gender:'male',height:50,weight:45,shoulders:45,legs:50,faceWidth:50,jawWidth:45,eyeSize:50,eyeSpace:50,nose:50,mouth:50,hair:'modular',frontHair:'swept',backHair:'sidepart',sideHair:'sidepart',braid:'none',hairlineHeight:35,clothes:'shirtPants',shoes:'shoes',expression:'neutral',skin:'#f1cbb2',hairColor:'#332821',eyeColor:'#497b93',shirt:'#f0ece0',pants:'#475569',shoeColor:'#f0ece0',stoneView:'skin',sleeveLength:0,shirtLength:50});
 await loadHumanAssets({textures:false});await ensureHumanPresets(state,{textures:false});
-const sourceRoot=createHuman(state);sourceRoot.updateMatrixWorld(true);await MeshoptSimplifier.ready;
+const sourceRoot=createHuman(state);sourceRoot.updateMatrixWorld(true);
+await MeshoptSimplifier.ready;
 const height=sourceRoot.userData.height,uniformScale=1.70/height;
 const originalBones=sourceRoot.userData.skeleton.bones,humanoid=sourceRoot.userData.motion.humanoid;
 const names={hips:'Hips',spine:'Spine',chest:'Spine1',upperChest:'Spine2',neck:'Neck',head:'Head'};
@@ -65,7 +66,7 @@ async function buildModel(reduce=false){
   const p=g.attributes.position,n=g.attributes.normal,normalMatrix=new THREE.Matrix3().getNormalMatrix(sourceMesh.matrixWorld);
   for(let i=0;i<p.count;i++){const v=new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(sourceMesh.matrixWorld).multiplyScalar(uniformScale);p.setXYZ(i,...v.toArray());const nv=new THREE.Vector3().fromBufferAttribute(n,i).applyMatrix3(normalMatrix).normalize();n.setXYZ(i,...nv.toArray());}
   g.computeBoundingBox();g.computeBoundingSphere();
-  let ratio=1;if(reduce){ratio=part==='Pants'?.32:part==='Shirt'?.56:part==='Body'?.52:part.startsWith('Hair')?.7:description.includes('_SKIN')?.8:1;g=reduceGeometry(g,ratio,.004);}
+  let ratio=1;if(reduce){ratio=part==='Pants'?.32:part==='Shirt'?.56:part==='Body'?.52:part.startsWith('Hair')?.22:description.includes('_SKIN')?.8:1;g=reduceGeometry(g,ratio,.004);}
   const material=portableMaterial(sourceMesh.material);
   const texture=sourceMesh.userData.texture;
   if(texture&&part.startsWith('Face')){
@@ -80,7 +81,7 @@ async function buildModel(reduce=false){
   const groups=new Map(),pa=g.attributes.position,si=g.attributes.skinIndex,sw=g.attributes.skinWeight;
   for(let i=0;i<g.index.count;i+=3){const ids=[g.index.getX(i),g.index.getX(i+1),g.index.getX(i+2)],center=new THREE.Vector3();for(const id of ids)center.add(new THREE.Vector3().fromBufferAttribute(pa,id).multiplyScalar(1/3));let id=part,label=part,offset=[0,0,0];
    if(part.startsWith('Face')){id=part+'_'+description;label=part==='FaceEars'?'耳部':description.includes('_SKIN')?'头部皮肤':description.includes('EyeIris')?'虹膜':description.includes('EyeWhite')?'眼白':description.includes('EyeHighlight')?'眼睛高光':description.includes('Brow')?'眉毛':description.includes('Mouth')?'口腔':description.includes('Eyelash')?'睫毛':'眼线';offset=[0,.26,0];}
-   else if(part.startsWith('Hair')){id=part;label={HairFront:'前发',HairBack:'后发',HairSide:'侧发'}[part]||part;offset=part==='HairFront'?[0,.3,.16]:part==='HairBack'?[0,.3,-.16]:[.2,.3,0];}
+   else if(part.startsWith('Hair')){id=part+'_'+description;label={HairScalp:'帽内发底',HairFront:'前发',HairBack:'后发',HairSide:'侧发'}[part]||part;offset=part==='HairFront'?[0,.3,.16]:part==='HairBack'?[0,.3,-.16]:[.2,.3,0];}
    else if(part==='Pants'){const crotch=bones[humanoid.hips].getWorldPosition(new THREE.Vector3()).y-.04;const side=center.x>0?'L':'R';id=center.y>crotch?'pants_hip':'pants_'+side;label=id==='pants_hip'?'裤装腰胯':(side==='L'?'左':'右')+'裤腿';offset=id==='pants_hip'?[0,-.06,0]:[side==='L'?.18:-.18,-.1,0];}
    else if(part==='Shirt'){const side=center.x>0?'L':'R',shoulder=bones[humanoid[side==='L'?'leftUpperArm':'rightUpperArm']].getWorldPosition(new THREE.Vector3());id=Math.abs(center.x)>Math.abs(shoulder.x)+.015?'sleeve_'+side:'shirt_torso';label=id==='shirt_torso'?(reduce?'T 恤躯干':'原上衣躯干'):(side==='L'?'左':'右')+'短袖';offset=id==='shirt_torso'?[0,.07,.10]:[side==='L'?.22:-.22,.05,0];}
    else if(part==='Body'){
@@ -100,8 +101,9 @@ async function buildModel(reduce=false){
 
 const original=await buildModel(false),modified=await buildModel(true);
 // Accessory construction is isolated from the retained author geometry.
-const {addBoyAccessories,convertShirtToTee}=await import('./teen-boy-accessories.mjs');
+const {addBoyAccessories,convertShirtToTee,removeCoveredBody}=await import('./teen-boy-accessories.mjs');
 convertShirtToTee(modified,humanoid);
+const bodyCleanup=removeCoveredBody(modified,humanoid);
 addBoyAccessories(modified,humanoid);
 execFileSync('python',[fileURLToPath(new URL('./bake-character-textures.py',import.meta.url)),await (async()=>{const p=path.join(destination,'texture-build.json');await fs.writeFile(p,JSON.stringify(textureRows));return p;})()],{stdio:'inherit'});
 async function exportPortable(root){
@@ -116,7 +118,7 @@ async function exportPortable(root){
 }
 const originalGLB=await exportPortable(original.root),modelGLB=await exportPortable(modified.root);
 await fs.writeFile(path.join(destination,'source-preset.glb'),Buffer.from(originalGLB));await fs.writeFile(path.join(destination,'reassembled-boy.glb'),Buffer.from(modelGLB));
-const report={version:1,source:{repository:'https://github.com/GioGyan90/CharaBuilder',commit:pinned,preset:'boy / vroid / sidepart / shirtPants',state,uniformScale,bodyProportionsChanged:false},before:sourceStats,compactedSource:modelStats(original.root),after:modelStats(modified.root),sourceGLBBytes:originalGLB.byteLength,modelGLBBytes:modelGLB.byteLength,history,parts:modified.parts.filter(p=>p.parent).map(m=>({id:m.name,label:m.userData.partLabel,triangles:m.geometry.index.count/3,vertices:m.geometry.attributes.position.count,provenance:m.userData.provenance})),added:['backwards cap crown, brim, strap, button','sneaker soles','crew-neck binding and shoulder yoke'],removed:['six generated shirt buttons','standing shirt collar','covered hair tips inside cap'],limits:['Material-separated parts can have open seams; this is not a new watertight retopology.','Facial expressions and the original character editor are not ported.','The source head/body proportions are retained; generated concept is an outfit reference only.']};
+const report={version:1,source:{repository:'https://github.com/GioGyan90/CharaBuilder',commit:pinned,preset:'boy / vroid / swept fringe / shirtPants',state,uniformScale,bodyProportionsChanged:false},bodyCleanup,before:sourceStats,compactedSource:modelStats(original.root),after:modelStats(modified.root),sourceGLBBytes:originalGLB.byteLength,modelGLBBytes:modelGLB.byteLength,history,parts:modified.parts.filter(p=>p.parent).map(m=>({id:m.name,label:m.userData.partLabel,triangles:m.geometry.index.count/3,vertices:m.geometry.attributes.position.count,provenance:m.userData.provenance})),added:['backwards cap crown, brim, strap, button','sneaker soles','crew-neck binding and shoulder yoke'],removed:['six generated shirt buttons','standing shirt collar','covered hair tips inside cap','body skin concealed inside shirt and sleeves'],limits:['Material-separated parts can have open seams; this is not a new watertight retopology.','Facial expressions and the original character editor are not ported.','The source head/body proportions are retained; generated concept is an outfit reference only.']};
 await fs.writeFile(path.join(destination,'manifest.json'),JSON.stringify(report,null,2)+'\n');
 await fs.copyFile(path.join(destination,'manifest.json'),fileURLToPath(new URL('../docs/CHARABUILDER_BOY_VALIDATION.json',import.meta.url)));
 await fs.writeFile(path.join(destination,'preset-state.json'),JSON.stringify(state,null,2)+'\n');

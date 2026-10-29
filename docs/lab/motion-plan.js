@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Track, trackToClip } from '../retarget.js?v=1cfe9af41ff0';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=c95109fde78d';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});
@@ -39,6 +39,24 @@ export function planToTake(rig,input){
   return {id:'plan_'+Date.now(),name:plan.name,duration:plan.duration,description:'提示词 → 动作方案 → 骨骼重定向',prompt:'',plan,track,clip,loop:plan.loop,source:'motion-plan'};
 }
 
+// A limb direction does not determine its axial twist. Use an anatomical hand
+// frame after aiming the arm chain, so an A-pose wrist cannot leave a wave edge-on.
+const handFrames=new WeakMap();
+function restHandFrame(rig,side){
+ if(!handFrames.has(rig))handFrames.set(rig,new Map());const cache=handFrames.get(rig);if(cache.has(side))return cache.get(side);
+ const hand=rig.rest[side+'Hand'],middle=rig.rest[side+'HandMiddle1'];if(!hand||!middle)return null;
+ const along=middle.wp.clone().sub(hand.wp).normalize(),index=rig.rest[side+'HandIndex1'],pinky=rig.rest[side+'HandPinky1'];
+ const palm=index&&pinky?along.clone().cross(index.wp.clone().sub(pinky.wp)).multiplyScalar(side==='Left'?1:-1).normalize():new THREE.Vector3(0,0,1);
+ if(palm.lengthSq()<.1)return null;
+ const frame={along,palm,q:basisQuat(along,palm)};cache.set(side,frame);return frame;
+}
+function orientRetargetedHand(driver,target,side,basis){
+ const source=restHandFrame(driver,side),rest=restHandFrame(target,side),name=side+'Hand';if(!source||!rest)return;
+ const current=driver.bones[name].getWorldQuaternion(new THREE.Quaternion()),delta=current.multiply(driver.rest[name].wq.clone().invert());
+ const along=source.along.clone().applyQuaternion(delta).applyQuaternion(basis),palm=source.palm.clone().applyQuaternion(delta).applyQuaternion(basis);
+ const desired=basisQuat(along,palm).multiply(rest.q.clone().invert()).multiply(target.rest[name].wq);target.setWorldQuat(name,desired);
+}
+
 export function applyRetarget(driver,target){
   if(driver===target)return;
   target.reset();target.copyPoseFrom(driver);
@@ -49,6 +67,7 @@ export function applyRetarget(driver,target){
     const a=driver.bones[side+name],b=driver.bones[side+child];if(!a||!b||!target.bones[side+child])continue;
     const direction=b.getWorldPosition(new THREE.Vector3()).sub(a.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis);target.aim(side+name,direction);
   }
+  for(const side of ['Left','Right'])orientRetargetedHand(driver,target,side,basis);
   target.clampToFloor();
 }
 

@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import { GLTFLoader } from '../vendor/loaders/GLTFLoader.js?v=1cfe9af41ff0';
-import { DRACOLoader } from '../vendor/loaders/DRACOLoader.js?v=1cfe9af41ff0';
-import { MeshoptDecoder } from '../vendor/meshopt/meshopt_decoder.module.js?v=1cfe9af41ff0';
-import { GLTFExporter } from '../vendor/exporters/GLTFExporter.js?v=1cfe9af41ff0';
-import { readGLB, compressGLB } from './glb-codec.js?v=1cfe9af41ff0';
-import { normalizeCharacter, prepareRig } from './rig-adapter.js?v=1cfe9af41ff0';
-import { optimizeModel, modelStats } from './optimize.js?v=1cfe9af41ff0';
-import { prepareProceduralExport } from './procedural-character.js?v=1cfe9af41ff0';
+import { GLTFLoader } from '../vendor/loaders/GLTFLoader.js?v=c95109fde78d';
+import { DRACOLoader } from '../vendor/loaders/DRACOLoader.js?v=c95109fde78d';
+import { MeshoptDecoder } from '../vendor/meshopt/meshopt_decoder.module.js?v=c95109fde78d';
+import { GLTFExporter } from '../vendor/exporters/GLTFExporter.js?v=c95109fde78d';
+import { readGLB, compressGLB } from './glb-codec.js?v=c95109fde78d';
+import { normalizeCharacter, prepareRig } from './rig-adapter.js?v=c95109fde78d';
+import { optimizeModel, modelStats } from './optimize.js?v=c95109fde78d';
+import { prepareProceduralExport } from './procedural-character.js?v=c95109fde78d';
 
 export async function parseCharacter(buffer){
   const {json}=readGLB(buffer);
