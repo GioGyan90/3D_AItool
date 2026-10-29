@@ -45,7 +45,7 @@ export function applyRetarget(driver,target){
   // Correct A-pose/T-pose and bone-axis differences using measured limb
   // directions, rather than adding a T-pose rotation to an A-pose rest.
   const basis=target.restHipBasis.clone().multiply(driver.restHipBasis.clone().invert());
-  for(const side of ['Left','Right'])for(const [name,child] of [['Arm','ForeArm'],['ForeArm','Hand'],['UpLeg','Leg'],['Leg','Foot'],['Foot','ToeBase']]){
+  for(const side of ['Left','Right'])for(const [name,child] of [['Arm','ForeArm'],['ForeArm','Hand'],['UpLeg','Leg'],['Leg','Foot']]){
     const a=driver.bones[side+name],b=driver.bones[side+child];if(!a||!b||!target.bones[side+child])continue;
     const direction=b.getWorldPosition(new THREE.Vector3()).sub(a.getWorldPosition(new THREE.Vector3())).applyQuaternion(basis);target.aim(side+name,direction);
   }

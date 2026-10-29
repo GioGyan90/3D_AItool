@@ -22,8 +22,9 @@ export function createRenderer() {
       scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
       ctx.fillStyle='#e9eee5';ctx.fillRect(0,0,width,height);
       ctx.strokeStyle='#d4ddd0';ctx.lineWidth=.6;
-      for(let i=-3;i<=3;i++){for(const line of [[[-3,0,i],[3,0,i]],[[i,0,-3],[i,0,3]]]){const p=line.map(x=>project(new THREE.Vector3(...x),camera));if(p.some(x=>x[2]>1||x[2]<-1))continue;ctx.beginPath();ctx.moveTo(...p[0].slice(0,2));ctx.lineTo(...p[1].slice(0,2));ctx.stroke();}}
-      const ground=project(new THREE.Vector3(0,0,0),camera);ctx.fillStyle='#b2bdae66';ctx.beginPath();ctx.ellipse(ground[0],ground[1],width*.095,height*.025,0,0,Math.PI*2);ctx.fill();
+      const floorY=scene.userData.labFloorY||0;
+      for(let i=-3;i<=3;i++){for(const line of [[[-3,floorY,i],[3,floorY,i]],[[i,floorY,-3],[i,floorY,3]]]){const p=line.map(x=>project(new THREE.Vector3(...x),camera));if(p.some(x=>x[2]>1||x[2]<-1))continue;ctx.beginPath();ctx.moveTo(...p[0].slice(0,2));ctx.lineTo(...p[1].slice(0,2));ctx.stroke();}}
+      const ground=project(new THREE.Vector3(0,floorY,0),camera);ctx.fillStyle='#b2bdae66';ctx.beginPath();ctx.ellipse(ground[0],ground[1],width*.095,height*.025,0,0,Math.PI*2);ctx.fill();
       const triangles=[];
       scene.traverse(mesh=>{
         if(!mesh.isMesh||!mesh.visible)return;
@@ -43,12 +44,12 @@ export function createRenderer() {
             a.subVectors(points[ids[1]],points[ids[0]]);b.subVectors(points[ids[2]],points[ids[0]]);normal.crossVectors(a,b).normalize();
             const c=color.clone().multiplyScalar(.65+.35*Math.max(0,normal.dot(sun)));
             const p=ids.map(i=>projected[i]);if(p.some(x=>x[2]>1||x[2]<-1))continue;
-            triangles.push({p,z:p.reduce((n,x)=>n+x[2],0)/3,color:'#'+c.getHexString()});
+            triangles.push({p,z:p.reduce((n,x)=>n+x[2],0)/3,color:'#'+c.getHexString(),wireframe:material?.wireframe});
           }
         }
       });
       triangles.sort((x,y)=>y.z-x.z);
-      for(const t of triangles){ctx.fillStyle=t.color;ctx.strokeStyle=t.color;ctx.lineWidth=.45;ctx.beginPath();ctx.moveTo(...t.p[0].slice(0,2));ctx.lineTo(...t.p[1].slice(0,2));ctx.lineTo(...t.p[2].slice(0,2));ctx.closePath();ctx.fill();ctx.stroke();}
+      for(const t of triangles){ctx.fillStyle=t.color;ctx.strokeStyle=t.wireframe?'#476458':t.color;ctx.lineWidth=t.wireframe ? .6 : .45;ctx.beginPath();ctx.moveTo(...t.p[0].slice(0,2));ctx.lineTo(...t.p[1].slice(0,2));ctx.lineTo(...t.p[2].slice(0,2));ctx.closePath();if(!t.wireframe)ctx.fill();ctx.stroke();}
       scene.traverse(o=>{
         if(!o.isSkeletonHelper||!o.visible)return;
         ctx.strokeStyle='#cf6b35';ctx.lineWidth=2;

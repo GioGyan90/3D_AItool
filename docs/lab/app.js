@@ -9,6 +9,7 @@ import { modelStats } from './optimize.js';
 import { prepareRig, detectBones, MAPPABLE, REQUIRED } from './rig-adapter.js';
 import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, PLAN_JOINTS } from './motion-plan.js';
 import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js';
+import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js';
 
 const $=s=>document.querySelector(s),viewport=$('#viewport'),status=text=>$('#status').textContent=text;
 const bytes=n=>n>=1048576?(n/1048576).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';
@@ -17,16 +18,17 @@ const saveJSON=(data,name)=>download(JSON.stringify(data,null,2),'application/js
 try{
   const scene=new THREE.Scene();scene.background=new THREE.Color(0xe9eee5);
   const renderer=createRenderer();if(renderer.compatibility)$('#mode').textContent='Canvas 兼容预览 · 贴图简化显示';viewport.appendChild(renderer.domElement);
-  const camera=new THREE.PerspectiveCamera(36,1,.05,60);camera.position.set(3,2.1,4.5);
-  const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,.95,0);controls.enableDamping=true;controls.maxDistance=8;controls.minDistance=1.6;controls.maxPolarAngle=Math.PI/2-.02;
+  const perspective=new THREE.PerspectiveCamera(36,1,.01,60),orthographic=new THREE.OrthographicCamera(-1,1,1,-1,.01,60);let camera=perspective,viewSpan=2.35;camera.position.set(3,2.1,4.5);
+  const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,.95,0);controls.enableDamping=true;controls.maxDistance=8;controls.minDistance=.15;controls.maxPolarAngle=Math.PI/2+.01;
   scene.add(new THREE.HemisphereLight(0xffffff,0xc8b897,3));
   const light=new THREE.DirectionalLight(0xfff7e3,3);light.position.set(3,5,4);light.castShadow=true;light.shadow.mapSize.set(2048,2048);light.shadow.camera.left=-3;light.shadow.camera.right=3;light.shadow.camera.top=3;light.shadow.camera.bottom=-3;light.shadow.normalBias=.025;scene.add(light);
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0xe9eee5,roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.015;floor.receiveShadow=true;scene.add(floor);
   const grid=new THREE.GridHelper(12,24,0xc2d0c1,0xd4ddd0);grid.position.y=-.01;scene.add(grid);
   const driverModel=createCharacter();driverModel.userData.motionCharacter=true;const driver=new Rig(driverModel);
-  let asset={root:driverModel,rig:driver,sourceName:'内置测试人物',animations:[],...detectBones(driverModel)},helper=null,mixer=null,nativeIndex=-1;
+  function makeProceduralAsset(){const root=createProceduralCharacter();return {root,rig:new Rig(root),sourceName:'自建人物 · 截面灰模 v1',animations:[],...detectBones(root)};}
+  let asset=makeProceduralAsset(),helper=null,mixer=null,nativeIndex=-1;
   const takes=MOTIONS.map(m=>({...m,...bakeMotion(driver,m),loop:true}));
-  let selected=takes[0],time=0,playing=true,last=performance.now(),busy=false,exporting=false,controller=null,config={...API_DEFAULTS,key:''};
+  let selected=takes[0],time=0,playing=false,studying=true,last=performance.now(),busy=false,exporting=false,controller=null,config={...API_DEFAULTS,key:''};
   try{config={...config,...JSON.parse(localStorage.getItem('motion-lab-api')||'{}'),key:''};config=resolveConfig(config);}catch{config={...API_DEFAULTS,key:''};}
   const setBusy=value=>{busy=value;for(const id of ['file-model','reset-model','mapping-open','sample-model'])$('#'+id).disabled=value;$('#reprocess').disabled=value||!asset.sourceBytes;$('#generate').disabled=value||!asset.rig;$('#export').disabled=value;};
   function replaceHelper(){if(helper){scene.remove(helper);helper.geometry.dispose();helper.material.dispose();}helper=new THREE.SkeletonHelper(asset.root);helper.material.depthTest=false;helper.material.transparent=true;helper.material.opacity=.85;helper.visible=$('#skeleton').checked;helper.renderOrder=2;scene.add(helper);}
@@ -36,17 +38,22 @@ try{
     $('#asset-stats').textContent=report?`面数 ${report.before.triangles.toLocaleString()} → ${report.after.triangles.toLocaleString()} · 顶点 ${stats.vertices.toLocaleString()}\n文件 ${bytes(asset.originalBytes)} → ${bytes(asset.optimizedBytes)}${report.warnings.length?'\n部分区域保留原数据，详情见处理提示':''}`:`${stats.triangles.toLocaleString()} 面 · ${stats.vertices.toLocaleString()} 顶点`;
     $('#rig-status').textContent=asset.rig?`骨架就绪 · ${asset.rig.order.length} 根骨骼`:stats.bones?`待映射：${asset.missing.slice(0,3).join('、')}`:'未发现骨架 · 可优化导出，动作需先绑骨';
     $('#source-animation').hidden=!asset.animations.length;$('#reprocess').disabled=busy||!asset.sourceBytes;$('#generate').disabled=busy||!asset.rig;$('#export-info').textContent=asset.optimizedBytes?'已处理 '+bytes(asset.optimizedBytes):'';
+    const parts=getProceduralParts(asset.root);$('#part-select').replaceChildren(new Option('整个人物','all'));for(const part of parts)$('#part-select').add(new Option((part.id.endsWith('_L')?'左':part.id.endsWith('_R')?'右':'')+part.label,part.id));
+    for(const id of ['part-select','surface-select','model-wireframe','explode'])$('#'+id).disabled=!parts.length;$('#export-part').disabled=true;$('#study-note').textContent=parts.length?`${parts.length} 个独立封口零件 · 约 6.5 头身 · 先验形体，再看动作`:'当前是导入模型；截面分块检查用于自建人物。';
+    const settings=proceduralSettings(asset.root);$('#surface-select').value=settings?.surface||'grey';$('#explode').value=settings?.explosion||0;$('#model-wireframe').checked=!!settings?.wireframe;
   }
   function installAsset(next){
     mixer?.stopAllAction();mixer=null;nativeIndex=-1;const previous=asset.root;scene.remove(previous);asset=next;asset.root.userData.motionCharacter=true;scene.add(asset.root);replaceHelper();disposeRoot(previous);showAssetInfo();
-    for(const take of takes)delete take.boundClip;select(takes[0],true);renderLibrary();
+    for(const take of takes)delete take.boundClip;select(takes[0],true);renderLibrary();if(getProceduralParts(asset.root).length)studyPose();
   }
   scene.add(asset.root);replaceHelper();showAssetInfo();
   function renderPose(){
-    if(selected.kind==='native'){mixer?.setTime(time);}else{driver.applySnapshot(selected.track.sample(time));if(asset.rig&&asset.rig!==driver)applyRetarget(driver,asset.rig);}
+    if(studying){const r=getProceduralParts(asset.root).length?asset.rig:driver;r.reset();for(const [side,sign] of [['Left',-1],['Right',1]]){r.bones[side+'Arm'].quaternion.copy(r.rest[side+'Arm'].q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),sign*Math.PI/3));r.bones[side+'ForeArm'].quaternion.copy(r.rest[side+'ForeArm'].q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),sign*.04));}r.model.updateMatrixWorld(true);if(r===driver&&asset.rig&&asset.rig!==driver)applyRetarget(driver,asset.rig);}
+    else if(selected.kind==='native'){mixer?.setTime(time);}else{driver.applySnapshot(selected.track.sample(time));if(asset.rig&&asset.rig!==driver)applyRetarget(driver,asset.rig);}
     $('#seek').value=time;$('#time').textContent=`${time.toFixed(2)} / ${selected.duration.toFixed(2)} s`;
   }
   function select(take,quiet=false){
+    studying=false;setProceduralView(asset.root,{explosion:0,isolated:'all'});$('#explode').value=0;$('#part-select').value='all';$('#export-part').disabled=true;floor.position.y=-.015;grid.position.y=-.01;scene.userData.labFloorY=-.01;
     mixer?.stopAllAction();mixer=null;selected=take;time=0;playing=true;$('#play').textContent='暂停';$('#name').textContent=take.name;$('#description').textContent=take.description||'';$('#seek').max=take.duration;
     if(asset.rig)asset.rig.reset();
     if(take.kind==='native'){mixer=new THREE.AnimationMixer(asset.root);mixer.clipAction(take.clip).play();}
@@ -56,8 +63,21 @@ try{
   function renderLibrary(){
     $('#motions').replaceChildren();for(const [i,take] of takes.entries()){const b=document.createElement('button');b.className='motion'+(selected===take?' active':'');b.setAttribute('aria-pressed',String(selected===take));const number=document.createElement('span'),name=document.createElement('b'),duration=document.createElement('span');number.textContent=String(i+1).padStart(2,'0');name.textContent=take.name;duration.textContent=take.duration+'s';b.append(number,name,duration);b.onclick=()=>select(take);$('#motions').appendChild(b);}$('#library-count').textContent=takes.length+' 段';
   }
-  $('#play').onclick=()=>{playing=!playing;$('#play').textContent=playing?'暂停':'播放';};$('#restart').onclick=()=>{time=0;renderPose();};$('#seek').oninput=e=>{playing=false;$('#play').textContent='播放';time=Number(e.target.value);renderPose();};$('#skeleton').onchange=e=>helper.visible=e.target.checked;
-  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{camera.position.set(...({front:[0,1.4,4.8],side:[4.8,1.4,0],three:[3,2.1,4.5]})[b.dataset.view]);controls.target.set(0,.95,0);controls.update();});
+  $('#play').onclick=()=>{if(studying){select(selected);return;}playing=!playing;$('#play').textContent=playing?'暂停':'播放';};$('#restart').onclick=()=>{time=0;renderPose();};$('#seek').oninput=e=>{studying=false;playing=false;$('#play').textContent='播放';time=Number(e.target.value);renderPose();};$('#skeleton').onchange=e=>helper.visible=e.target.checked;
+  function resizeCamera(){const w=viewport.clientWidth,h=viewport.clientHeight;renderer.setSize(w,h);perspective.aspect=w/h;perspective.updateProjectionMatrix();orthographic.left=-viewSpan*w/h/2;orthographic.right=viewSpan*w/h/2;orthographic.top=viewSpan/2;orthographic.bottom=-viewSpan/2;orthographic.updateProjectionMatrix();}
+  function frameCharacter(view='three'){
+    const settings=proceduralSettings(asset.root),part=getProceduralParts(asset.root).find(p=>p.id===settings?.isolated);let target=new THREE.Vector3(0,.92,0);viewSpan=2.35+(settings?.explosion||0)*.7;
+    if(part){part.mesh.computeBoundingBox();const box=part.mesh.boundingBox.clone().applyMatrix4(part.mesh.matrixWorld),size=box.getSize(new THREE.Vector3());target=box.getCenter(new THREE.Vector3());viewSpan=Math.max(.18,Math.max(size.x,size.y,size.z)*1.7);}
+    camera=view==='three'?perspective:orthographic;controls.object=camera;const direction=new THREE.Vector3(...({front:[0,0,1],side:[1,0,0],back:[0,0,-1],rear:[1,.08,-1],three:[1,.3,1]})[view]).normalize();
+    camera.position.copy(target).add(direction.multiplyScalar(view==='three'?viewSpan*2.05:4));controls.target.copy(target);camera.lookAt(target);camera.zoom=1;resizeCamera();controls.update();renderer.render(scene,camera);
+    $('#mode').textContent=(renderer.compatibility?'Canvas · ':'')+(view==='three'?'斜侧透视':'正交'+({front:'正面',side:'侧面',back:'背面',rear:'后斜'})[view]);
+  }
+  function studyPose(){mixer?.stopAllAction();mixer=null;studying=true;playing=false;time=0;$('#play').textContent='播放动作';renderPose();status('形体检查 · A 字站姿；可检查正、侧、背及分块封口。');}
+  $('#model-inspect').onclick=studyPose;$('#model-animate').onclick=()=>{select(selected);frameCharacter('three');};
+  document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>frameCharacter(b.dataset.view));
+  function updateStudy(){studyPose();const explosion=Number($('#explode').value);setProceduralView(asset.root,{surface:$('#surface-select').value,isolated:$('#part-select').value,explosion,wireframe:$('#model-wireframe').checked});floor.position.y=-.015-explosion*.3;grid.position.y=floor.position.y+.005;scene.userData.labFloorY=grid.position.y;$('#export-part').disabled=$('#part-select').value==='all';frameCharacter('three');}
+  for(const id of ['surface-select','part-select','model-wireframe'])$('#'+id).onchange=updateStudy;$('#explode').oninput=updateStudy;
+  $('#export-part').onclick=async()=>{try{const mesh=createPartExport(asset.root,$('#part-select').value);const glb=await exportCharacter(mesh,[],{compressed:$('#export-format').value==='meshopt'});download(glb,'model/gltf-binary',mesh.name+'.glb');status('已导出零件；保留装配坐标，不含预览拆解位移。');}catch(error){status(error.message);}};
   $('#source-animation').onclick=()=>{if(!asset.animations.length)return;nativeIndex=(nativeIndex+1)%asset.animations.length;const clip=asset.animations[nativeIndex];select({kind:'native',name:clip.name||'原有动画',duration:Math.max(.01,clip.duration),clip,loop:true,description:'来自导入 GLB 的原有动画'});};
   async function loadBytes(buffer,name){
     if(busy)return;setBusy(true);const wasPlaying=playing;playing=false;
@@ -68,7 +88,7 @@ try{
   $('#file-model').onchange=e=>{loadFile(e.target.files[0]);e.target.value='';};$('#reprocess').onclick=()=>asset.sourceBytes&&loadBytes(asset.sourceBytes,asset.sourceName);
   $('#sample-model').onclick=async()=>{try{const response=await fetch(new URL('./examples/test-character.glb',import.meta.url));if(!response.ok)throw new Error('样本文件暂时无法加载');await loadBytes(await response.arrayBuffer(),'test-character.glb');}catch(error){status(error.message);}};
   $('#dropzone').ondragover=e=>{e.preventDefault();$('#dropzone').classList.add('dragging');};$('#dropzone').ondragleave=()=>$('#dropzone').classList.remove('dragging');$('#dropzone').ondrop=e=>{e.preventDefault();$('#dropzone').classList.remove('dragging');if(!busy)loadFile(e.dataTransfer.files[0]);};
-  $('#reset-model').onclick=()=>{if(busy)return;driver.reset();installAsset({root:driverModel,rig:driver,sourceName:'内置测试人物',animations:[],...detectBones(driverModel)});status('已恢复内置样机');};
+  $('#reset-model').onclick=()=>{if(busy)return;driver.reset();installAsset(makeProceduralAsset());frameCharacter('three');status('已重建自建人物灰模');};
   const openDialog=id=>{const dialog=$('#'+id);if(!dialog.open)dialog.showModal();};document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).close());
   function refreshAPI(){const c=resolveConfig(config);$('#api-open').textContent='API 设置 · '+(c.provider==='openai'?'OpenAI':'自定义');$('#api-destination').textContent=new URL(c.baseUrl).host;$('#api-note').textContent=c.key?'将请求发送到 '+new URL(c.baseUrl).host+' · '+c.model:'默认使用 '+(c.provider==='openai'?'OpenAI':'自定义接口')+'；首次调用请填写自己的 API Key。';}
   function openAPI(){for(const [id,key] of [['api-provider','provider'],['api-base','baseUrl'],['api-model','model'],['api-protocol','protocol'],['api-key','key']])$('#'+id).value=config[key]||'';$('#api-error').textContent='';openDialog('api-dialog');}
@@ -105,8 +125,8 @@ try{
   $('#export').onclick=()=>exportGLB().catch(error=>status('导出失败：'+error.message));
   function exportPlan(take){if(take.plan)return take.plan;const frames=[];for(let i=0;i<=16;i++){const t=take.duration*i/16,s=take.track.sample(t),rotations=[];for(const joint of PLAN_JOINTS){const index=driver.order.indexOf(joint);if(index<0)continue;const q=new THREE.Quaternion().fromArray(s.q,index*4),e=new THREE.Euler().setFromQuaternion(q);rotations.push({joint,degrees:[e.x,e.y,e.z].map(x=>Number(THREE.MathUtils.radToDeg(x).toFixed(5)))});}frames.push({t,root:[...s.p].map((x,j)=>Number((x-driver.rest.Hips.wp.getComponent(j)).toFixed(6))),rotations});}return {version:1,name:take.name,duration:take.duration,loop:take.loop!==false,frames};}
   $('#json').onclick=()=>{if(selected.kind!=='native')saveJSON(exportPlan(selected),'luckybreak-motion-plan.json');};
-  new ResizeObserver(()=>{const w=viewport.clientWidth,h=viewport.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}).observe(viewport);
-  refreshAPI();select(takes[0]);$('#boot').remove();
+  new ResizeObserver(resizeCamera).observe(viewport);
+  refreshAPI();select(takes[0]);studyPose();frameCharacter('three');$('#boot').remove();
   function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.1);last=now;if(playing){time+=dt*Number($('#speed').value);if(time>selected.duration){if(selected.loop===false){time=selected.duration;playing=false;$('#play').textContent='播放';}else time%=selected.duration;}renderPose();}controls.update();renderer.render(scene,camera);}requestAnimationFrame(frame);
   // Reusable data workflow; credentials deliberately excluded.
   window.motionLab={THREE,driver,takes,get rig(){return asset.rig;},get asset(){return {name:asset.sourceName,stats:modelStats(asset.root),missing:asset.missing};},select,seek(t){playing=false;time=t;renderPose();},exportGLB,attachPlan,request:motionRequest,get selected(){return selected;},get time(){return time;}};

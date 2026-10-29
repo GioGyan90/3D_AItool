@@ -6,6 +6,7 @@ import { GLTFExporter } from '../vendor/exporters/GLTFExporter.js';
 import { readGLB, compressGLB } from './glb-codec.js';
 import { normalizeCharacter, prepareRig } from './rig-adapter.js';
 import { optimizeModel, modelStats } from './optimize.js';
+import { prepareProceduralExport } from './procedural-character.js';
 
 export async function parseCharacter(buffer){
   const {json}=readGLB(buffer);
@@ -18,8 +19,8 @@ export async function parseCharacter(buffer){
 }
 
 export async function exportCharacter(root,clips=[],{compressed=true}={}){
-  const glb=await new GLTFExporter().parseAsync(root,{binary:true,animations:clips,onlyVisible:false});
-  return compressed?compressGLB(glb):glb;
+  const restore=prepareProceduralExport(root);
+  try{const glb=await new GLTFExporter().parseAsync(root,{binary:true,animations:clips,onlyVisible:false});return compressed?await compressGLB(glb):glb;}finally{restore();}
 }
 
 export async function importCharacter(buffer,name,{optimize=true,ratio=.7,maxTexture=1024,onProgress=()=>{}}={}){
