@@ -154,7 +154,7 @@ for(const [s,label]of [['L','左'],['R','右']]){
   const side=s==='L'?1:-1,foot=at(s==='L'?'LeftFoot':'RightFoot'),joint=joints.findIndex(j=>j.name==='mixamorig'+(s==='L'?'LeftFoot':'RightFoot'));
   const footSource=clip(bodyGeometry,[(x)=>side*x,(x,y)=>ankleY+.005-y]),g=assignRigid(footSource,joint);
   const vertices=Array.from({length:g.attributes.position.count},(_,i)=>new T.Vector3().fromBufferAttribute(g.attributes.position,i)),outline=hullXZ(vertices),cx=vertices.reduce((s,p)=>s+p.x,0)/vertices.length,cz=(g.boundingBox.min.z+g.boundingBox.max.z)/2;
-  transform(g,v=>{v.x=cx+(v.x-cx)*1.17;v.z=cz+(v.z-cz)*1.09;v.y=Math.max(.028,v.y+.012);});g.computeVertexNormals();
+  transform(g,v=>{v.x=cx+(v.x-cx)*1.17;v.z=cz+(v.z-cz)*1.09;v.y=Math.max(.028,v.y+.002);});g.computeVertexNormals();
   model.add(g,materials.shoe,'shoe_'+s,label+'运动鞋面',[side*.18,-.18,.07],'Fitted from this adult foot surface, rigid to matching Foot');
   const top=(x,z)=>{let height=-Infinity;const p=g.attributes.position;for(let i=0;i<g.index.count;i+=3){const a=new T.Vector3().fromBufferAttribute(p,g.index.getX(i)),b=new T.Vector3().fromBufferAttribute(p,g.index.getX(i+1)),c=new T.Vector3().fromBufferAttribute(p,g.index.getX(i+2)),den=(b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z);if(Math.abs(den)<1e-10)continue;const u=((b.z-c.z)*(x-c.x)+(c.x-b.x)*(z-c.z))/den,v=((c.z-a.z)*(x-c.x)+(a.x-c.x)*(z-c.z))/den,w=1-u-v;if(Math.min(u,v,w)>=-1e-6)height=Math.max(height,u*a.y+v*b.y+w*c.y);}if(!Number.isFinite(height))throw Error('Lace endpoint misses actual shoe surface');return height;};
   const laceParts=[],halfWidth=(g.boundingBox.max.x-g.boundingBox.min.x)*.26;

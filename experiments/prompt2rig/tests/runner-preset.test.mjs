@@ -31,6 +31,7 @@ test('runner preserves an independent complete adult source and exact anatomical
     assert.ok(shoulder>25,'sleeveless shoulders must remain real skin');
   }
   const full=source.getObjectByName('complete_body');assert.ok(full.geometry.attributes.position.count>6000);assert.ok(new T.Box3().setFromObject(full).min.y<.03);
+  for(const side of ['L','R']){const upper=new T.Box3().setFromObject(root.getObjectByName('shoe_'+side)),sole=new T.Box3().setFromObject(root.getObjectByName('sole_'+side));assert.ok(upper.min.y<sole.max.y+.0005,'shoe upper must actually meet its sole');}
   const tank=root.getObjectByName('tank'),binding=root.getObjectByName('tank_binding');assert.ok(binding,'real opening walls must exist');
   const pointKey=p=>p.toArray().map(v=>Math.round(v*1e5)).join(','),outer=new Set(Array.from({length:tank.geometry.attributes.position.count},(_,i)=>pointKey(new T.Vector3().fromBufferAttribute(tank.geometry.attributes.position,i)))),inner=[...new Map(Array.from({length:binding.geometry.attributes.position.count},(_,i)=>new T.Vector3().fromBufferAttribute(binding.geometry.attributes.position,i)).filter(p=>!outer.has(pointKey(p))).map(p=>[pointKey(p),p])).values()];
   assert.ok(inner.length>20,'opening binding must return into the body, not duplicate the outer edge');

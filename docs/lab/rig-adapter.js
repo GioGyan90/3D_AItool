@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Rig, BONES } from '../retarget.js?v=1b8f92adcb2a';
+import { Rig, BONES } from '../retarget.js?v=808b43d68f0e';
 
 export const REQUIRED=['Hips','Spine','Neck','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg','LeftFoot','RightFoot'];
 export const MAPPABLE=BONES.filter(n=>!/Hand(Thumb|Index|Middle|Ring|Pinky)/.test(n));

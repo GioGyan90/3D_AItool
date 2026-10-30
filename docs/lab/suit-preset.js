@@ -1,7 +1,7 @@
-import {parseCharacter} from './assets.js?v=1b8f92adcb2a';
-import {prepareRig} from './rig-adapter.js?v=1b8f92adcb2a';
-import {registerStudyModel} from './procedural-character.js?v=1b8f92adcb2a';
-import {modelStats} from './optimize.js?v=1b8f92adcb2a';
+import {parseCharacter} from './assets.js?v=808b43d68f0e';
+import {prepareRig} from './rig-adapter.js?v=808b43d68f0e';
+import {registerStudyModel} from './procedural-character.js?v=808b43d68f0e';
+import {modelStats} from './optimize.js?v=808b43d68f0e';
 
 const cache=new Map(),revision=new URL(import.meta.url).searchParams.get('v');
 async function bytes(name){
