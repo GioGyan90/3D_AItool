@@ -4,6 +4,8 @@
 
 后续只提出动作需求时，直接使用当前装配少年，生成新的动作方案并绑定；不因动作提示词中出现人物描述而重建角色。需要不同人物或明确要求新造型时，再走新模型流程。当前默认模型也可用于其他角色的动作草稿，最终接入新角色时重新检查接触、比例和蒙皮。
 
+新角色默认采用**二次元低面建模风格**，参考《塞尔达》《原神》的风格化观感，统一头脸、身体、头发、衣物与材质。新角色具备可用的五指骨架与蒙皮，跑步默认双手自然松握拳；其他动作按语义指定手型，并验证实时与导出结果。具体美术标准、手型映射与当前实现状态见 [默认风格与手型要求](CHARACTER_DEFAULTS.md)。
+
 - 在线入口：[人物动作实验室](https://giogyan90.github.io/3D_AItool/lab/)。
 - 当前模型：[`reassembled-boy.glb`](../public/lab/characters/teen-boy/reassembled-boy.glb)。
 - 来源与参数：[`manifest.json`](../public/lab/characters/teen-boy/manifest.json)、[`preset-state.json`](../public/lab/characters/teen-boy/preset-state.json)、[许可记录](../public/lab/characters/teen-boy/SOURCES.md)。
