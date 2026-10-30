@@ -54,13 +54,13 @@
     "bones": 65
   },
   "after": {
-    "triangles": 18909,
-    "vertices": 16501,
-    "meshes": 14,
+    "triangles": 19677,
+    "vertices": 17041,
+    "meshes": 16,
     "bones": 71
   },
   "sourceGLBBytes": 727448,
-  "modelGLBBytes": 877996,
+  "modelGLBBytes": 901516,
   "rig": {
     "totalJoints": 71,
     "sourceJoints": 65,
@@ -928,6 +928,13 @@
       "provenance": "Fitted from this adult foot surface, rigid to matching Foot"
     },
     {
+      "id": "laces_L",
+      "label": "左运动鞋带",
+      "triangles": 384,
+      "vertices": 270,
+      "provenance": "Six fitted crossing laces sampled on the actual shoe upper"
+    },
+    {
       "id": "sole_L",
       "label": "左运动鞋底",
       "triangles": 92,
@@ -940,6 +947,13 @@
       "triangles": 784,
       "vertices": 2346,
       "provenance": "Fitted from this adult foot surface, rigid to matching Foot"
+    },
+    {
+      "id": "laces_R",
+      "label": "右运动鞋带",
+      "triangles": 384,
+      "vertices": 270,
+      "provenance": "Six fitted crossing laces sampled on the actual shoe upper"
     },
     {
       "id": "sole_R",

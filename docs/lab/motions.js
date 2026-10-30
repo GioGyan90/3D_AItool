@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Track, trackToClip, basisQuat } from '../retarget.js?v=36a8b581d8d9';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=bb4ee76062a4';
 
 export const MOTIONS = [
   {id:'wave',name:'挥手致意',duration:4,description:'抬起右手 → 挥手三次 → 放下',prompt:'raises the right hand, waves hello three times with an open palm, then lowers the arm'},

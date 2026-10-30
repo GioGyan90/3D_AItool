@@ -48,6 +48,7 @@ test('running plan respects the existing protocol and visibly alternates actual 
   assert.ok(positions[0].LeftFoot.distanceTo(positions[.4].LeftFoot)>.35);assert.ok(positions[0].LeftHand.distanceTo(positions[.4].LeftHand)>.12);
   assert.ok(Math.abs(positions[0].LeftFoot.y-positions[.4].RightFoot.y)<1e-5);assert.ok(Math.abs(positions[0].LeftFoot.z-positions[.4].RightFoot.z)<1e-5);
   for(const n of Object.keys(positions[0]))assert.ok(positions[0][n].distanceTo(positions[.8][n])<1e-5,n+' cycle mismatch');
+  for(const t of [0,.1,.2,.3,.4,.6]){driver.applySnapshot(take.track.sample(t));applyRetarget(driver,target);for(const [side,sign]of [['Left',1],['Right',-1]]){const at=n=>target.bones[side+n].getWorldPosition(new T.Vector3()),palm=at('HandMiddle1').sub(at('Hand')).normalize().cross(at('HandIndex1').sub(at('HandPinky1'))).multiplyScalar(sign).normalize();assert.ok(palm.dot(new T.Vector3(-sign,0,0))>.95,side+' running palm must face inward');}}
 });
 
 test('actual complete run passes surface, waist, contact, rotation and exported vertex validation',()=>{

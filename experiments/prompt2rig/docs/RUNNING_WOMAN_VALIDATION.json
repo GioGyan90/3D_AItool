@@ -14,8 +14,10 @@
     "skin_L",
     "skin_R",
     "shoe_L",
+    "laces_L",
     "sole_L",
     "shoe_R",
+    "laces_R",
     "sole_R"
   ],
   "minNormalAlignment": 0.2757011644921238,
@@ -1122,9 +1124,9 @@
   },
   "rotation": {
     "LeftForeArm": {
-      "maxStepDegrees": 0.7500048618437197,
-      "maxLocalAngleDegrees": 120.665282324089,
-      "twistRangeDegrees": 0.015816258066269778
+      "maxStepDegrees": 0.7500058390523626,
+      "maxLocalAngleDegrees": 91.53636370162714,
+      "twistRangeDegrees": 0.015810277162520592
     },
     "LeftHand": {
       "maxStepDegrees": 0.0000017075472925031877,
@@ -1140,14 +1142,14 @@
       "maxLocalAngleDegrees": 44.99999796868946
     },
     "RightForeArm": {
-      "maxStepDegrees": 0.7500048618437197,
-      "maxLocalAngleDegrees": 120.665282324089,
-      "twistRangeDegrees": 0.01581625812012293
+      "maxStepDegrees": 0.7500058390523626,
+      "maxLocalAngleDegrees": 91.53636370162714,
+      "twistRangeDegrees": 0.015810277216814248
     },
     "RightHand": {
       "maxStepDegrees": 0.0000017075472925031877,
       "maxLocalAngleDegrees": 4.652845670774731,
-      "twistRangeDegrees": 8.294714101437508e-10
+      "twistRangeDegrees": 8.29452593932559e-10
     },
     "RightLeg": {
       "maxStepDegrees": 10.000011613783325,
@@ -1163,34 +1165,34 @@
     "hipSeamMeters": 0
   },
   "export": {
-    "comparedVertices": 165010,
+    "comparedVertices": 170410,
     "maxReloadError": 3.084650931608309e-7,
     "imagesPreserved": 2,
-    "animatedGLBBytes": 990464
+    "animatedGLBBytes": 1014848
   },
   "ranges": {
     "LeftHand": {
       "min": [
-        0.1718814218505247,
-        1.0212828806792782,
-        0.10055165312242112
+        0.1718814299783985,
+        1.0212828780721501,
+        0.10055165169797345
       ],
       "max": [
-        0.18326941102023536,
-        1.1474969775034953,
-        0.27368281408586376
+        0.18326942639704485,
+        1.1474969724940611,
+        0.2736828148695604
       ]
     },
     "RightHand": {
       "min": [
-        -0.1832692952521095,
-        1.0212828767698015,
-        0.10055165312162612
+        -0.18326931062891894,
+        1.0212828741626734,
+        0.10055165169717839
       ],
       "max": [
-        -0.17188130608246824,
-        1.1474969814126257,
-        0.27368281408516876
+        -0.17188131421034208,
+        1.1474969764031917,
+        0.2736828148688655
       ]
     },
     "LeftFoot": {

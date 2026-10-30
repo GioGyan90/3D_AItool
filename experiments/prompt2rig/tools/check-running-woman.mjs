@@ -19,7 +19,7 @@ const target=prepareRig(scene).rig,driver=new Rig(createCharacter()),take=planTo
 assert.ok(target,'runner rig must exist');assert.equal(meshes.length,manifest.parts.length);assert.equal(target.order.length,58);assert.equal(manifest.source.completeBasePreserved,true);
 for(const side of ['Left','Right'])assert.equal(target.bones[side+'Foot'].parent,target.bones[side+'Leg']);
 for(const m of meshes){for(const a of Object.values(m.geometry.attributes))for(const n of a.array)assert.ok(Number.isFinite(n),m.name+' nonfinite attribute');for(let i=0;i<m.geometry.attributes.position.count;i++){let sum=0;for(let k=0;k<4;k++){const w=m.geometry.attributes.skinWeight.getComponent(i,k),j=m.geometry.attributes.skinIndex.getComponent(i,k);assert.ok(w>=0&&j>=0&&j<m.skeleton.bones.length,m.name+' invalid weight/index');sum+=w;}assert.ok(Math.abs(sum-1)<5e-6,m.name+' nonnormalized weight');}}
-const garments=meshes.filter(m=>/^(tank|leggings_|shoe_|sole_|skin_)/.test(m.name));assert.ok(garments.some(m=>m.name==='tank')&&garments.some(m=>m.name==='leggings_waist')&&garments.length>=8);
+const garments=meshes.filter(m=>/^(tank|leggings_|shoe_|sole_|laces_|skin_)/.test(m.name));assert.ok(garments.some(m=>m.name==='tank')&&garments.some(m=>m.name==='leggings_waist')&&garments.length>=8);
 const vector=(a,i)=>new T.Vector3().fromBufferAttribute(a,i),restData=new Map();
 for(const m of garments)restData.set(m,{p:Array.from({length:m.geometry.attributes.position.count},(_,i)=>vector(m.geometry.attributes.position,i))});
 function posedVertices(m){return Array.from({length:m.geometry.attributes.position.count},(_,i)=>m.getVertexPosition(i,new T.Vector3()).applyMatrix4(m.matrixWorld));}

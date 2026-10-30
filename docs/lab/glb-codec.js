@@ -1,5 +1,5 @@
-import { MeshoptEncoder } from '../vendor/meshopt/meshopt_encoder.module.js?v=36a8b581d8d9';
-import { MeshoptDecoder } from '../vendor/meshopt/meshopt_decoder.module.js?v=36a8b581d8d9';
+import { MeshoptEncoder } from '../vendor/meshopt/meshopt_encoder.module.js?v=bb4ee76062a4';
+import { MeshoptDecoder } from '../vendor/meshopt/meshopt_decoder.module.js?v=bb4ee76062a4';
 
 export function readGLB(buffer) {
   const bytes=buffer instanceof Uint8Array?buffer:new Uint8Array(buffer);

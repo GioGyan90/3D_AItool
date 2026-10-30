@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import * as T from 'three';
 import {parseCharacter} from '../public/lab/assets.js';
 import {GLTFExporter} from '../public/vendor/exporters/GLTFExporter.js';
-import {mergeVertices} from '../public/vendor/utils/BufferGeometryUtils.js';
+import {mergeVertices,mergeGeometries} from '../public/vendor/utils/BufferGeometryUtils.js';
 import {MeshoptSimplifier} from '../public/vendor/meshopt/meshopt_simplifier.module.js';
 import {reduceGeometry,modelStats} from '../public/lab/optimize.js';
 import {readGLB,writeGLB,compressGLB} from '../public/lab/glb-codec.js';
@@ -151,6 +151,13 @@ for(const [s,label]of [['L','左'],['R','右']]){
   const vertices=Array.from({length:g.attributes.position.count},(_,i)=>new T.Vector3().fromBufferAttribute(g.attributes.position,i)),outline=hullXZ(vertices),cx=vertices.reduce((s,p)=>s+p.x,0)/vertices.length,cz=(g.boundingBox.min.z+g.boundingBox.max.z)/2;
   transform(g,v=>{v.x=cx+(v.x-cx)*1.17;v.z=cz+(v.z-cz)*1.09;v.y=Math.max(.028,v.y+.012);});g.computeVertexNormals();
   model.add(g,materials.shoe,'shoe_'+s,label+'运动鞋面',[side*.18,-.18,.07],'Fitted from this adult foot surface, rigid to matching Foot');
+  const top=(x,z)=>{let height=-Infinity;const p=g.attributes.position;for(let i=0;i<g.index.count;i+=3){const a=new T.Vector3().fromBufferAttribute(p,g.index.getX(i)),b=new T.Vector3().fromBufferAttribute(p,g.index.getX(i+1)),c=new T.Vector3().fromBufferAttribute(p,g.index.getX(i+2)),den=(b.z-c.z)*(a.x-c.x)+(c.x-b.x)*(a.z-c.z);if(Math.abs(den)<1e-10)continue;const u=((b.z-c.z)*(x-c.x)+(c.x-b.x)*(z-c.z))/den,v=((c.z-a.z)*(x-c.x)+(a.x-c.x)*(z-c.z))/den,w=1-u-v;if(Math.min(u,v,w)>=-1e-6)height=Math.max(height,u*a.y+v*b.y+w*c.y);}if(!Number.isFinite(height))throw Error('Lace endpoint misses actual shoe surface');return height;};
+  const laceParts=[],halfWidth=(g.boundingBox.max.x-g.boundingBox.min.x)*.26;
+  for(let i=0;i<3;i++)for(const diagonal of [-1,1]){
+    const z=foot.z+.026+i*.019,points=Array.from({length:5},(_,k)=>{const t=k/4,x=cx+halfWidth*(2*t-1),depth=z+diagonal*.006*(2*t-1);return new T.Vector3(x,top(x,depth)+.0025,depth);});
+    laceParts.push(new T.TubeGeometry(new T.CatmullRomCurve3(points),8,.0018,4,false));
+  }
+  model.add(assignRigid(mergeGeometries(laceParts),joint),materials.tank,'laces_'+s,label+'运动鞋带',[side*.18,-.16,.12],'Six fitted crossing laces sampled on the actual shoe upper');
   const points=outline.map(v=>new T.Vector2(cx+(v.x-cx)*1.21,cz+(v.z-cz)*1.12)),shape=new T.Shape(points),sole=new T.ExtrudeGeometry(shape,{depth:.029,bevelEnabled:false,steps:1,curveSegments:1});
   // Extrude XY along Z, then map XY to the actual foot's XZ plane.
   transform(sole,v=>{const y=v.y;v.y=.031-v.z;v.z=y;});sole.computeVertexNormals();const indexed=sole.index?sole:mergeVertices(sole,1e-6);assignRigid(indexed,joint);

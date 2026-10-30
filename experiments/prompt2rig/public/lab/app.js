@@ -54,13 +54,14 @@ try{
     for(const take of takes)delete take.boundClip;select(takes.find(t=>t.id===asset.defaultMotion)||takes[0],true);renderLibrary();if(!asset.defaultMotion&&getProceduralParts(asset.root).length)studyPose();
   }
   scene.add(asset.root);replaceHelper();showAssetInfo();
+  function positionFloor(explosion=0){const sole=asset.root.userData.soleGrounding,base=sole?asset.rig.floorY-.001:-.015;floor.position.y=base-explosion*.3;grid.position.y=floor.position.y+(sole ? .0005 : .005);scene.userData.labFloorY=grid.position.y;}
   function renderPose(){
     if(studying){const r=getProceduralParts(asset.root).length?asset.rig:driver;r.reset();if(!asset.root.userData.studyRest)for(const [side,sign] of [['Left',-1],['Right',1]]){r.bones[side+'Arm'].quaternion.copy(r.rest[side+'Arm'].q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),sign*Math.PI/3));r.bones[side+'ForeArm'].quaternion.copy(r.rest[side+'ForeArm'].q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),sign*.04));}r.model.updateMatrixWorld(true);if(r===driver&&asset.rig&&asset.rig!==driver)applyRetarget(driver,asset.rig);}
     else if(selected.kind==='native'){mixer?.setTime(time);}else{driver.applySnapshot(selected.track.sample(time));if(asset.rig&&asset.rig!==driver)applyRetarget(driver,asset.rig);}
     $('#seek').value=time;$('#time').textContent=`${time.toFixed(2)} / ${selected.duration.toFixed(2)} s`;
   }
   function select(take,quiet=false){
-    studying=false;setProceduralView(asset.root,{explosion:0,isolated:'all'});$('#explode').value=0;$('#part-select').value='all';$('#export-part').disabled=true;floor.position.y=-.015;grid.position.y=-.01;scene.userData.labFloorY=-.01;
+    studying=false;setProceduralView(asset.root,{explosion:0,isolated:'all'});$('#explode').value=0;$('#part-select').value='all';$('#export-part').disabled=true;positionFloor();
     mixer?.stopAllAction();mixer=null;selected=take;time=0;playing=true;$('#play').textContent='暂停';$('#name').textContent=take.name;$('#description').textContent=take.description||'';$('#seek').max=take.duration;
     if(asset.rig)asset.rig.reset();
     if(take.kind==='native'){mixer=new THREE.AnimationMixer(asset.root);mixer.clipAction(take.clip).play();}
@@ -82,7 +83,7 @@ try{
   function studyPose(){mixer?.stopAllAction();mixer=null;studying=true;playing=false;time=0;$('#play').textContent='播放动作';renderPose();status(asset.root.userData.studyRest?'形体检查 · 原始 '+(asset.root.userData.restPoseLabel||'A 姿势')+'；可检查比例、分件和装配。':'形体检查 · A 字站姿；可检查正、侧、背及分块封口。');}
   $('#model-inspect').onclick=studyPose;$('#model-animate').onclick=()=>{select(selected);frameCharacter('three');};
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>frameCharacter(b.dataset.view));
-  function updateStudy(){studyPose();const explosion=Number($('#explode').value);setProceduralView(asset.root,{surface:$('#surface-select').value,isolated:$('#part-select').value,explosion,wireframe:$('#model-wireframe').checked});floor.position.y=-.015-explosion*.3;grid.position.y=floor.position.y+.005;scene.userData.labFloorY=grid.position.y;$('#export-part').disabled=$('#part-select').value==='all';frameCharacter('three');}
+  function updateStudy(){studyPose();const explosion=Number($('#explode').value);setProceduralView(asset.root,{surface:$('#surface-select').value,isolated:$('#part-select').value,explosion,wireframe:$('#model-wireframe').checked});positionFloor(explosion);$('#export-part').disabled=$('#part-select').value==='all';frameCharacter('three');}
   for(const id of ['surface-select','part-select','model-wireframe'])$('#'+id).onchange=updateStudy;$('#explode').oninput=updateStudy;
   $('#export-part').onclick=async()=>{try{const mesh=createPartExport(asset.root,$('#part-select').value);const glb=await exportCharacter(mesh,[],{compressed:$('#export-format').value==='meshopt'});download(glb,'model/gltf-binary',mesh.name+'.glb');status('已导出零件；保留装配坐标，不含预览拆解位移。');}catch(error){status(error.message);}};
   $('#source-animation').onclick=()=>{if(!asset.animations.length)return;nativeIndex=(nativeIndex+1)%asset.animations.length;const clip=asset.animations[nativeIndex];select({kind:'native',name:clip.name||'原有动画',duration:Math.max(.01,clip.duration),clip,loop:true,description:'来自导入 GLB 的原有动画'});};
