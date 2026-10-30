@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "date": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "codeCommit": "7c5de7ae8d39cb8849976c9021ad657adae670ae",
+  "url": "https://giogyan90.github.io/3D_AItool/lab/?model=runner",
+  "renderer": "Canvas CPU compatibility; actual public-page UI, not a stand-in render",
+  "staticViewsReviewed": [
+    "front grey",
+    "side grey",
+    "back grey",
+    "three-quarter material",
+    "front-top grey",
+    "rear-top grey"
+  ],
+  "runningReviewed": [
+    "three-quarter contact and live playback",
+    "side opposite support at 0.40s"
+  ],
+  "visualFindingsResolved": [
+    "neckline and armhole light leaks: fitted edge allowance, body-return binding, retained skin overlap",
+    "palms up: turn palms inward through forearm roll",
+    "shoe upper/outsole side gap: close entire projected perimeter",
+    "exploded-preview export changed hips: restore assembly before baking contact"
+  ],
+  "browserExportInspectionState": {
+    "surface": "grey",
+    "isolated": "hair",
+    "explosion": 1,
+    "wireframe": true
+  },
+  "actualBrowserExport": {
+    "fileSHA256": "6d22aed4177482ed63ca41e1b2f47264cc8a1dea1cb973d21eea4cd7c3eb5118",
+    "bytes": 1482804,
+    "parts": 17,
+    "animatedBones": 58,
+    "tracks": 59,
+    "duration": 4,
+    "embeddedImages": 2,
+    "imagePixels": [
+      {
+        "image": 0,
+        "exactBytes": false,
+        "size": [
+          1024,
+          1024
+        ],
+        "maxChannelDifference": 0
+      },
+      {
+        "image": 1,
+        "exactBytes": false,
+        "size": [
+          256,
+          256
+        ],
+        "maxChannelDifference": 0
+      }
+    ],
+    "sampledPoses": 10,
+    "comparedVertices": 185370,
+    "maxError": 4.754598091922009e-07,
+    "inspectionStateExcluded": true
+  },
+  "publicFiles": [
+    {
+      "file": "index.html",
+      "bytes": 12129,
+      "matches": true,
+      "sha256": "1e119dc3cd145325536fdeb850235a8cecc1b207292ad1a9ad3866419cd3d13b"
+    },
+    {
+      "file": "app.js",
+      "bytes": 26082,
+      "matches": true,
+      "sha256": "6e840820820db4f2ab256c68d40c30fff9a3ab91283e7b0ba8bb835e251b2cf0"
+    },
+    {
+      "file": "motion-plan.js",
+      "bytes": 14708,
+      "matches": true,
+      "sha256": "fb0618caff1128a9f064e74ef7e226f2ab096c773cd14474d95e63780e706fa8"
+    },
+    {
+      "file": "runner-preset.js",
+      "bytes": 1903,
+      "matches": true,
+      "sha256": "ecfd2f51ba0b540b4d691081a94c13a548974149eefde7bb50089393f524b753"
+    },
+    {
+      "file": "running-motion.js",
+      "bytes": 2283,
+      "matches": true,
+      "sha256": "cd06562c321512437edde524332b3e1ed9490c00e98c4bb558e30d6fbeb7af1b"
+    },
+    {
+      "file": "characters/running-woman/manifest.json",
+      "bytes": 24812,
+      "matches": true,
+      "sha256": "d46c1bd743a2ef9025cc168ac81b51de45a74b044ebf264742ee4474ea09d057"
+    },
+    {
+      "file": "characters/running-woman/assembled-running-woman.glb",
+      "bytes": 938976,
+      "matches": true,
+      "sha256": "ce2b5b6eb30b2883a30f489e82a0894962c4f72a5b85714c7b5d06a2cc6e84c1"
+    },
+    {
+      "file": "characters/running-woman/running-woman-run.glb",
+      "bytes": 1052452,
+      "matches": true,
+      "sha256": "3d6d797c84c476dbc578da8362c839f3120f461d3d90a1035ef55621f67eb049"
+    },
+    {
+      "file": "characters/running-woman/running-plan.json",
+      "bytes": 166422,
+      "matches": true,
+      "sha256": "45b18ba2f90143da323325986495195d894ad1f91e5ad4ec1b222a4e783e276b"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "screenshots/running-woman-preview.jpg",
+      "sha256": "e14111a3a3b4829cccf11cfd2f257e10e2c3bdbe4a4a4339b73b37846d442bd1"
+    },
+    {
+      "path": "screenshots/running-woman-side.jpg",
+      "sha256": "7f18d3280364e7009ae783431afabf9b1679f75c5f8427b2a9c76708e8dea06c"
+    }
+  ],
+  "tests": {
+    "total": 40,
+    "existing": 36,
+    "runner": 4,
+    "finalRunnerAssetRechecked": true
+  },
+  "limits": [
+    "GPU WebGL render path was not available in this cloud browser.",
+    "Sole grounding adjusts height; no full foot IK or constant stance-speed guarantee.",
+    "Browser PNG compression differs from the offline file; decoded pixels match exactly."
+  ]
+}

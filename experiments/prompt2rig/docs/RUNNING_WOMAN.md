@@ -37,7 +37,15 @@
 
 本轮数值结果：最小法线对齐约 0.27570、最小面积比约 0.24108、最大边伸长约 1.79763 倍；46,464 个腰部径向样本最小间距约 1.62mm，无采样穿入。腕部最大局部角约 4.65°，踝部约 45°；导出重载比较 185,370 个顶点，最大误差约 0.00000031m。
 
-详细数值与范围：[RUNNING_WOMAN_VALIDATION.json](RUNNING_WOMAN_VALIDATION.json)。数值验证不等同于美术验收；浏览器多视角与动作复查状态将在发布检查后补充。
+详细数值与范围：[RUNNING_WOMAN_VALIDATION.json](RUNNING_WOMAN_VALIDATION.json)。浏览器实际复查已覆盖灰模正 / 侧 / 背 / 前后俯视、真实材质斜侧，以及跑步接触、另一侧支撑与连续播放。领口漏缝、掌面和鞋底围边均按发现的问题修正后复查。
+
+[浏览器与发布检查记录](RUNNING_WOMAN_BROWSER_VALIDATION.json) 保存公开文件哈希和真实网页导出检查。实际点击“导出人物 + 动作”时故意保持灰模、仅看头发、拆解=1、线框开启：下载的 GLB 仍为完整 17 件人物、58 根动作骨骼 / 59 条轨道、4 秒动画及 2 张嵌入贴图；重载比较 185,370 个顶点，最大误差约 0.00000048m，贴图解码像素完全一致。浏览器导出约 1.41MiB，与离线包的体积差来自 PNG 重编码等序列化差异，不代表几何或颜色改变。
+
+实际复查使用 Canvas CPU 兼容预览，未验证 GPU WebGL 路径。高度校正仍不等于完整足部 IK，也没有宣称任意动作无穿模。
+
+![女性跑步实际预览](screenshots/running-woman-preview.jpg)
+
+![侧面跑步与鞋底接口](screenshots/running-woman-side.jpg)
 
 ## 重建与检查
 
@@ -51,6 +59,12 @@ npm test
 ```
 
 PowerShell 先用 `$env:RUNNER_SOURCE="C:\path\to\runner-source"` 设置路径，再运行 Node 构建命令。构建器核对每个源文件哈希；检查不通过时不会保存有效交付的动作文件。
+
+检查实际网页下载的 GLB（贴图像素复核需 Python Pillow）：
+
+```sh
+node --experimental-loader ./tests/vendor-loader.mjs tools/check-browser-run-export.mjs /path/to/browser-export.glb
+```
 
 输出：
 
