@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Track, trackToClip, basisQuat } from '../retarget.js';
+import { prepareProceduralExport } from './procedural-character.js';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});
@@ -107,9 +108,13 @@ export function applyRetarget(driver,target){
 
 export function retargetTake(driver,target,take){
   if(driver===target)return take.clip;
-  const track=new Track(target.order.length);
-  for(let i=0;i<take.track.length;i++){driver.applySnapshot(take.track.sample(take.track.times[i]));applyRetarget(driver,target);track.push(take.track.times[i],target.snapshot());}
-  driver.reset();target.reset();return trackToClip(target,track,take.name);
+  // Grounding reads actual surfaces. Restore assembly BEFORE baking, not only
+  // when serializing GLB, or exploded shoe geometry shifts the exported hips.
+  const restore=prepareProceduralExport(target.model);
+  try{const track=new Track(target.order.length);
+    for(let i=0;i<take.track.length;i++){driver.applySnapshot(take.track.sample(take.track.times[i]));applyRetarget(driver,target);track.push(take.track.times[i],target.snapshot());}
+    return trackToClip(target,track,take.name);
+  }finally{driver.reset();target.reset();restore();}
 }
 
 export function motionRequest(prompt,duration=5){return {format:'luckybreak-motion-request',version:1,provider:'openai',prompt,duration,instructions:PLAN_INSTRUCTIONS,schema:PLAN_SCHEMA};}

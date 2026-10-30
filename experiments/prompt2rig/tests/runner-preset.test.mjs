@@ -8,8 +8,8 @@ import {parseCharacter} from '../public/lab/assets.js';
 import {readGLB,writeGLB} from '../public/lab/glb-codec.js';
 import {prepareRig} from '../public/lab/rig-adapter.js';
 import {loadRunnerPreset} from '../public/lab/runner-preset.js';
-import {getProceduralParts,setProceduralView,proceduralSettings} from '../public/lab/procedural-character.js';
-import {validatePlan,planToTake,applyRetarget} from '../public/lab/motion-plan.js';
+import {getProceduralParts,setProceduralView,proceduralSettings,registerStudyModel} from '../public/lab/procedural-character.js';
+import {validatePlan,planToTake,applyRetarget,retargetTake} from '../public/lab/motion-plan.js';
 import {createCharacter} from '../public/lab/character.js';
 import {Rig} from '../public/retarget.js';
 import {RUNNING_PLAN} from '../public/lab/running-motion.js';
@@ -55,6 +55,8 @@ test('running plan respects the existing protocol and visibly alternates actual 
   assert.ok(Math.abs(positions[0].LeftFoot.y-positions[.4].RightFoot.y)<1e-5);assert.ok(Math.abs(positions[0].LeftFoot.z-positions[.4].RightFoot.z)<1e-5);
   for(const n of Object.keys(positions[0]))assert.ok(positions[0][n].distanceTo(positions[.8][n])<1e-5,n+' cycle mismatch');
   for(const t of [0,.1,.2,.3,.4,.6]){driver.applySnapshot(take.track.sample(t));applyRetarget(driver,target);for(const [side,sign]of [['Left',1],['Right',-1]]){const at=n=>target.bones[side+n].getWorldPosition(new T.Vector3()),palm=at('HandMiddle1').sub(at('Hand')).normalize().cross(at('HandIndex1').sub(at('HandPinky1'))).multiplyScalar(sign).normalize();assert.ok(palm.dot(new T.Vector3(-sign,0,0))>.95,side+' running palm must face inward');}}
+  registerStudyModel(root);const assembled=retargetTake(driver,target,take);setProceduralView(root,{surface:'grey',isolated:'hair',explosion:1,wireframe:true});const settings=proceduralSettings(root),inspected=retargetTake(driver,target,take);assert.deepEqual(proceduralSettings(root),settings);
+  for(let i=0;i<assembled.tracks.length;i++){assert.equal(inspected.tracks[i].name,assembled.tracks[i].name);assert.deepEqual(inspected.tracks[i].values,assembled.tracks[i].values,'inspection geometry must not shift baked contact/hips');}
 });
 
 test('actual complete run passes surface, waist, contact, rotation and exported vertex validation',()=>{
