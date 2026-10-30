@@ -54,13 +54,13 @@
     "bones": 65
   },
   "after": {
-    "triangles": 19677,
-    "vertices": 17041,
-    "meshes": 16,
+    "triangles": 20213,
+    "vertices": 18341,
+    "meshes": 17,
     "bones": 71
   },
   "sourceGLBBytes": 727448,
-  "modelGLBBytes": 901516,
+  "modelGLBBytes": 935908,
   "rig": {
     "totalJoints": 71,
     "sourceJoints": 65,
@@ -827,6 +827,13 @@
       "sole": "#c8ded9",
       "accent": "#f5ac7b"
     },
+    "openingBinding": {
+      "edges": 213,
+      "edgeEase": 0.002,
+      "skinOverlap": 0.012,
+      "returnsToSameBody": true,
+      "hemAllowanceUnchanged": true
+    },
     "bodyMask": "Recomputed for sleeveless tank, not inherited from teen tee",
     "waist": "Covered leggings waist stays inside tank; visible hips/legs preserve source anatomy",
     "contact": "Sole surface vertical correction; no full foot IK"
@@ -858,6 +865,13 @@
       "provenance": "Same adult body topology, geometric neckline/armhole pattern, fitted allowance"
     },
     {
+      "id": "tank_binding",
+      "label": "领口与袖窿包边",
+      "triangles": 426,
+      "vertices": 1230,
+      "provenance": "Opening walls return into the same body surface; preserve source UV/skin anchors"
+    },
+    {
       "id": "leggings_waist",
       "label": "瑜伽裤腰胯",
       "triangles": 516,
@@ -881,22 +895,22 @@
     {
       "id": "head_neck",
       "label": "头颈",
-      "triangles": 3250,
-      "vertices": 1810,
+      "triangles": 3281,
+      "vertices": 1829,
       "provenance": "Quaternius source surface"
     },
     {
       "id": "skin_L",
       "label": "左肩臂与手",
-      "triangles": 2377,
-      "vertices": 1443,
+      "triangles": 2416,
+      "vertices": 1468,
       "provenance": "Quaternius source surface"
     },
     {
       "id": "skin_R",
       "label": "右肩臂与手",
-      "triangles": 2377,
-      "vertices": 1443,
+      "triangles": 2417,
+      "vertices": 1469,
       "provenance": "Quaternius source surface"
     },
     {

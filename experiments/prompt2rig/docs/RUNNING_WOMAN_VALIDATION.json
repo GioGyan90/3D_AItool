@@ -8,6 +8,7 @@
   "bakedRotationSamples": 241,
   "garmentParts": [
     "tank",
+    "tank_binding",
     "leggings_waist",
     "leggings_L",
     "leggings_R",
@@ -1165,10 +1166,10 @@
     "hipSeamMeters": 0
   },
   "export": {
-    "comparedVertices": 170410,
+    "comparedVertices": 183410,
     "maxReloadError": 3.084650931608309e-7,
     "imagesPreserved": 2,
-    "animatedGLBBytes": 1014848
+    "animatedGLBBytes": 1049384
   },
   "ranges": {
     "LeftHand": {

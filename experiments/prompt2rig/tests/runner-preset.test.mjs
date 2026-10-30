@@ -31,6 +31,11 @@ test('runner preserves an independent complete adult source and exact anatomical
     assert.ok(shoulder>25,'sleeveless shoulders must remain real skin');
   }
   const full=source.getObjectByName('complete_body');assert.ok(full.geometry.attributes.position.count>6000);assert.ok(new T.Box3().setFromObject(full).min.y<.03);
+  const tank=root.getObjectByName('tank'),binding=root.getObjectByName('tank_binding');assert.ok(binding,'real opening walls must exist');
+  const pointKey=p=>p.toArray().map(v=>Math.round(v*1e5)).join(','),outer=new Set(Array.from({length:tank.geometry.attributes.position.count},(_,i)=>pointKey(new T.Vector3().fromBufferAttribute(tank.geometry.attributes.position,i)))),inner=[...new Map(Array.from({length:binding.geometry.attributes.position.count},(_,i)=>new T.Vector3().fromBufferAttribute(binding.geometry.attributes.position,i)).filter(p=>!outer.has(pointKey(p))).map(p=>[pointKey(p),p])).values()];
+  assert.ok(inner.length>20,'opening binding must return into the body, not duplicate the outer edge');
+  const skinTriangles=[];for(const m of meshes(root).filter(m=>/^(head_neck|skin_)/.test(m.name))){const g=m.geometry;for(let i=0;i<g.index.count;i+=3)skinTriangles.push(new T.Triangle(...[0,1,2].map(k=>new T.Vector3().fromBufferAttribute(g.attributes.position,g.index.getX(i+k)))));}
+  const closest=new T.Vector3();for(const p of inner){let distance=Infinity;for(const tri of skinTriangles){tri.closestPointToPoint(p,closest);distance=Math.min(distance,closest.distanceTo(p));}assert.ok(distance<.003,'an opening wall must meet retained actual skin');}
 });
 
 test('runner loader registers independent inspection states, actual soles and all six helper tracks',async()=>{

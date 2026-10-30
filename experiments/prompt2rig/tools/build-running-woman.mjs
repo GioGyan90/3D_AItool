@@ -9,7 +9,7 @@ import {mergeVertices,mergeGeometries} from '../public/vendor/utils/BufferGeomet
 import {MeshoptSimplifier} from '../public/vendor/meshopt/meshopt_simplifier.module.js';
 import {reduceGeometry,modelStats} from '../public/lab/optimize.js';
 import {readGLB,writeGLB,compressGLB} from '../public/lab/glb-codec.js';
-import {compact,clip,transform,assignRigid,hullXZ} from './runner-geometry.mjs';
+import {compact,clip,transform,assignRigid,hullXZ,boundaryEdges} from './runner-geometry.mjs';
 
 const source=process.env.RUNNER_SOURCE;
 if(!source)throw Error('Set RUNNER_SOURCE to the reviewed Universal Base Characters directory (see SOURCES.md)');
@@ -99,19 +99,24 @@ function legWeights(p){
 const tankField=(x,y,z)=>{
   const front=T.MathUtils.smoothstep(z-centerZ,-.01,.04),neckline=neckY-.055-front*.085;
   const armEdge=armX+.055-.080*T.MathUtils.smoothstep(y,neckY-.23,neckY-.04);
-  return Math.min(y-hemY,neckline+.13*(x/.07)**2-y,armEdge-Math.abs(x),neckY+.012-y);
+  const necklineDistance=(neckline+.13*(x/.07)**2-y)/Math.sqrt(1+(.26*x/(.07*.07))**2);
+  return Math.min(y-hemY,necklineDistance,armEdge-Math.abs(x),neckY+.012-y);
 };
 // A little interior overlap is retained in the body mask; the exterior garment
 // is generated independently and the full unmasked source is kept separately.
 const torso=clip(bodyGeometry,[(x,y)=>y-hemY,(x,y)=>neckY+.02-y,(x)=>armX+.06-Math.abs(x)]);
-let tank=clip(torso,[tankField]);
-transform(tank,(v)=>{
-  const radial=new T.Vector3(v.x,0,v.z-centerZ).normalize(),ease=.010+.005*T.MathUtils.smoothstep(v.y,waistY,neckY-.16);
+let tank=mergeVertices(clip(torso,[tankField]),1e-6);
+const openingEdges=boundaryEdges(tank).filter(e=>tank.attributes.position.getY(e.a)>hemY+.03&&tank.attributes.position.getY(e.b)>hemY+.03),edgeVertices=new Set(openingEdges.flatMap(e=>[e.a,e.b])),tankAnchors=Array.from({length:tank.attributes.position.count},(_,i)=>new T.Vector3().fromBufferAttribute(tank.attributes.position,i));
+transform(tank,(v,i)=>{
+  const radial=new T.Vector3(v.x,0,v.z-centerZ).normalize(),fullEase=.010+.005*T.MathUtils.smoothstep(v.y,waistY,neckY-.16),distance=Math.max(0,tankField(v.x,v.y,v.z)),edgeBlend=edgeVertices.has(i)?0:T.MathUtils.smoothstep(distance,.002,.032),ease=v.y<hemY+.03?fullEase:T.MathUtils.lerp(.002,fullEase,edgeBlend);
   v.addScaledVector(radial,ease);
 });
-tank=mergeVertices(tank,1e-6);tank.computeVertexNormals();
+tank.computeVertexNormals();
 setWeights(tank,torsoWeights);
 model.add(tank,materials.tank,'tank','运动背心',[0,.055,.12],'Same adult body topology, geometric neckline/armhole pattern, fitted allowance');
+const rimPositions=[],rimSkin=[],rimWeights=[],rimUV=[];
+for(const e of openingEdges){const a=new T.Vector3().fromBufferAttribute(tank.attributes.position,e.a),b=new T.Vector3().fromBufferAttribute(tank.attributes.position,e.b),inner=i=>{const p=tankAnchors[i].clone();return p.addScaledVector(new T.Vector3(p.x,0,p.z-centerZ).normalize(),-.001);},ia=inner(e.a),ib=inner(e.b);for(const [p,id]of [[a,e.a],[ia,e.a],[b,e.b],[b,e.b],[ia,e.a],[ib,e.b]]){rimPositions.push(...p.toArray());for(let k=0;k<4;k++){rimSkin.push(tank.attributes.skinIndex.getComponent(id,k));rimWeights.push(tank.attributes.skinWeight.getComponent(id,k));}rimUV.push(0,0);}}
+const rim=new T.BufferGeometry();rim.setAttribute('position',new T.Float32BufferAttribute(rimPositions,3));rim.setAttribute('skinIndex',new T.Uint16BufferAttribute(rimSkin,4));rim.setAttribute('skinWeight',new T.Float32BufferAttribute(rimWeights,4));rim.setAttribute('uv',new T.Float32BufferAttribute(rimUV,2));rim.setIndex(Array.from({length:rimPositions.length/3},(_,i)=>i));rim.computeVertexNormals();model.add(rim,materials.binding,'tank_binding','领口与袖窿包边',[0,.065,.14],'Opening walls return into the same body surface; preserve source UV/skin anchors');
 history.push({part:'tank',sourceTriangles:bodyGeometry.index.count/3,outputTriangles:tank.index.count/3});
 let pants=clip(bodyGeometry,[(x,y)=>waistY-y,(x,y)=>y-ankleY]);
 transform(pants,v=>{
@@ -126,7 +131,7 @@ for(const [id,indices]of legGroups)model.add(compact(pants,indices),materials.pa
 history.push({part:'leggings',sourceTriangles:bodyGeometry.index.count/3,outputTriangles:pants.index.count/3});
 // Actual removal of covered skin: only neck/head, exposed shoulders/arms and
 // hands remain. Hidden torso and leg triangles are absent in exported geometry.
-const skin=clip(bodyGeometry,[(x,y,z)=>Math.min(y-waistY,-tankField(x,y,z)+.005)]);
+const skin=clip(bodyGeometry,[(x,y,z)=>Math.min(y-waistY,-tankField(x,y,z)+.012)]);
 setWeights(skin,(p,i)=>{
   const side=p.x>0?'Left':'Right',x=Math.abs(p.x),elbow=Math.abs(at(side+'ForeArm').x),wrist=Math.abs(at(side+'Hand').x),source=()=>Array.from({length:4},(_,k)=>[skin.attributes.skinIndex.getComponent(i,k),skin.attributes.skinWeight.getComponent(i,k)]);
   if(x<elbow-.09){
@@ -163,7 +168,7 @@ for(const [s,label]of [['L','左'],['R','右']]){
   transform(sole,v=>{const y=v.y;v.y=.031-v.z;v.z=y;});sole.computeVertexNormals();const indexed=sole.index?sole:mergeVertices(sole,1e-6);assignRigid(indexed,joint);
   model.add(indexed,materials.sole,'sole_'+s,label+'运动鞋底',[side*.18,-.225,.07],'Convex footprint from original foot, 29mm sole, bound to Foot');
 }
-model.root.userData.runnerConstruction={hemY,waistY,ankleY,neckY,palette,bodyMask:'Recomputed for sleeveless tank, not inherited from teen tee',waist:'Covered leggings waist stays inside tank; visible hips/legs preserve source anatomy',contact:'Sole surface vertical correction; no full foot IK'};
+model.root.userData.runnerConstruction={hemY,waistY,ankleY,neckY,palette,openingBinding:{edges:openingEdges.length,edgeEase:.002,skinOverlap:.012,returnsToSameBody:true,hemAllowanceUnchanged:true},bodyMask:'Recomputed for sleeveless tank, not inherited from teen tee',waist:'Covered leggings waist stays inside tank; visible hips/legs preserve source anatomy',contact:'Sole surface vertical correction; no full foot IK'};
 model.root.updateMatrixWorld(true);original.root.updateMatrixWorld(true);
 
 async function portable(root){

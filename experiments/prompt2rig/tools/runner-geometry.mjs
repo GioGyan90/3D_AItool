@@ -41,6 +41,12 @@ export function transform(g,fn){const p=g.attributes.position,v=new T.Vector3();
 
 export function assignRigid(g,joint){const p=g.attributes.position,si=new Uint16Array(p.count*4),sw=new Float32Array(p.count*4);for(let i=0;i<p.count;i++){si[i*4]=joint;sw[i*4]=1;}g.setAttribute('skinIndex',new T.BufferAttribute(si,4));g.setAttribute('skinWeight',new T.BufferAttribute(sw,4));return g;}
 
+export function boundaryEdges(g){
+  const p=g.attributes.position,key=i=>[p.getX(i),p.getY(i),p.getZ(i)].map(x=>Math.round(x*1e5)).join(','),edges=new Map();
+  for(let i=0;i<g.index.count;i+=3)for(let k=0;k<3;k++){const a=g.index.getX(i+k),b=g.index.getX(i+(k+1)%3),ka=key(a),kb=key(b),id=ka<kb?ka+'|'+kb:kb+'|'+ka;if(edges.has(id))edges.get(id).count++;else edges.set(id,{a,b,count:1});}
+  return [...edges.values()].filter(e=>e.count===1);
+}
+
 export function hullXZ(points){
   const p=[...new Map(points.map(v=>[v.x.toFixed(7)+','+v.z.toFixed(7),v.clone()])).values()].sort((a,b)=>a.x-b.x||a.z-b.z);
   const cross=(a,b,c)=>(b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x),half=arr=>{const h=[];for(const v of arr){while(h.length>1&&cross(h.at(-2),h.at(-1),v)<=0)h.pop();h.push(v);}return h.slice(0,-1);};
