@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { Track, trackToClip, basisQuat } from '../retarget.js?v=6f8d754605aa';
-import { prepareProceduralExport } from './procedural-character.js?v=6f8d754605aa';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=6b9539a510de';
+import { prepareProceduralExport } from './procedural-character.js?v=6b9539a510de';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});

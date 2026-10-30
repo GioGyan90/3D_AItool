@@ -1166,10 +1166,10 @@
     "hipSeamMeters": 0
   },
   "export": {
-    "comparedVertices": 183410,
+    "comparedVertices": 185370,
     "maxReloadError": 3.084650931608309e-7,
     "imagesPreserved": 2,
-    "animatedGLBBytes": 1049428
+    "animatedGLBBytes": 1052452
   },
   "ranges": {
     "LeftHand": {

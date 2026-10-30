@@ -31,7 +31,12 @@ test('runner preserves an independent complete adult source and exact anatomical
     assert.ok(shoulder>25,'sleeveless shoulders must remain real skin');
   }
   const full=source.getObjectByName('complete_body');assert.ok(full.geometry.attributes.position.count>6000);assert.ok(new T.Box3().setFromObject(full).min.y<.03);
-  for(const side of ['L','R']){const upper=new T.Box3().setFromObject(root.getObjectByName('shoe_'+side)),sole=new T.Box3().setFromObject(root.getObjectByName('sole_'+side));assert.ok(upper.min.y<sole.max.y+.0005,'shoe upper must actually meet its sole');}
+  for(const side of ['L','R']){
+    const mesh=root.getObjectByName('shoe_'+side),g=mesh.geometry,upper=new T.Box3().setFromObject(mesh),sole=new T.Box3().setFromObject(root.getObjectByName('sole_'+side)),section=new T.Box3(),y=sole.max.y+.0005;
+    assert.ok(upper.min.y<sole.max.y+.0005,'shoe upper must actually meet its sole');
+    for(let i=0;i<g.index.count;i+=3)for(let k=0;k<3;k++){const a=new T.Vector3().fromBufferAttribute(g.attributes.position,g.index.getX(i+k)),b=new T.Vector3().fromBufferAttribute(g.attributes.position,g.index.getX(i+(k+1)%3));if((a.y<y)!==(b.y<y))section.expandByPoint(a.lerp(b,(y-a.y)/(b.y-a.y)));}
+    assert.ok(!section.isEmpty(),'shoe must have a full lower perimeter above the sole');for(const axis of ['x','z'])for(const bound of ['min','max'])assert.ok(Math.abs(section[bound][axis]-upper[bound][axis])<.003,'outsole connection must close the projected '+axis+' perimeter, not only one low point');
+  }
   const tank=root.getObjectByName('tank'),binding=root.getObjectByName('tank_binding');assert.ok(binding,'real opening walls must exist');
   const pointKey=p=>p.toArray().map(v=>Math.round(v*1e5)).join(','),outer=new Set(Array.from({length:tank.geometry.attributes.position.count},(_,i)=>pointKey(new T.Vector3().fromBufferAttribute(tank.geometry.attributes.position,i)))),inner=[...new Map(Array.from({length:binding.geometry.attributes.position.count},(_,i)=>new T.Vector3().fromBufferAttribute(binding.geometry.attributes.position,i)).filter(p=>!outer.has(pointKey(p))).map(p=>[pointKey(p),p])).values()];
   assert.ok(inner.length>20,'opening binding must return into the body, not duplicate the outer edge');

@@ -54,13 +54,13 @@
     "bones": 65
   },
   "after": {
-    "triangles": 20213,
-    "vertices": 18341,
+    "triangles": 20309,
+    "vertices": 18537,
     "meshes": 17,
     "bones": 71
   },
   "sourceGLBBytes": 727448,
-  "modelGLBBytes": 935952,
+  "modelGLBBytes": 938976,
   "rig": {
     "totalJoints": 71,
     "sourceJoints": 65,
@@ -936,10 +936,10 @@
     },
     {
       "id": "shoe_L",
-      "label": "左运动鞋面",
-      "triangles": 784,
-      "vertices": 2346,
-      "provenance": "Fitted from this adult foot surface, rigid to matching Foot"
+      "label": "左运动鞋面与围边",
+      "triangles": 832,
+      "vertices": 2444,
+      "provenance": "Fitted adult foot surface plus full hull welt returning into the outsole plane, rigid to Foot"
     },
     {
       "id": "laces_L",
@@ -957,10 +957,10 @@
     },
     {
       "id": "shoe_R",
-      "label": "右运动鞋面",
-      "triangles": 784,
-      "vertices": 2346,
-      "provenance": "Fitted from this adult foot surface, rigid to matching Foot"
+      "label": "右运动鞋面与围边",
+      "triangles": 832,
+      "vertices": 2444,
+      "provenance": "Fitted adult foot surface plus full hull welt returning into the outsole plane, rigid to Foot"
     },
     {
       "id": "laces_R",
