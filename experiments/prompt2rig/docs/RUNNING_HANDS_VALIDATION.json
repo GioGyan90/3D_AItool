@@ -1,23 +1,8 @@
 {
   "version": 1,
   "date": "2026-10-30",
-  "status": "user explicitly approved public model, animation and code release; publication verification in progress",
+  "status": "publicly deployed and verified",
   "localCodeCommit": "b6f63dc",
-  "publicCommitStill": "84a099bfd395cfeee88d4c45859bc73c3d4df7a1",
-  "publicationBlock": {
-    "action": "upload updated character and animated GLB to GioGyan90/3D_AItool",
-    "reason": "review could not establish explicit user authorization to publish these payloads to this public destination",
-    "retried": true,
-    "nextStep": "Publish the now explicitly authorized update and verify deployed preview and browser export.",
-    "userReply": "行，把这个要求写道文档中，然后以后建立新角色默认风格是二次元低面建模风格，类似塞尔达、原神的画风",
-    "latestReason": "Automatic review treated the latest user reply as authorization to document defaults only, and rejected the public model/animation upload again.",
-    "resolvedBy": {
-      "userReply": "允许",
-      "questionAnswered": "握拳版是否允许公开发布？请明确回复“允许将本次模型、动画和代码公开发布到 GioGyan90/3D_AItool”。",
-      "scope": "publish this model, animation and code to GioGyan90/3D_AItool and update Pages",
-      "date": "2026-10-30"
-    }
-  },
   "files": [
     {
       "file": "assembled-running-woman.glb",
@@ -90,60 +75,6 @@
     "imagesPreserved": 2,
     "animatedGLBBytes": 1054460
   },
-  "browser": {
-    "renderer": "Canvas CPU compatibility",
-    "workflow": "Local prepared GLB imported through existing public-page file chooser with optimization disabled; native clip played, paused, scrubbed and re-exported. This does not publish the payload.",
-    "views": [
-      "three-quarter full body at 0s",
-      "three-quarter zoom showing both hands at 0s and 0.4s",
-      "side at 0.4s",
-      "continuous playback"
-    ],
-    "actualDownloadValidation": {
-      "workflow": "local prepared GLB imported through existing page; native animation re-export",
-      "fileSHA256": "a70ff51917bca4caeeca20a10b2d6d512fa31d369534d1d1fdfec1b5a2afb0bb",
-      "bytes": 1485632,
-      "parts": 17,
-      "animatedBones": 58,
-      "tracks": 59,
-      "fingerTracks": 30,
-      "duration": 4,
-      "embeddedImages": 2,
-      "imagePixels": [
-        {
-          "image": 0,
-          "exactBytes": false,
-          "size": [
-            1024,
-            1024
-          ],
-          "maxChannelDifference": 0
-        },
-        {
-          "image": 1,
-          "exactBytes": false,
-          "size": [
-            256,
-            256
-          ],
-          "maxChannelDifference": 0
-        }
-      ],
-      "sampledPoses": 10,
-      "comparedVertices": 185370,
-      "maxError": 2.92156658343651e-09,
-      "inspectionStateExcluded": false
-    },
-    "screenshots": [
-      "screenshots/running-woman-fists-preview.jpg",
-      "screenshots/running-woman-fists-closeup.jpg",
-      "screenshots/running-woman-fists-side.jpg"
-    ],
-    "pending": [
-      "deployment of updated hand-aware runtime and assets",
-      "live UI review of the newly added hand-follow camera on the deployed runtime"
-    ]
-  },
   "limits": [
     "Whole-take constant hand profiles, not individual finger keyframes or timed gesture changes.",
     "GPU WebGL rendering has not been reviewed.",
@@ -162,5 +93,230 @@
     "commit": "84a099bfd395cfeee88d4c45859bc73c3d4df7a1",
     "scope": "four Markdown documents only; no runtime, models, animation or screenshots",
     "verified": true
+  },
+  "previousPublicCommit": "84a099bfd395cfeee88d4c45859bc73c3d4df7a1",
+  "codeCommit": "e12519141766f2fabc44ad58f4e5396a3dbf71a1",
+  "historicalPublicationBlock": {
+    "action": "upload updated character and animated GLB to GioGyan90/3D_AItool",
+    "reason": "review could not establish explicit user authorization to publish these payloads to this public destination",
+    "retried": true,
+    "nextStep": "Completed: approved asset/code release and public-page verification.",
+    "userReply": "行，把这个要求写道文档中，然后以后建立新角色默认风格是二次元低面建模风格，类似塞尔达、原神的画风",
+    "latestReason": "Automatic review treated the latest user reply as authorization to document defaults only, and rejected the public model/animation upload again.",
+    "resolvedBy": {
+      "userReply": "允许",
+      "questionAnswered": "握拳版是否允许公开发布？请明确回复“允许将本次模型、动画和代码公开发布到 GioGyan90/3D_AItool”。",
+      "scope": "publish this model, animation and code to GioGyan90/3D_AItool and update Pages",
+      "date": "2026-10-30"
+    },
+    "resolved": true
+  },
+  "publication": {
+    "codeCommit": "e12519141766f2fabc44ad58f4e5396a3dbf71a1",
+    "pagesRun": 41041894715,
+    "conclusion": "success",
+    "moduleRevision": "355115890893",
+    "url": "https://giogyan90.github.io/3D_AItool/lab/?model=runner",
+    "publicFiles": [
+      {
+        "file": "lab/index.html",
+        "bytes": 12209,
+        "matches": true,
+        "sha256": "f34e4a34e915f1278d3fd36ff72106af4d713e388854412e011eafef96a92a87"
+      },
+      {
+        "file": "lab/app.js",
+        "bytes": 26576,
+        "matches": true,
+        "sha256": "51165715e7ccdf4c9848e6e04afa52addc3c4cb54cb18055048dc161d384f4ea"
+      },
+      {
+        "file": "lab/hand-poses.js",
+        "bytes": 2806,
+        "matches": true,
+        "sha256": "c0aeaec4ea845c5749d7078460200abb07616d886149ad6e7c0d89c4ad44fd1a"
+      },
+      {
+        "file": "lab/motion-plan.js",
+        "bytes": 15979,
+        "matches": true,
+        "sha256": "92d3ba3d8d94553422885fc0edc0e39bbab633df1e7746210560ff73a25635ac"
+      },
+      {
+        "file": "lab/api.js",
+        "bytes": 3733,
+        "matches": true,
+        "sha256": "eca9420805188c966de4e2bc2b2b086d3cdef1938e577f17d07f4bd98078a089"
+      },
+      {
+        "file": "lab/runner-preset.js",
+        "bytes": 1903,
+        "matches": true,
+        "sha256": "64333f08da4ee05ab04c1c39b5d94f19d68d0fcb3c07c11c46010c0f4ca0b949"
+      },
+      {
+        "file": "lab/running-motion.js",
+        "bytes": 2326,
+        "matches": true,
+        "sha256": "bc3441dd4a3135816f8e21f60493a497afac3f9d98dcca0e593d43c24a61dc73"
+      },
+      {
+        "file": "retarget.js",
+        "bytes": 21789,
+        "matches": true,
+        "sha256": "fce40baf6e30b323eac3f05f4f7bd08c4729eec0f2067f63d5e187bf2795e063"
+      },
+      {
+        "file": "lab/examples/motion-plan.schema.json",
+        "bytes": 3229,
+        "matches": true,
+        "sha256": "8a3d9ae945465b2d96bf39b60dbb139120c0abedbca47dc404a7457af47e94b2"
+      },
+      {
+        "file": "lab/characters/running-woman/manifest.json",
+        "bytes": 24997,
+        "matches": true,
+        "sha256": "c535d27800341b466f52c0ab2f9c8145a73898e86f119aee293af0c13f8828b7"
+      },
+      {
+        "file": "lab/characters/running-woman/assembled-running-woman.glb",
+        "bytes": 938160,
+        "matches": true,
+        "sha256": "e0cd65a169eab175529882c2fcf71abd115f433ea0376313ce1d800776cc0847"
+      },
+      {
+        "file": "lab/characters/running-woman/running-woman-run.glb",
+        "bytes": 1054460,
+        "matches": true,
+        "sha256": "ca4f53ae9cf682684e14e3c0bafbcbc9487466a919e1de13c1bfcc2902c4a7ec"
+      },
+      {
+        "file": "lab/characters/running-woman/running-plan.json",
+        "bytes": 166490,
+        "matches": true,
+        "sha256": "234763d92d7ae9916b9b3be0428344b71c834cbfd0aadf67f370e4a205b87e87"
+      },
+      {
+        "file": "lab/characters/running-woman/SOURCES.md",
+        "bytes": 4995,
+        "matches": true,
+        "sha256": "f97c257bd96044b06dd92346de8543a30cb28ed31dbd9f8724b49deb5348f85d"
+      }
+    ]
+  },
+  "browser": {
+    "localFileReview": {
+      "renderer": "Canvas CPU compatibility",
+      "workflow": "Local prepared GLB imported through existing public-page file chooser with optimization disabled; native clip played, paused, scrubbed and re-exported. This does not publish the payload.",
+      "views": [
+        "three-quarter full body at 0s",
+        "three-quarter zoom showing both hands at 0s and 0.4s",
+        "side at 0.4s",
+        "continuous playback"
+      ],
+      "actualDownloadValidation": {
+        "workflow": "local prepared GLB imported through existing page; native animation re-export",
+        "fileSHA256": "a70ff51917bca4caeeca20a10b2d6d512fa31d369534d1d1fdfec1b5a2afb0bb",
+        "bytes": 1485632,
+        "parts": 17,
+        "animatedBones": 58,
+        "tracks": 59,
+        "fingerTracks": 30,
+        "duration": 4,
+        "embeddedImages": 2,
+        "imagePixels": [
+          {
+            "image": 0,
+            "exactBytes": false,
+            "size": [
+              1024,
+              1024
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "image": 1,
+            "exactBytes": false,
+            "size": [
+              256,
+              256
+            ],
+            "maxChannelDifference": 0
+          }
+        ],
+        "sampledPoses": 10,
+        "comparedVertices": 185370,
+        "maxError": 2.92156658343651e-09,
+        "inspectionStateExcluded": false
+      },
+      "screenshots": [
+        "screenshots/running-woman-fists-preview.jpg",
+        "screenshots/running-woman-fists-closeup.jpg",
+        "screenshots/running-woman-fists-side.jpg"
+      ],
+      "pending": []
+    },
+    "deployedReview": {
+      "renderer": "Canvas CPU compatibility; GPU WebGL unverified",
+      "views": [
+        "default full-body running loop",
+        "right-hand follow camera at 0s and 0.4s",
+        "wave at 1.2s opens fingers, switching back to running restores loose fists"
+      ],
+      "exportInspectionState": {
+        "surface": "grey",
+        "isolated": "hair",
+        "explosion": 1,
+        "wireframe": true
+      },
+      "actualDownloadValidation": {
+        "workflow": "deployed preset, current motion-plan retarget and export",
+        "fileSHA256": "d9b99f10211d9f0a09d8ffbf0758387ba788a3ccfdae6c571eed4146640222f9",
+        "bytes": 1484816,
+        "parts": 17,
+        "animatedBones": 58,
+        "tracks": 59,
+        "fingerTracks": 30,
+        "duration": 4,
+        "embeddedImages": 2,
+        "imagePixels": [
+          {
+            "image": 0,
+            "exactBytes": false,
+            "size": [
+              1024,
+              1024
+            ],
+            "maxChannelDifference": 0
+          },
+          {
+            "image": 1,
+            "exactBytes": false,
+            "size": [
+              256,
+              256
+            ],
+            "maxChannelDifference": 0
+          }
+        ],
+        "sampledPoses": 10,
+        "comparedVertices": 185370,
+        "maxError": 4.754598091922009e-07,
+        "inspectionStateExcluded": true
+      },
+      "restoredFinalPreview": {
+        "surface": "original",
+        "isolated": "all",
+        "explosion": 0,
+        "wireframe": false,
+        "playing": true,
+        "camera": "three-quarter"
+      },
+      "screenshots": [
+        "screenshots/running-woman-published-hands.jpg",
+        "screenshots/running-woman-published-preview.jpg"
+      ],
+      "pending": []
+    }
   }
 }
