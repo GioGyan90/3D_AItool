@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "date": "2026-10-30",
+  "status": "user explicitly approved public model, animation and code release; publication verification in progress",
+  "localCodeCommit": "b6f63dc",
+  "publicCommitStill": "84a099bfd395cfeee88d4c45859bc73c3d4df7a1",
+  "publicationBlock": {
+    "action": "upload updated character and animated GLB to GioGyan90/3D_AItool",
+    "reason": "review could not establish explicit user authorization to publish these payloads to this public destination",
+    "retried": true,
+    "nextStep": "Publish the now explicitly authorized update and verify deployed preview and browser export.",
+    "userReply": "行，把这个要求写道文档中，然后以后建立新角色默认风格是二次元低面建模风格，类似塞尔达、原神的画风",
+    "latestReason": "Automatic review treated the latest user reply as authorization to document defaults only, and rejected the public model/animation upload again.",
+    "resolvedBy": {
+      "userReply": "允许",
+      "questionAnswered": "握拳版是否允许公开发布？请明确回复“允许将本次模型、动画和代码公开发布到 GioGyan90/3D_AItool”。",
+      "scope": "publish this model, animation and code to GioGyan90/3D_AItool and update Pages",
+      "date": "2026-10-30"
+    }
+  },
+  "files": [
+    {
+      "file": "assembled-running-woman.glb",
+      "bytes": 938160,
+      "sha256": "e0cd65a169eab175529882c2fcf71abd115f433ea0376313ce1d800776cc0847"
+    },
+    {
+      "file": "running-woman-run.glb",
+      "bytes": 1054460,
+      "sha256": "ca4f53ae9cf682684e14e3c0bafbcbc9487466a919e1de13c1bfcc2902c4a7ec"
+    },
+    {
+      "file": "running-plan.json",
+      "bytes": 166490,
+      "sha256": "234763d92d7ae9916b9b3be0428344b71c834cbfd0aadf67f370e4a205b87e87"
+    }
+  ],
+  "geometry": {
+    "baseline": "c15ab6924fa71cf193d61ee1f76190f9c5bdd584",
+    "partsCompared": 17,
+    "allPositionsNormalsUVAndIndicesUnchanged": true,
+    "headParts": [
+      {
+        "part": "head_neck",
+        "allGeometryUVAndWeightsUnchanged": true,
+        "sha256": "5da555f49e48dbfb6c96ced5ba1ee29f4728c0935748c85e779ab5474ab8dda3"
+      },
+      {
+        "part": "brows",
+        "allGeometryUVAndWeightsUnchanged": true,
+        "sha256": "5e5e1071b2490843fdea3296a6705c395d6f37da1f2000497a42e2435a82bd04"
+      },
+      {
+        "part": "eyes",
+        "allGeometryUVAndWeightsUnchanged": true,
+        "sha256": "d0c6da2d0aa4828deae6d25aeea8fe39137b20c3517e707a097b605a742a01a8"
+      },
+      {
+        "part": "hair",
+        "allGeometryUVAndWeightsUnchanged": true,
+        "sha256": "e1f33ef4c4f50e559b4c6a076bb24b5b388878adcedd3fa50cbcce4e9c7cc2c2"
+      }
+    ]
+  },
+  "tests": {
+    "total": 44,
+    "passed": 44,
+    "failed": 0
+  },
+  "hands": {
+    "profile": {
+      "left": "looseFist",
+      "right": "looseFist"
+    },
+    "controlledFingerBones": 30,
+    "bakedFingerTracks": 30,
+    "minJointCurlDegrees": 11.999999679293063,
+    "maxJointCurlDegrees": 70.00000011693909
+  },
+  "runSurfaces": {
+    "sampledPoses": 242,
+    "minNormalAlignment": 0.2757011644921238,
+    "minAreaRatio": 0.24107653766417914,
+    "maxEdgeStretch": 2.2939727404026304,
+    "failures": []
+  },
+  "preparedExport": {
+    "comparedVertices": 185370,
+    "maxReloadError": 3.084650931608309e-07,
+    "imagesPreserved": 2,
+    "animatedGLBBytes": 1054460
+  },
+  "browser": {
+    "renderer": "Canvas CPU compatibility",
+    "workflow": "Local prepared GLB imported through existing public-page file chooser with optimization disabled; native clip played, paused, scrubbed and re-exported. This does not publish the payload.",
+    "views": [
+      "three-quarter full body at 0s",
+      "three-quarter zoom showing both hands at 0s and 0.4s",
+      "side at 0.4s",
+      "continuous playback"
+    ],
+    "actualDownloadValidation": {
+      "workflow": "local prepared GLB imported through existing page; native animation re-export",
+      "fileSHA256": "a70ff51917bca4caeeca20a10b2d6d512fa31d369534d1d1fdfec1b5a2afb0bb",
+      "bytes": 1485632,
+      "parts": 17,
+      "animatedBones": 58,
+      "tracks": 59,
+      "fingerTracks": 30,
+      "duration": 4,
+      "embeddedImages": 2,
+      "imagePixels": [
+        {
+          "image": 0,
+          "exactBytes": false,
+          "size": [
+            1024,
+            1024
+          ],
+          "maxChannelDifference": 0
+        },
+        {
+          "image": 1,
+          "exactBytes": false,
+          "size": [
+            256,
+            256
+          ],
+          "maxChannelDifference": 0
+        }
+      ],
+      "sampledPoses": 10,
+      "comparedVertices": 185370,
+      "maxError": 2.92156658343651e-09,
+      "inspectionStateExcluded": false
+    },
+    "screenshots": [
+      "screenshots/running-woman-fists-preview.jpg",
+      "screenshots/running-woman-fists-closeup.jpg",
+      "screenshots/running-woman-fists-side.jpg"
+    ],
+    "pending": [
+      "deployment of updated hand-aware runtime and assets",
+      "live UI review of the newly added hand-follow camera on the deployed runtime"
+    ]
+  },
+  "limits": [
+    "Whole-take constant hand profiles, not individual finger keyframes or timed gesture changes.",
+    "GPU WebGL rendering has not been reviewed.",
+    "Old RUNNING_WOMAN_BROWSER_VALIDATION.json describes the original open-hand deployment, not this update."
+  ],
+  "requirementsDocumented": {
+    "style": "Future new characters default to anime low-poly modeling, with Zelda and Genshin Impact as visual direction.",
+    "hands": "Running defaults to natural loose fists; other actions specify appropriate hand profiles, with actual finger skinning and exported tracks checked.",
+    "files": [
+      "AGENTS.md",
+      "docs/CHARACTER_PRODUCTION.md",
+      "docs/WORKFLOW.md"
+    ]
+  },
+  "documentationPublication": {
+    "commit": "84a099bfd395cfeee88d4c45859bc73c3d4df7a1",
+    "scope": "four Markdown documents only; no runtime, models, animation or screenshots",
+    "verified": true
+  }
+}

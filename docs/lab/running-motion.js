@@ -7,7 +7,7 @@ const gait=[[-30,18,12],[-18,30,-10],[0,26,-23],[18,16,0],[28,42,-20],[15,82,-40
 // then 25 / 45 / 20mm of flight; repeats for the opposite leg.
 const hipHeight=[-.0447566,-.01785554,-.03786895,-.00608841,-.04347864,-.05485952];
 export const RUNNING_PHASES=['contact','load','support','toe-off','flight','recovery','opposite-contact','opposite-load','opposite-support','opposite-toe-off','flight','reach'];
-export const RUNNING_PLAN={version:1,name:'自然慢跑 · 原地循环',duration:4,loop:true,frames:Array.from({length:61},(_,i)=>{
+export const RUNNING_PLAN={version:1,name:'自然慢跑 · 原地循环',duration:4,loop:true,hands:{left:'looseFist',right:'looseFist'},frames:Array.from({length:61},(_,i)=>{
   const p=i%12,a=p*Math.PI/6,left=gait[p],right=gait[(p+6)%12],swing=19*Math.cos(a),rotations=[];
   const r=(joint,degrees)=>rotations.push({joint,degrees});
   r('Hips',[3,3.5*Math.sin(a),1.2*Math.cos(a)]);r('Spine',[3,-2*Math.sin(a),-.7*Math.cos(a)]);r('Spine1',[2,-2*Math.sin(a),0]);r('Spine2',[0,-3*Math.sin(a),0]);r('Neck',[-5,0,0]);r('Head',[-2,0,0]);

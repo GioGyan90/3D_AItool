@@ -1,20 +1,26 @@
 import * as THREE from 'three';
-import { Track, trackToClip, basisQuat } from '../retarget.js?v=6b9539a510de';
-import { prepareProceduralExport } from './procedural-character.js?v=6b9539a510de';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=355115890893';
+import { prepareProceduralExport } from './procedural-character.js?v=355115890893';
+import { HAND_POSES, applyHandPoses } from './hand-poses.js?v=355115890893';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});
 export const PLAN_SCHEMA={type:'object',additionalProperties:false,properties:{version:{type:'integer',enum:[1]},name:{type:'string'},duration:{type:'number',minimum:1,maximum:20},loop:{type:'boolean'},frames:{type:'array',minItems:2,maxItems:64,items:{type:'object',additionalProperties:false,properties:{t:{type:'number',minimum:0,maximum:20},root:vec(-1,1),rotations:{type:'array',maxItems:20,items:{type:'object',additionalProperties:false,properties:{joint:{type:'string',enum:PLAN_JOINTS},degrees:vec(-180,180)},required:['joint','degrees']}}},required:['t','root','rotations']}}},required:['version','name','duration','loop','frames']};
+PLAN_SCHEMA.properties.hands={anyOf:[{type:'object',additionalProperties:false,properties:{left:{type:'string',enum:HAND_POSES},right:{type:'string',enum:HAND_POSES}},required:['left','right']},{type:'null'}]};
+// Strict API schema requires a nullable key; old public v1 files may omit it.
+export const API_PLAN_SCHEMA=structuredClone(PLAN_SCHEMA);API_PLAN_SCHEMA.required.push('hands');
 
 export const PLAN_INSTRUCTIONS=`Create a safe, readable 3D humanoid motion as JSON matching the given motion-plan v1 schema. Return data only, never code.
 The animation is authored on a canonical 1.8m Mixamo T-pose skeleton with identity local rest quaternions. Subject's LEFT is +X, up is +Y, forward is +Z. Arms extend outward along +/-X at T-pose; legs extend along -Y. All angles are local XYZ Euler degrees, absolute offsets from T-pose, not additive over time. Relaxed arms are LeftArm [0,0,-75], RightArm [0,0,75], elbows +/-8 degrees. Omitted joints use this relaxed stance at EVERY frame, not the previous frame. Hips is rotation only; root is an offset in meters from the resting hips. Keep root [0,0,0] unless locomotion is requested. No scaling or bone translations.
-Use 6-20 distinct key poses with clear anticipation, action, recovery; frames start exactly at t=0 and end at t=duration in strictly increasing order. Duration 1-20 seconds. If loop=true, match first and last poses. Use smooth quaternion interpolation; enough distinct poses to avoid a static-looking action. Keep elbows/knees plausible. Preserve feet near ground; no unrealistic spin or teleport. For a wave, RightArm z around -25 and RightForeArm z around -80 point the right hand up. A two-arm celebration uses LeftArm z +50, RightArm z -50, elbows +/-45. All values must be finite. Do not claim this is video motion capture.`;
+Use 6-20 distinct key poses with clear anticipation, action, recovery; frames start exactly at t=0 and end at t=duration in strictly increasing order. Duration 1-20 seconds. If loop=true, match first and last poses. Use smooth quaternion interpolation; enough distinct poses to avoid a static-looking action. Keep elbows/knees plausible. Preserve feet near ground; no unrealistic spin or teleport. For a wave, RightArm z around -25 and RightForeArm z around -80 point the right hand up. A two-arm celebration uses LeftArm z +50, RightArm z -50, elbows +/-45. All values must be finite. Do not claim this is video motion capture.
+Choose a whole-take hand shape with hands: {left,right}: open, relaxed, looseFist, or fist. Use looseFist for running, open for waving, relaxed for idle, and fist for an explicitly clenched celebration. Use hands: null when unspecified; legacy files may omit it. Hand shapes need real finger bones and are calibrated on the target rig, not represented by wrist rotation.`;
 
 export function validatePlan(input){
   let plan=input;if(typeof input==='string'){if(input.length>250000)throw new Error('动作 JSON 太大');const clean=input.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');try{plan=JSON.parse(clean);}catch{throw new Error('动作方案不是有效 JSON');}}
   if(!plan||plan.version!==1||typeof plan.name!=='string'||!plan.name.trim()||plan.name.length>120)throw new Error('动作方案需要 version: 1 和有效名称');
   if(!Number.isFinite(plan.duration)||plan.duration<1||plan.duration>20||typeof plan.loop!=='boolean')throw new Error('动作时长应为 1–20 秒，并包含 loop');
   if(!Array.isArray(plan.frames)||plan.frames.length<2||plan.frames.length>64)throw new Error('动作需要 2–64 个关键姿态');
+  if(plan.hands!=null&&(typeof plan.hands!=='object'||Array.isArray(plan.hands)||Object.keys(plan.hands).some(k=>!['left','right'].includes(k))||!HAND_POSES.includes(plan.hands.left)||!HAND_POSES.includes(plan.hands.right)))throw new Error('手型需要有效的 left / right：open、relaxed、looseFist 或 fist');
   let previous=-1;
   const vector=(v,min,max)=>Array.isArray(v)&&v.length===3&&v.every(x=>typeof x==='number'&&Number.isFinite(x)&&x>=min&&x<=max);
   for(const frame of plan.frames){
@@ -32,10 +38,12 @@ export function planToTake(rig,input){
     rig.reset();rig.bones.LeftArm.rotation.z=-75*unit;rig.bones.RightArm.rotation.z=75*unit;
     if(rig.bones.LeftForeArm)rig.bones.LeftForeArm.rotation.z=-8*unit;if(rig.bones.RightForeArm)rig.bones.RightForeArm.rotation.z=8*unit;
     for(const {joint,degrees} of frame.rotations){const b=rig.bones[joint];if(b)b.quaternion.copy(rig.rest[joint].q).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(...degrees.map(v=>v*unit))));}
+    applyHandPoses(rig,plan.hands);
     rig.model.updateMatrixWorld(true);rig.setHipsWorld(rig.rest.Hips.wp.clone().add(new THREE.Vector3(...frame.root)));rig.clampToFloor();keys.push(frame.t,rig.snapshot());
   }
   if(plan.loop){const first=keys.q[0],last=keys.q.at(-1);if(first.some((v,i)=>Math.abs(v-last[i])>1e-4)||keys.p[0].some((v,i)=>Math.abs(v-keys.p.at(-1)[i])>1e-4))throw new Error('循环动作首尾姿态不同，请修正 JSON 或设置 loop: false');}
   const track=new Track(rig.order.length);for(let i=0;i<=Math.ceil(plan.duration*30);i++){const t=Math.min(i/30,plan.duration);track.push(t,keys.sample(t));}
+  if(plan.hands)track.hands=plan.hands;
   const clip=trackToClip(rig,track,plan.name);rig.reset();
   return {id:'plan_'+Date.now(),name:plan.name,duration:plan.duration,description:'提示词 → 动作方案 → 骨骼重定向',prompt:'',plan,track,clip,loop:plan.loop,source:'motion-plan'};
 }
@@ -103,6 +111,7 @@ export function applyRetarget(driver,target){
     if(target.bones[entry.middleBone])target.setWorldQuat(entry.middleBone,desired.clone().slerp(full,.5));
   }
   for(const entry of target.model.userData.legBend||[]){const a=target.bones[entry.upper],b=target.bones[entry.lower];if(!a||!b||!target.bones[entry.bone])continue;target.setWorldQuat(entry.bone,a.getWorldQuaternion(new THREE.Quaternion()).slerp(b.getWorldQuaternion(new THREE.Quaternion()),entry.fraction));}
+  applyHandPoses(target,driver.handPose);
   if(target.model.userData.soleGrounding)groundOnSoles(driver,target);else target.clampToFloor();
 }
 

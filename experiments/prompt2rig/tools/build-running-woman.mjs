@@ -10,6 +10,7 @@ import {MeshoptSimplifier} from '../public/vendor/meshopt/meshopt_simplifier.mod
 import {reduceGeometry,modelStats} from '../public/lab/optimize.js';
 import {readGLB,writeGLB,compressGLB} from '../public/lab/glb-codec.js';
 import {compact,clip,transform,assignRigid,hullXZ,boundaryEdges} from './runner-geometry.mjs';
+import {calibrateRunnerHands} from './runner-hands.mjs';
 
 const source=process.env.RUNNER_SOURCE;
 if(!source)throw Error('Set RUNNER_SOURCE to the reviewed Universal Base Characters directory (see SOURCES.md)');
@@ -145,6 +146,7 @@ setWeights(skin,(p,i)=>{
   if(x<elbow+.075){const t=T.MathUtils.smoothstep(x,elbow,elbow+.075);return [[helper,1-t],[middle,t]];}
   const t=T.MathUtils.smoothstep(x,elbow+.075,wrist-.035);return [[middle,1-t],[index(side+'ForeArm'),t]];
 });
+const handSkinning=calibrateRunnerHands(skin,joints);
 const skinGroups=new Map();for(let i=0;i<skin.index.count;i+=3){const ids=[0,1,2].map(k=>skin.index.getX(i+k)),p=ids.reduce((v,id)=>v.addScaledVector(new T.Vector3().fromBufferAttribute(skin.attributes.position,id),1/3),new T.Vector3()),id=p.y>neckY-.025&&Math.abs(p.x)<.13?'head_neck':p.x>0?'skin_L':'skin_R';if(!skinGroups.has(id))skinGroups.set(id,[]);skinGroups.get(id).push(...ids);}
 for(const[id,indices]of skinGroups)model.add(compact(skin,indices),materials.skin,id,id==='head_neck'?'头颈':(id.endsWith('L')?'左':'右')+'肩臂与手',id==='head_neck'?[0,.16,.02]:[id.endsWith('L')?.25:-.25,0,0]);
 model.add(browGeometry,materials.hair,'brows','眉毛',[0,.16,.07]);model.add(eyeGeometry,materials.eyes,'eyes','眼睛',[0,.16,.10]);
@@ -176,7 +178,7 @@ for(const [s,label]of [['L','左'],['R','右']]){
   transform(sole,v=>{const y=v.y;v.y=.031-v.z;v.z=y;});sole.computeVertexNormals();const indexed=sole.index?sole:mergeVertices(sole,1e-6);assignRigid(indexed,joint);
   model.add(indexed,materials.sole,'sole_'+s,label+'运动鞋底',[side*.18,-.225,.07],'Convex footprint from original foot, 29mm sole, bound to Foot');
 }
-model.root.userData.runnerConstruction={hemY,waistY,ankleY,neckY,palette,openingBinding:{edges:openingEdges.length,edgeEase:.002,skinOverlap:.012,returnsToSameBody:true,hemAllowanceUnchanged:true},bodyMask:'Recomputed for sleeveless tank, not inherited from teen tee',waist:'Covered leggings waist stays inside tank; visible hips/legs preserve source anatomy',contact:'Sole surface vertical correction; no full foot IK'};
+model.root.userData.runnerConstruction={handSkinning,hemY,waistY,ankleY,neckY,palette,openingBinding:{edges:openingEdges.length,edgeEase:.002,skinOverlap:.012,returnsToSameBody:true,hemAllowanceUnchanged:true},bodyMask:'Recomputed for sleeveless tank, not inherited from teen tee',waist:'Covered leggings waist stays inside tank; visible hips/legs preserve source anatomy',contact:'Sole surface vertical correction; no full foot IK'};
 model.root.updateMatrixWorld(true);original.root.updateMatrixWorld(true);
 
 async function portable(root){

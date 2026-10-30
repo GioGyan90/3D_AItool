@@ -128,6 +128,7 @@ export class Rig {
 
   // ---- low-level ------------------------------------------------------------
   reset() {
+    this.handPose = null;
     for (const [n, b] of Object.entries(this.bones)) { b.quaternion.copy(this.rest[n].q); b.position.copy(this.rest[n].p); }
     this.model.updateMatrixWorld(true);
   }
@@ -173,6 +174,7 @@ export class Rig {
   }
 
   applySnapshot(s) {
+    this.handPose = s.hands || null;
     this.order.forEach((name, i) => this.bones[name].quaternion.fromArray(s.q, i * 4));
     this.model.updateMatrixWorld(true);
     this.setHipsWorld(_v2.fromArray(s.p));
@@ -433,6 +435,7 @@ export class Track {
     const span = this.times[j] - this.times[i];
     const a = span > 1e-6 ? Math.min(1, Math.max(0, (t - this.times[i]) / span)) : 0;
     blendSnapshots(this.q[i], this.p[i], this.q[j], this.p[j], a, out);
+    if(this.hands)out.hands=this.hands;else delete out.hands;
     return out;
   }
 }

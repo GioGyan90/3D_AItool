@@ -1,4 +1,4 @@
-import { PLAN_SCHEMA, PLAN_INSTRUCTIONS, validatePlan } from './motion-plan.js';
+import { PLAN_SCHEMA, API_PLAN_SCHEMA, PLAN_INSTRUCTIONS, validatePlan } from './motion-plan.js';
 export const API_DEFAULTS={provider:'openai',baseUrl:'https://api.openai.com/v1',model:'gpt-4.1-mini',protocol:'responses'};
 
 export function resolveConfig(config={}){
@@ -13,8 +13,8 @@ export function resolveConfig(config={}){
 export function createRequest(config,prompt,duration){
   const c=resolveConfig(config);if(!c.key)throw new Error('请在 API 设置中填写自己的 API Key；网页不能借用此聊天的凭据');
   if(!prompt.trim()||prompt.length>3000)throw new Error('请输入 1–3000 字的动作描述');
-  const input=JSON.stringify({request:prompt.trim(),preferred_duration:duration,output_schema:PLAN_SCHEMA});
-  if(c.protocol==='responses')return {url:c.baseUrl+'/responses',key:c.key,body:{model:c.model,store:false,instructions:PLAN_INSTRUCTIONS,input,max_output_tokens:6500,text:{format:{type:'json_schema',name:'humanoid_motion_plan',strict:true,schema:PLAN_SCHEMA}}}};
+  const schema=c.protocol==='responses'?API_PLAN_SCHEMA:PLAN_SCHEMA,input=JSON.stringify({request:prompt.trim(),preferred_duration:duration,output_schema:schema});
+  if(c.protocol==='responses')return {url:c.baseUrl+'/responses',key:c.key,body:{model:c.model,store:false,instructions:PLAN_INSTRUCTIONS,input,max_output_tokens:6500,text:{format:{type:'json_schema',name:'humanoid_motion_plan',strict:true,schema}}}};
   return {url:c.baseUrl+'/chat/completions',key:c.key,body:{model:c.model,messages:[{role:'system',content:PLAN_INSTRUCTIONS},{role:'user',content:input}],max_tokens:6500,response_format:{type:'json_object'}}};
 }
 

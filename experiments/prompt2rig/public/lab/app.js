@@ -58,6 +58,7 @@ try{
   function renderPose(){
     if(studying){const r=getProceduralParts(asset.root).length?asset.rig:driver;r.reset();if(!asset.root.userData.studyRest)for(const [side,sign] of [['Left',-1],['Right',1]]){r.bones[side+'Arm'].quaternion.copy(r.rest[side+'Arm'].q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),sign*Math.PI/3));r.bones[side+'ForeArm'].quaternion.copy(r.rest[side+'ForeArm'].q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),sign*.04));}r.model.updateMatrixWorld(true);if(r===driver&&asset.rig&&asset.rig!==driver)applyRetarget(driver,asset.rig);}
     else if(selected.kind==='native'){mixer?.setTime(time);}else{driver.applySnapshot(selected.track.sample(time));if(asset.rig&&asset.rig!==driver)applyRetarget(driver,asset.rig);}
+    if(activeView==='hands'&&asset.rig?.bones.RightHand){const shift=handFocus().sub(controls.target);camera.position.add(shift);controls.target.add(shift);}
     $('#seek').value=time;$('#time').textContent=`${time.toFixed(2)} / ${selected.duration.toFixed(2)} s`;
   }
   function select(take,quiet=false){
@@ -73,12 +74,14 @@ try{
   }
   $('#play').onclick=()=>{if(studying){select(selected);return;}playing=!playing;$('#play').textContent=playing?'暂停':'播放';};$('#restart').onclick=()=>{if(studying)select(selected);else{time=0;renderPose();}};$('#seek').oninput=e=>{const value=Number(e.target.value);if(studying)select(selected,true);studying=false;playing=false;$('#play').textContent='播放';time=value;renderPose();};$('#skeleton').onchange=e=>helper.visible=e.target.checked;
   function resizeCamera(){const w=viewport.clientWidth,h=viewport.clientHeight;renderer.setSize(w,h);perspective.aspect=w/h;perspective.updateProjectionMatrix();orthographic.left=-viewSpan*w/h/2;orthographic.right=viewSpan*w/h/2;orthographic.top=viewSpan/2;orthographic.bottom=-viewSpan/2;orthographic.updateProjectionMatrix();}
+  function handFocus(){const bones=asset.rig?.bones;return bones?.RightHand?(bones.RightHandMiddle1||bones.RightHand).getWorldPosition(new THREE.Vector3()).lerp(bones.RightHand.getWorldPosition(new THREE.Vector3()),.35):new THREE.Vector3(0,.9,0);}
   function frameCharacter(view='three'){activeView=view;
     const settings=proceduralSettings(asset.root),part=getProceduralParts(asset.root).find(p=>p.id===settings?.isolated);let target=new THREE.Vector3(...(asset.root.userData.frameCenter||[0,.92,0]));viewSpan=(asset.root.userData.frameSpan||2.12)+(settings?.explosion||0)*.7;if(view==='head'){target.fromArray(asset.root.userData.headFocus||[0,1.56,.015]);viewSpan=asset.root.userData.headSpan||.49;}
     if(part){part.mesh.computeBoundingBox();const box=part.mesh.boundingBox.clone().applyMatrix4(part.mesh.matrixWorld),size=box.getSize(new THREE.Vector3());target=box.getCenter(new THREE.Vector3());viewSpan=Math.max(.18,Math.max(size.x,size.y,size.z)*1.7);}
-    camera=view==='three'?perspective:orthographic;controls.object=camera;const direction=new THREE.Vector3(...({front:[0,0,1],side:[1,0,0],back:[0,0,-1],rear:[1,.08,-1],three:[1,.3,1],head:[0,.06,1],frontTop:[1,1.15,1],rearTop:[1,1.15,-1]})[view]).normalize();
+    if(view==='hands'){target=handFocus();viewSpan=.28;}
+    camera=view==='three'?perspective:orthographic;controls.object=camera;const direction=new THREE.Vector3(...({front:[0,0,1],side:[1,0,0],back:[0,0,-1],rear:[1,.08,-1],three:[1,.3,1],head:[0,.06,1],hands:[-1,.3,1],frontTop:[1,1.15,1],rearTop:[1,1.15,-1]})[view]).normalize();
     camera.position.copy(target).add(direction.multiplyScalar(view==='three'?viewSpan*1.65:4));controls.target.copy(target);camera.lookAt(target);camera.zoom=1;resizeCamera();controls.update();renderer.render(scene,camera);
-    $('#mode').textContent=(renderer.compatibility?'Canvas · ':'')+(view==='three'?'斜侧透视':'正交'+({front:'正面',side:'侧面',back:'背面',rear:'后斜',head:'头部',frontTop:'前俯',rearTop:'后俯'})[view]);
+    $('#mode').textContent=(renderer.compatibility?'Canvas · ':'')+(view==='three'?'斜侧透视':'正交'+({front:'正面',side:'侧面',back:'背面',rear:'后斜',head:'头部',hands:'手部',frontTop:'前俯',rearTop:'后俯'})[view]);
   }
   function studyPose(){mixer?.stopAllAction();mixer=null;studying=true;playing=false;time=0;$('#play').textContent='播放动作';renderPose();status(asset.root.userData.studyRest?'形体检查 · 原始 '+(asset.root.userData.restPoseLabel||'A 姿势')+'；可检查比例、分件和装配。':'形体检查 · A 字站姿；可检查正、侧、背及分块封口。');}
   $('#model-inspect').onclick=studyPose;$('#model-animate').onclick=()=>{select(selected);frameCharacter('three');};

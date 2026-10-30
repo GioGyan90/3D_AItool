@@ -1,6 +1,16 @@
 {
   "version": 1,
   "motion": "run",
+  "hands": {
+    "profile": {
+      "left": "looseFist",
+      "right": "looseFist"
+    },
+    "controlledFingerBones": 30,
+    "bakedFingerTracks": 30,
+    "minJointCurlDegrees": 11.999999679293063,
+    "maxJointCurlDegrees": 70.00000011693909
+  },
   "duration": 4,
   "cycles": 5,
   "keyPoses": 61,
@@ -23,7 +33,7 @@
   ],
   "minNormalAlignment": 0.2757011644921238,
   "minAreaRatio": 0.24107653766417914,
-  "maxEdgeStretch": 1.7976271856718964,
+  "maxEdgeStretch": 2.2939727404026304,
   "failures": [],
   "waist": {
     "samples": 46464,
@@ -1162,14 +1172,14 @@
     }
   },
   "loop": {
-    "maxJointSeamDegrees": 0.0000024148365394514667,
+    "maxJointSeamDegrees": 0.0000029575586669421963,
     "hipSeamMeters": 0
   },
   "export": {
     "comparedVertices": 185370,
     "maxReloadError": 3.084650931608309e-7,
     "imagesPreserved": 2,
-    "animatedGLBBytes": 1052452
+    "animatedGLBBytes": 1054460
   },
   "ranges": {
     "LeftHand": {

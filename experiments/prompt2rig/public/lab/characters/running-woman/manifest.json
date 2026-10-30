@@ -60,7 +60,7 @@
     "bones": 71
   },
   "sourceGLBBytes": 727448,
-  "modelGLBBytes": 938976,
+  "modelGLBBytes": 938160,
   "rig": {
     "totalJoints": 71,
     "sourceJoints": 65,
@@ -813,6 +813,15 @@
     ]
   },
   "construction": {
+    "handSkinning": {
+      "transitionHalfWidth": 0.022,
+      "thumbRadialFade": [
+        0.018,
+        0.035
+      ],
+      "vertices": 7486,
+      "geometryChanged": false
+    },
     "hemY": 0.9828606200442769,
     "waistY": 1.022860620044277,
     "ankleY": 0.1408710491191086,

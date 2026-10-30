@@ -98,6 +98,41 @@
           "rotations"
         ]
       }
+    },
+    "hands": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "left": {
+              "type": "string",
+              "enum": [
+                "open",
+                "relaxed",
+                "looseFist",
+                "fist"
+              ]
+            },
+            "right": {
+              "type": "string",
+              "enum": [
+                "open",
+                "relaxed",
+                "looseFist",
+                "fist"
+              ]
+            }
+          },
+          "required": [
+            "left",
+            "right"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [

@@ -3,6 +3,10 @@
   "name": "自然慢跑 · 原地循环",
   "duration": 4,
   "loop": true,
+  "hands": {
+    "left": "looseFist",
+    "right": "looseFist"
+  },
   "frames": [
     {
       "t": 0,
