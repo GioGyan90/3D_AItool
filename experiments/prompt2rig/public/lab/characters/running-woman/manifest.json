@@ -1,0 +1,958 @@
+{
+  "version": 1,
+  "source": {
+    "author": "Quaternius",
+    "asset": "Superhero Female FullBody + Hair Buns",
+    "pack": "Universal Base Characters Standard",
+    "authorURL": "https://quaternius.com/packs/universalbasecharacters.html",
+    "license": "CC0-1.0",
+    "mirrorRepository": "https://github.com/kirbycope/godot-3d-player-controller-v2",
+    "mirrorCommit": "a928cfa67684352b75a65c510d8751d1f3f2489c",
+    "mirrorPath": "assets/universal_base_characters",
+    "hashes": {
+      "Base Characters/Superhero_Female_FullBody.gltf": "215f2af81ad91eecfcee807bad19b541704b800844d997286b78d5dbed7a3b5e",
+      "Base Characters/Superhero_Female_FullBody.bin": "3a8220a485b33d05d879115a50697728b45a151781106033afb8b8c243fca208",
+      "Base Characters/T_Superhero_Female_Dark_BaseColor.png": "f958c18d562e8bc8ffdaf602b98df6ebb56c24d799c82047a05ca26343323a23",
+      "Base Characters/T_Eye_Brown.png": "d2da8cd60909331fc3a6fb02572b4d33139a8f7f78f0448b04c147666955cd15",
+      "Hairstyles/Origin/Hair_Buns.gltf": "2bb3593575e21c9af39a53e48c42c1314b0a894e9577f3f14abffcb145cd56c5",
+      "Hairstyles/Origin/Hair_Buns.bin": "4f6d4c010201278483da8d6d46ec40e3beb8d9e679ec2139bed216c561bccd38",
+      "License_Standard.txt": "e08f717c3cfd999f4b44f2be4522b11a3ac3c0e5b6364b3a8788d25d4c90ff94"
+    },
+    "bodyProportionsChanged": false,
+    "normalization": {
+      "barefootHeight": 1.68,
+      "soleLift": 0.028,
+      "scale": 0.946451670361219,
+      "translationBeforeScale": [
+        6.11590138532847e-8,
+        0.008407148906634432,
+        0
+      ]
+    },
+    "completeBasePreserved": true,
+    "ageBasis": "Independent adult Superhero female author geometry, not Teen or CharaBuilder girl"
+  },
+  "choices": {
+    "palette": {
+      "tank": "#16a59c",
+      "binding": "#9de4d2",
+      "pants": "#29395c",
+      "panel": "#465f87",
+      "hair": "#3e2929",
+      "shoe": "#f1f3e9",
+      "sole": "#c8ded9",
+      "accent": "#f5ac7b"
+    },
+    "hairstyle": "Source double tied buns",
+    "outfit": "Full-length sleeveless athletic tank, opaque fitted ankle-length yoga leggings, running shoes",
+    "motion": "Authored in-place 4-second loop; no API call"
+  },
+  "before": {
+    "triangles": 18344,
+    "vertices": 12078,
+    "meshes": 4,
+    "bones": 65
+  },
+  "after": {
+    "triangles": 18909,
+    "vertices": 16501,
+    "meshes": 14,
+    "bones": 71
+  },
+  "sourceGLBBytes": 727448,
+  "modelGLBBytes": 877996,
+  "rig": {
+    "totalJoints": 71,
+    "sourceJoints": 65,
+    "motionTracks": 58,
+    "legBend": [
+      {
+        "bone": "Runner_LeftKneeBend",
+        "upper": "LeftUpLeg",
+        "lower": "LeftLeg",
+        "fraction": 0.5
+      },
+      {
+        "bone": "Runner_RightKneeBend",
+        "upper": "RightUpLeg",
+        "lower": "RightLeg",
+        "fraction": 0.5
+      }
+    ],
+    "forearmTwist": [
+      {
+        "bone": "Runner_LeftElbowBend",
+        "middleBone": "Runner_LeftForearmMid",
+        "arm": "LeftArm",
+        "forearm": "LeftForeArm",
+        "hand": "LeftHand",
+        "fraction": 0.25,
+        "swingFraction": 0.5
+      },
+      {
+        "bone": "Runner_RightElbowBend",
+        "middleBone": "Runner_RightForearmMid",
+        "arm": "RightArm",
+        "forearm": "RightForeArm",
+        "hand": "RightHand",
+        "fraction": 0.25,
+        "swingFraction": 0.5
+      }
+    ],
+    "joints": [
+      {
+        "source": "root",
+        "name": "Runner_root",
+        "parent": -1,
+        "position": [
+          5.788405081908624e-8,
+          0.03595696012565966,
+          0
+        ]
+      },
+      {
+        "source": "pelvis",
+        "name": "mixamorigHips",
+        "parent": 0,
+        "position": [
+          5.788405081908624e-8,
+          0.9178606200442769,
+          -0.04325286406818229
+        ]
+      },
+      {
+        "source": "spine_01",
+        "name": "mixamorigSpine",
+        "parent": 1,
+        "position": [
+          5.7883565749879275e-8,
+          1.0340848939249876,
+          -0.014291421553178038
+        ]
+      },
+      {
+        "source": "spine_02",
+        "name": "mixamorigSpine1",
+        "parent": 2,
+        "position": [
+          5.788414934160858e-8,
+          1.1378159447016816,
+          -0.0021768282812180645
+        ]
+      },
+      {
+        "source": "spine_03",
+        "name": "mixamorigSpine2",
+        "parent": 3,
+        "position": [
+          5.7884115133135683e-8,
+          1.2574474170223662,
+          -0.0016089653436436129
+        ]
+      },
+      {
+        "source": "neck_01",
+        "name": "mixamorigNeck",
+        "parent": 4,
+        "position": [
+          5.7884117997877536e-8,
+          1.4413429758407497,
+          -0.03842593944188415
+        ]
+      },
+      {
+        "source": "Head",
+        "name": "mixamorigHead",
+        "parent": 5,
+        "position": [
+          5.7884238704702124e-8,
+          1.5025784624730858,
+          -0.010316296387030398
+        ]
+      },
+      {
+        "source": "clavicle_l",
+        "name": "mixamorigLeftShoulder",
+        "parent": 4,
+        "position": [
+          0.027731090572821814,
+          1.389856048041417,
+          0.015143251360977342
+        ]
+      },
+      {
+        "source": "upperarm_l",
+        "name": "mixamorigLeftArm",
+        "parent": 7,
+        "position": [
+          0.14348215472249187,
+          1.3781199625797442,
+          -0.05139231150165446
+        ]
+      },
+      {
+        "source": "lowerarm_l",
+        "name": "mixamorigLeftForeArm",
+        "parent": 8,
+        "position": [
+          0.37091445136304385,
+          1.378120004972239,
+          -0.05565134284318151
+        ]
+      },
+      {
+        "source": "hand_l",
+        "name": "mixamorigLeftHand",
+        "parent": 9,
+        "position": [
+          0.6067702401679111,
+          1.378119944309082,
+          -0.048836880596223736
+        ]
+      },
+      {
+        "source": "index_01_l",
+        "name": "mixamorigLeftHandIndex1",
+        "parent": 10,
+        "position": [
+          0.6908151411797373,
+          1.374144894952854,
+          -0.01590033152120403
+        ]
+      },
+      {
+        "source": "index_02_l",
+        "name": "mixamorigLeftHandIndex2",
+        "parent": 11,
+        "position": [
+          0.7208176518908541,
+          1.3741448653070847,
+          -0.016657493398391367
+        ]
+      },
+      {
+        "source": "index_03_l",
+        "name": "mixamorigLeftHandIndex3",
+        "parent": 12,
+        "position": [
+          0.7464664352088859,
+          1.374144975256574,
+          -0.017414652909602375
+        ]
+      },
+      {
+        "source": "index_04_leaf_l",
+        "name": "Runner_index_04_leaf_l",
+        "parent": 13,
+        "position": [
+          0.7687080796598732,
+          1.3741448964239775,
+          -0.01807716838624341
+        ]
+      },
+      {
+        "source": "middle_01_l",
+        "name": "mixamorigLeftHandMiddle1",
+        "parent": 10,
+        "position": [
+          0.6886383401571624,
+          1.3763218561355952,
+          -0.04003485856185392
+        ]
+      },
+      {
+        "source": "middle_02_l",
+        "name": "mixamorigLeftHandMiddle2",
+        "parent": 15,
+        "position": [
+          0.7230891945016386,
+          1.376321788616096,
+          -0.04135988985514486
+        ]
+      },
+      {
+        "source": "middle_03_l",
+        "name": "mixamorigLeftHandMiddle3",
+        "parent": 16,
+        "position": [
+          0.7508201645492888,
+          1.3763218635196561,
+          -0.04221169084847683
+        ]
+      },
+      {
+        "source": "middle_04_leaf_l",
+        "name": "Runner_middle_04_leaf_l",
+        "parent": 17,
+        "position": [
+          0.7788351639595601,
+          1.3763218703409519,
+          -0.0432527874908242
+        ]
+      },
+      {
+        "source": "pinky_01_l",
+        "name": "mixamorigLeftHandPinky1",
+        "parent": 10,
+        "position": [
+          0.6724539454840845,
+          1.3745234073243546,
+          -0.0820573231726897
+        ]
+      },
+      {
+        "source": "pinky_02_l",
+        "name": "mixamorigLeftHandPinky2",
+        "parent": 19,
+        "position": [
+          0.7016047202195853,
+          1.374523292250507,
+          -0.08338235714721988
+        ]
+      },
+      {
+        "source": "pinky_03_l",
+        "name": "mixamorigLeftHandPinky3",
+        "parent": 20,
+        "position": [
+          0.7267803624629566,
+          1.3745234354547005,
+          -0.08461274364043739
+        ]
+      },
+      {
+        "source": "pinky_04_leaf_l",
+        "name": "Runner_pinky_04_leaf_l",
+        "parent": 21,
+        "position": [
+          0.7465611517430265,
+          1.374523383776807,
+          -0.08546454589344804
+        ]
+      },
+      {
+        "source": "ring_01_l",
+        "name": "mixamorigLeftHandRing1",
+        "parent": 10,
+        "position": [
+          0.6826756878392186,
+          1.3760376901884916,
+          -0.06312828867098288
+        ]
+      },
+      {
+        "source": "ring_02_l",
+        "name": "mixamorigLeftHandRing2",
+        "parent": 23,
+        "position": [
+          0.7158014828294922,
+          1.3760377311606138,
+          -0.06341221569164374
+        ]
+      },
+      {
+        "source": "ring_03_l",
+        "name": "mixamorigLeftHandRing3",
+        "parent": 24,
+        "position": [
+          0.7419235825989126,
+          1.3760378037664505,
+          -0.06350687105125906
+        ]
+      },
+      {
+        "source": "ring_04_leaf_l",
+        "name": "Runner_ring_04_leaf_l",
+        "parent": 25,
+        "position": [
+          0.7687081073869778,
+          1.3760377345467223,
+          -0.06379079512719324
+        ]
+      },
+      {
+        "source": "thumb_01_l",
+        "name": "mixamorigLeftHandThumb1",
+        "parent": 10,
+        "position": [
+          0.6044986957155308,
+          1.368655448713559,
+          -0.020443318359040907
+        ]
+      },
+      {
+        "source": "thumb_02_l",
+        "name": "mixamorigLeftHandThumb2",
+        "parent": 27,
+        "position": [
+          0.6314725030533033,
+          1.3522817561735316,
+          -0.008044803418821703
+        ]
+      },
+      {
+        "source": "thumb_03_l",
+        "name": "mixamorigLeftHandThumb3",
+        "parent": 28,
+        "position": [
+          0.6583518236472706,
+          1.3360029817733303,
+          0.0041644472541030545
+        ]
+      },
+      {
+        "source": "thumb_04_leaf_l",
+        "name": "Runner_thumb_04_leaf_l",
+        "parent": 29,
+        "position": [
+          0.6819184792232243,
+          1.3217115486196074,
+          0.014953930231598769
+        ]
+      },
+      {
+        "source": "clavicle_r",
+        "name": "mixamorigRightShoulder",
+        "parent": 4,
+        "position": [
+          -0.027730974804113153,
+          1.3898560480413893,
+          0.015143251360805098
+        ]
+      },
+      {
+        "source": "upperarm_r",
+        "name": "mixamorigRightArm",
+        "parent": 31,
+        "position": [
+          -0.1434820389543732,
+          1.378119962579617,
+          -0.051392311502385615
+        ]
+      },
+      {
+        "source": "lowerarm_r",
+        "name": "mixamorigRightForeArm",
+        "parent": 32,
+        "position": [
+          -0.3709143355950628,
+          1.378120004972121,
+          -0.05565134284495532
+        ]
+      },
+      {
+        "source": "hand_r",
+        "name": "mixamorigRightHand",
+        "parent": 33,
+        "position": [
+          -0.606770124399981,
+          1.37811994430899,
+          -0.04883688059906993
+        ]
+      },
+      {
+        "source": "index_01_r",
+        "name": "mixamorigRightHandIndex1",
+        "parent": 34,
+        "position": [
+          -0.6908150254115732,
+          1.374144894952814,
+          -0.015900331524400586
+        ]
+      },
+      {
+        "source": "index_02_r",
+        "name": "mixamorigRightHandIndex2",
+        "parent": 35,
+        "position": [
+          -0.7208175361227097,
+          1.3741448653070456,
+          -0.016657493401725624
+        ]
+      },
+      {
+        "source": "index_03_r",
+        "name": "mixamorigRightHandIndex3",
+        "parent": 36,
+        "position": [
+          -0.7464663194407593,
+          1.3741449752565356,
+          -0.017414652913054433
+        ]
+      },
+      {
+        "source": "index_04_leaf_r",
+        "name": "Runner_index_04_leaf_r",
+        "parent": 37,
+        "position": [
+          -0.768707963891762,
+          1.3741448964239396,
+          -0.01807716838979763
+        ]
+      },
+      {
+        "source": "middle_01_r",
+        "name": "mixamorigRightHandMiddle1",
+        "parent": 34,
+        "position": [
+          -0.6886382243891961,
+          1.3763218561355208,
+          -0.04003485856506381
+        ]
+      },
+      {
+        "source": "middle_02_r",
+        "name": "mixamorigRightHandMiddle2",
+        "parent": 39,
+        "position": [
+          -0.7230890787336987,
+          1.3763217886160222,
+          -0.04135988985851322
+        ]
+      },
+      {
+        "source": "middle_03_r",
+        "name": "mixamorigRightHandMiddle3",
+        "parent": 40,
+        "position": [
+          -0.7508200487813684,
+          1.3763218635195826,
+          -0.042211690851972586
+        ]
+      },
+      {
+        "source": "middle_04_leaf_r",
+        "name": "Runner_middle_04_leaf_r",
+        "parent": 41,
+        "position": [
+          -0.7788350481916608,
+          1.3763218703408788,
+          -0.0432527874944488
+        ]
+      },
+      {
+        "source": "pinky_01_r",
+        "name": "mixamorigRightHandPinky1",
+        "parent": 34,
+        "position": [
+          -0.672453829716454,
+          1.3745234073242154,
+          -0.08205732317585539
+        ]
+      },
+      {
+        "source": "pinky_02_r",
+        "name": "mixamorigRightHandPinky2",
+        "parent": 43,
+        "position": [
+          -0.7016046044519787,
+          1.3745232922503678,
+          -0.08338235715051981
+        ]
+      },
+      {
+        "source": "pinky_03_r",
+        "name": "mixamorigRightHandPinky3",
+        "parent": 44,
+        "position": [
+          -0.7267802466953714,
+          1.3745234354545608,
+          -0.08461274364385335
+        ]
+      },
+      {
+        "source": "pinky_04_leaf_r",
+        "name": "Runner_pinky_04_leaf_r",
+        "parent": 45,
+        "position": [
+          -0.7465610359754572,
+          1.3745233837766677,
+          -0.08546454589695507
+        ]
+      },
+      {
+        "source": "ring_01_r",
+        "name": "mixamorigRightHandRing1",
+        "parent": 34,
+        "position": [
+          -0.6826755720714385,
+          1.3760376901883824,
+          -0.06312828867418324
+        ]
+      },
+      {
+        "source": "ring_02_r",
+        "name": "mixamorigRightHandRing2",
+        "parent": 47,
+        "position": [
+          -0.7158013670617295,
+          1.376037731160506,
+          -0.0634122156949957
+        ]
+      },
+      {
+        "source": "ring_03_r",
+        "name": "mixamorigRightHandRing3",
+        "parent": 48,
+        "position": [
+          -0.7419234668311624,
+          1.3760378037663445,
+          -0.06350687105473045
+        ]
+      },
+      {
+        "source": "ring_04_leaf_r",
+        "name": "Runner_ring_04_leaf_r",
+        "parent": 49,
+        "position": [
+          -0.768707991619242,
+          1.3760377345466177,
+          -0.06379079513078727
+        ]
+      },
+      {
+        "source": "thumb_01_r",
+        "name": "mixamorigRightHandThumb1",
+        "parent": 34,
+        "position": [
+          -0.6044985799473614,
+          1.3686554487135023,
+          -0.02044331836183603
+        ]
+      },
+      {
+        "source": "thumb_02_r",
+        "name": "mixamorigRightHandThumb2",
+        "parent": 51,
+        "position": [
+          -0.6314724329086238,
+          1.3522817733626986,
+          -0.008044811564775304
+        ]
+      },
+      {
+        "source": "thumb_03_r",
+        "name": "mixamorigRightHandThumb3",
+        "parent": 52,
+        "position": [
+          -0.658351695376052,
+          1.3360029879188329,
+          0.00416446301786461
+        ]
+      },
+      {
+        "source": "thumb_04_leaf_r",
+        "name": "Runner_thumb_04_leaf_r",
+        "parent": 53,
+        "position": [
+          -0.6819184000477269,
+          1.3217115609373442,
+          0.014953910039697822
+        ]
+      },
+      {
+        "source": "thigh_l",
+        "name": "mixamorigLeftUpLeg",
+        "parent": 1,
+        "position": [
+          0.10543477467309334,
+          0.9295019626940295,
+          -0.04902620110788501
+        ]
+      },
+      {
+        "source": "calf_l",
+        "name": "mixamorigLeftLeg",
+        "parent": 55,
+        "position": [
+          0.10543477467309337,
+          0.5420244813680556,
+          -0.030570480979881104
+        ]
+      },
+      {
+        "source": "foot_l",
+        "name": "mixamorigLeftFoot",
+        "parent": 56,
+        "position": [
+          0.10543477467309338,
+          0.10287104911910862,
+          -0.07240375989938837
+        ]
+      },
+      {
+        "source": "ball_l",
+        "name": "mixamorigLeftToeBase",
+        "parent": 57,
+        "position": [
+          0.10543477519637519,
+          0.04996450792577456,
+          0.058490510940152854
+        ]
+      },
+      {
+        "source": "ball_leaf_l",
+        "name": "Runner_ball_leaf_l",
+        "parent": 58,
+        "position": [
+          0.10543477467332961,
+          0.04996452554739733,
+          0.12294385334901715
+        ]
+      },
+      {
+        "source": "thigh_r",
+        "name": "mixamorigRightUpLeg",
+        "parent": 1,
+        "position": [
+          -0.10543465890499171,
+          0.9295019626940295,
+          -0.04902620110788501
+        ]
+      },
+      {
+        "source": "calf_r",
+        "name": "mixamorigRightLeg",
+        "parent": 60,
+        "position": [
+          -0.10543465890499173,
+          0.5420244813680556,
+          -0.030570480979881104
+        ]
+      },
+      {
+        "source": "foot_r",
+        "name": "mixamorigRightFoot",
+        "parent": 61,
+        "position": [
+          -0.10543465890499175,
+          0.10287104911910862,
+          -0.07240375989938837
+        ]
+      },
+      {
+        "source": "ball_r",
+        "name": "mixamorigRightToeBase",
+        "parent": 62,
+        "position": [
+          -0.10543465838158345,
+          0.049964508291902784,
+          0.05849051094049068
+        ]
+      },
+      {
+        "source": "ball_leaf_r",
+        "name": "Runner_ball_leaf_r",
+        "parent": 63,
+        "position": [
+          -0.10543465890475548,
+          0.049964525547397345,
+          0.12294385334935506
+        ]
+      },
+      {
+        "source": null,
+        "name": "Runner_LeftKneeBend",
+        "parent": 55,
+        "position": [
+          0.10543477467309337,
+          0.5420244813680556,
+          -0.030570480979881104
+        ]
+      },
+      {
+        "source": null,
+        "name": "Runner_LeftElbowBend",
+        "parent": 8,
+        "position": [
+          0.37091445136304385,
+          1.378120004972239,
+          -0.05565134284318151
+        ]
+      },
+      {
+        "source": null,
+        "name": "Runner_LeftForearmMid",
+        "parent": 8,
+        "position": [
+          0.37091445136304385,
+          1.378120004972239,
+          -0.05565134284318151
+        ]
+      },
+      {
+        "source": null,
+        "name": "Runner_RightKneeBend",
+        "parent": 60,
+        "position": [
+          -0.10543465890499173,
+          0.5420244813680556,
+          -0.030570480979881104
+        ]
+      },
+      {
+        "source": null,
+        "name": "Runner_RightElbowBend",
+        "parent": 32,
+        "position": [
+          -0.3709143355950628,
+          1.378120004972121,
+          -0.05565134284495532
+        ]
+      },
+      {
+        "source": null,
+        "name": "Runner_RightForearmMid",
+        "parent": 32,
+        "position": [
+          -0.3709143355950628,
+          1.378120004972121,
+          -0.05565134284495532
+        ]
+      }
+    ]
+  },
+  "construction": {
+    "hemY": 0.9828606200442769,
+    "waistY": 1.022860620044277,
+    "ankleY": 0.1408710491191086,
+    "neckY": 1.4413429758407497,
+    "palette": {
+      "tank": "#16a59c",
+      "binding": "#9de4d2",
+      "pants": "#29395c",
+      "panel": "#465f87",
+      "hair": "#3e2929",
+      "shoe": "#f1f3e9",
+      "sole": "#c8ded9",
+      "accent": "#f5ac7b"
+    },
+    "bodyMask": "Recomputed for sleeveless tank, not inherited from teen tee",
+    "waist": "Covered leggings waist stays inside tank; visible hips/legs preserve source anatomy",
+    "contact": "Sole surface vertical correction; no full foot IK"
+  },
+  "history": [
+    {
+      "part": "tank",
+      "sourceTriangles": 12812,
+      "outputTriangles": 1913
+    },
+    {
+      "part": "leggings",
+      "sourceTriangles": 12812,
+      "outputTriangles": 2258
+    },
+    {
+      "part": "hair",
+      "before": 3284,
+      "after": 2734,
+      "requestedRatio": 0.62
+    }
+  ],
+  "parts": [
+    {
+      "id": "tank",
+      "label": "运动背心",
+      "triangles": 1913,
+      "vertices": 1203,
+      "provenance": "Same adult body topology, geometric neckline/armhole pattern, fitted allowance"
+    },
+    {
+      "id": "leggings_waist",
+      "label": "瑜伽裤腰胯",
+      "triangles": 516,
+      "vertices": 340,
+      "provenance": "Continuous adult pelvis/crotch/leg surface with original skin weights"
+    },
+    {
+      "id": "leggings_L",
+      "label": "左瑜伽裤腿",
+      "triangles": 871,
+      "vertices": 497,
+      "provenance": "Continuous adult pelvis/crotch/leg surface with original skin weights"
+    },
+    {
+      "id": "leggings_R",
+      "label": "右瑜伽裤腿",
+      "triangles": 871,
+      "vertices": 497,
+      "provenance": "Continuous adult pelvis/crotch/leg surface with original skin weights"
+    },
+    {
+      "id": "head_neck",
+      "label": "头颈",
+      "triangles": 3250,
+      "vertices": 1810,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "skin_L",
+      "label": "左肩臂与手",
+      "triangles": 2377,
+      "vertices": 1443,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "skin_R",
+      "label": "右肩臂与手",
+      "triangles": 2377,
+      "vertices": 1443,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "brows",
+      "label": "眉毛",
+      "triangles": 1480,
+      "vertices": 912,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "eyes",
+      "label": "眼睛",
+      "triangles": 768,
+      "vertices": 420,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "hair",
+      "label": "双束发",
+      "triangles": 2734,
+      "vertices": 2956,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "shoe_L",
+      "label": "左运动鞋面",
+      "triangles": 784,
+      "vertices": 2346,
+      "provenance": "Fitted from this adult foot surface, rigid to matching Foot"
+    },
+    {
+      "id": "sole_L",
+      "label": "左运动鞋底",
+      "triangles": 92,
+      "vertices": 144,
+      "provenance": "Convex footprint from original foot, 29mm sole, bound to Foot"
+    },
+    {
+      "id": "shoe_R",
+      "label": "右运动鞋面",
+      "triangles": 784,
+      "vertices": 2346,
+      "provenance": "Fitted from this adult foot surface, rigid to matching Foot"
+    },
+    {
+      "id": "sole_R",
+      "label": "右运动鞋底",
+      "triangles": 92,
+      "vertices": 144,
+      "provenance": "Convex footprint from original foot, 29mm sole, bound to Foot"
+    }
+  ],
+  "limits": [
+    "Adult athletic author proportions retained; not newly sculpted anatomy.",
+    "Clothing derives from the same base body, not cloth simulation.",
+    "Vertical sole grounding does not constitute full foot IK or a no-sliding guarantee.",
+    "Visual validation and actual running checks are reported separately."
+  ]
+}

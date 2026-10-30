@@ -66,6 +66,15 @@
 
 网页 API 未选择提供商时默认 OpenAI；用户可填写自己的服务地址、协议、模型和 Key。网页不能借用聊天凭据。在聊天中制作 JSON 时可直接沿用这套协议，不需要网页再次调用付费模型。密钥不得写入任务、仓库或导出文件。
 
+## 成年女性跑步补充
+
+[女性跑步记录](RUNNING_WOMAN.md) 保存具体制作与验证；来源先查 CharaBuilder 成女入口，确认尚待建立后才使用独立成年 CC0 基础。`?model=runner` 新增独立人物并默认播放 4 秒循环，原有少年 / 西装保留。
+
+- **无袖衣服与裸露皮肤都测。** 背心若继承上臂权重，垂臂时袖窿会折叠；它主要随胸和少量锁骨运动。肩膀、腋窝和裸手肘仍是需要验证的真实表面，不能只检查衣物后宣布动作通过。
+- **屈膝与跨中线连续。** 大幅回收的膝窝需要按实际半径和屈曲角度安排过渡及半角辅助骨；裆部不能用 X 正负突然切换腿权重。新增骨骼也进入真实导出轨道。
+- **脚底接触与腾空分开定义。** 标准动作先校准各支撑 / 腾空相位的足部高度，再在目标实际鞋底表面做高度校正。垂直校正不等于完整足部 IK；原地跑按虚拟地面速度评估，需要前进位移时重新协调 root 速度、步幅和支撑相位。
+- **检查数必须对应当前动作。** 新跑步有独立的 242 姿势、241 个烘焙旋转采样、真实腰部截面及全部顶点导出重载检查；旧三段仍保留原覆盖。工程现在 40 项检查。
+
 ## 继续工作的检查入口
 
 从仓库根目录：
@@ -80,6 +89,6 @@ node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-waist.mjs 
 node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-arms.mjs
 ```
 
-重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。36 项工程测试（含 6 项西装人物检查），少年的 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json) 及 [衣裤间距报告](TEEN_WAIST_VALIDATION.json) 与 [手臂旋转报告](TEEN_ARM_ROTATION_VALIDATION.json) 是当前基线，不替代新人物、新服装和新动作的实际验证。
+重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。40 项工程测试（原有 36 项含西装人物 6 项，另加女性跑步 4 项）；少年的 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json)、[衣裤间距报告](TEEN_WAIST_VALIDATION.json)、[手臂旋转报告](TEEN_ARM_ROTATION_VALIDATION.json) 与独立的 [女性跑步报告](RUNNING_WOMAN_VALIDATION.json) 各自限定覆盖范围，不替代任意新动作的验证。
 
 公开预览：[GitHub Pages](https://giogyan90.github.io/3D_AItool/lab/)。修改运行时代码或模型后，从仓库根目录运行 `node experiments/prompt2rig/tools/build-pages.mjs`，连同根目录 `docs/` 输出提交并核对部署；只改本文等工程文档无需重新生成模型或网页资源。

@@ -11,6 +11,8 @@ import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, P
 import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js';
 import { loadTeenPreset } from './teen-preset.js';
 import { loadSuitPreset } from './suit-preset.js';
+import { loadRunnerPreset } from './runner-preset.js';
+import { makeRunningTake } from './running-motion.js';
 import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js';
 
 const $=s=>document.querySelector(s),viewport=$('#viewport'),status=text=>$('#status').textContent=text;
@@ -28,11 +30,11 @@ try{
   const grid=new THREE.GridHelper(12,24,0xc2d0c1,0xd4ddd0);grid.position.y=-.01;scene.add(grid);
   const driverModel=createCharacter();driverModel.userData.motionCharacter=true;const driver=new Rig(driverModel);
   function makeProceduralAsset(){const root=createProceduralCharacter();return {root,rig:new Rig(root),sourceName:'自建人物 · 截面灰模 v1',animations:[],...detectBones(root)};}
-  const presetNames=['boy','suit','suit-source','original','cage'],requestedPreset=new URL(location.href).searchParams.get('model'),initialPreset=presetNames.includes(requestedPreset)?requestedPreset:'boy';
-  async function presetAsset(value){return value==='cage'?makeProceduralAsset():value.startsWith('suit')?loadSuitPreset(value==='suit-source'):loadTeenPreset(value==='original');}
+  const presetNames=['boy','suit','suit-source','runner','runner-source','original','cage'],requestedPreset=new URL(location.href).searchParams.get('model'),initialPreset=presetNames.includes(requestedPreset)?requestedPreset:'boy';
+  async function presetAsset(value){return value==='cage'?makeProceduralAsset():value.startsWith('runner')?loadRunnerPreset(value==='runner-source'):value.startsWith('suit')?loadSuitPreset(value==='suit-source'):loadTeenPreset(value==='original');}
   $('#model-select').value=initialPreset;
   let asset=await presetAsset(initialPreset),helper=null,mixer=null,nativeIndex=-1;
-  const takes=MOTIONS.map(m=>({...m,...bakeMotion(driver,m),loop:true}));
+  const takes=[...MOTIONS.map(m=>({...m,...bakeMotion(driver,m),loop:true})),makeRunningTake(driver,planToTake)];
   let selected=takes[0],time=0,playing=false,studying=true,last=performance.now(),busy=false,exporting=false,controller=null,config={...API_DEFAULTS,key:''};
   try{config={...config,...JSON.parse(localStorage.getItem('motion-lab-api')||'{}'),key:''};config=resolveConfig(config);}catch{config={...API_DEFAULTS,key:''};}
   const setBusy=value=>{busy=value;for(const id of ['file-model','reset-model','mapping-open','sample-model','model-select'])$('#'+id).disabled=value;$('#reprocess').disabled=value||!asset.sourceBytes;$('#generate').disabled=value||!asset.rig;$('#export').disabled=value;};
@@ -49,7 +51,7 @@ try{
   }
   function installAsset(next){
     mixer?.stopAllAction();mixer=null;nativeIndex=-1;const previous=asset.root;scene.remove(previous);asset=next;asset.root.userData.motionCharacter=true;scene.add(asset.root);replaceHelper();disposeRoot(previous);showAssetInfo();
-    for(const take of takes)delete take.boundClip;select(takes[0],true);renderLibrary();if(getProceduralParts(asset.root).length)studyPose();
+    for(const take of takes)delete take.boundClip;select(takes.find(t=>t.id===asset.defaultMotion)||takes[0],true);renderLibrary();if(!asset.defaultMotion&&getProceduralParts(asset.root).length)studyPose();
   }
   scene.add(asset.root);replaceHelper();showAssetInfo();
   function renderPose(){
@@ -133,7 +135,7 @@ try{
   function exportPlan(take){if(take.plan)return take.plan;const frames=[];for(let i=0;i<=16;i++){const t=take.duration*i/16,s=take.track.sample(t),rotations=[];for(const joint of PLAN_JOINTS){const index=driver.order.indexOf(joint);if(index<0)continue;const q=new THREE.Quaternion().fromArray(s.q,index*4),e=new THREE.Euler().setFromQuaternion(q);rotations.push({joint,degrees:[e.x,e.y,e.z].map(x=>Number(THREE.MathUtils.radToDeg(x).toFixed(5)))});}frames.push({t,root:[...s.p].map((x,j)=>Number((x-driver.rest.Hips.wp.getComponent(j)).toFixed(6))),rotations});}return {version:1,name:take.name,duration:take.duration,loop:take.loop!==false,frames};}
   $('#json').onclick=()=>{if(selected.kind!=='native')saveJSON(exportPlan(selected),'luckybreak-motion-plan.json');};
   new ResizeObserver(resizeCamera).observe(viewport);
-  refreshAPI();select(takes[0]);studyPose();frameCharacter('three');$('#boot').remove();
+  refreshAPI();select(takes.find(t=>t.id===asset.defaultMotion)||takes[0]);if(!asset.defaultMotion)studyPose();frameCharacter('three');$('#boot').remove();
   function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.1);last=now;if(playing){time+=dt*Number($('#speed').value);if(time>selected.duration){if(selected.loop===false){time=selected.duration;playing=false;$('#play').textContent='播放';}else time%=selected.duration;}renderPose();}controls.update();renderer.render(scene,camera);}requestAnimationFrame(frame);
   // Reusable data workflow; credentials deliberately excluded.
   window.motionLab={THREE,driver,takes,get rig(){return asset.rig;},get asset(){return {name:asset.sourceName,stats:modelStats(asset.root),missing:asset.missing};},select,seek(t){playing=false;time=t;renderPose();},exportGLB,attachPlan,request:motionRequest,get selected(){return selected;},get time(){return time;}};

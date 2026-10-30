@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Track, trackToClip, basisQuat } from '../retarget.js?v=7a1a5f3a1429';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=36a8b581d8d9';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});
@@ -42,6 +42,13 @@ export function planToTake(rig,input){
 // A limb direction does not determine its axial twist. Use an anatomical hand
 // frame after aiming the arm chain, so an A-pose wrist cannot leave a wave edge-on.
 const handFrames=new WeakMap();
+const soleMeshes=new WeakMap();
+function groundOnSoles(driver,target){
+  if(!soleMeshes.has(target.model)){const parts=[];target.model.traverse(o=>{if(o.isSkinnedMesh&&/^sole_[LR]$/.test(o.name))parts.push(o);});if(parts.length!==2)throw Error('女性人物缺少实际左右鞋底，无法校正接地');soleMeshes.set(target.model,parts);}
+  target.model.updateMatrixWorld(true);let minimum=Infinity;const p=new THREE.Vector3();
+  for(const mesh of soleMeshes.get(target.model))for(let i=0;i<mesh.geometry.attributes.position.count;i++)minimum=Math.min(minimum,mesh.getVertexPosition(i,p).applyMatrix4(mesh.matrixWorld).y);
+  const clearance=Math.max(0,driver.lowestFoot()-driver.floorY)*target.legLength/driver.legLength,hip=target.hipsWorld();hip.y+=target.floorY+clearance-minimum;target.setHipsWorld(hip);
+}
 function restHandFrame(rig,side){
  if(!handFrames.has(rig))handFrames.set(rig,new Map());const cache=handFrames.get(rig);if(cache.has(side))return cache.get(side);
  const hand=rig.rest[side+'Hand'],middle=rig.rest[side+'HandMiddle1'];if(!hand||!middle)return null;
@@ -94,7 +101,8 @@ export function applyRetarget(driver,target){
     const desired=partialTwist.multiply(partialSwing);target.setWorldQuat(bone,desired);
     if(target.bones[entry.middleBone])target.setWorldQuat(entry.middleBone,desired.clone().slerp(full,.5));
   }
-  target.clampToFloor();
+  for(const entry of target.model.userData.legBend||[]){const a=target.bones[entry.upper],b=target.bones[entry.lower];if(!a||!b||!target.bones[entry.bone])continue;target.setWorldQuat(entry.bone,a.getWorldQuaternion(new THREE.Quaternion()).slerp(b.getWorldQuaternion(new THREE.Quaternion()),entry.fraction));}
+  if(target.model.userData.soleGrounding)groundOnSoles(driver,target);else target.clampToFloor();
 }
 
 export function retargetTake(driver,target,take){
