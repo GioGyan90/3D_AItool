@@ -1,7 +1,7 @@
 {
   "date": "2026-10-31",
   "character": "anime-bob-woman",
-  "status": "local asset and visual checks passed; public deployment pending",
+  "status": "published; actual preset, local multi-angle inspection and actual deployed browser export verified",
   "tests": {
     "total": 48,
     "passed": 48,
@@ -83,7 +83,283 @@
   },
   "offlineExport": "Complete numerical result and pixel/image retention in ANIME_BOB_WOMAN_VALIDATION.json; does not substitute for deployed preset export",
   "publicDeployment": {
-    "verified": false
+    "verified": true,
+    "url": "https://giogyan90.github.io/3D_AItool/lab/?model=bob",
+    "runtimeCommit": "12e07285a3a66a5fb19e50faef25b53b706e8dc7",
+    "pagesRun": 41181981428,
+    "pagesConclusion": "success",
+    "presetRigBones": 58,
+    "comparisonTriangles": 35729,
+    "publishedFiles": [
+      {
+        "path": "lab/index.html",
+        "bytes": 12356,
+        "sha256": "46ee877e5142f81df960fc68701d484826d2bb9695e8103296186e8e011b385d"
+      },
+      {
+        "path": "lab/app.js",
+        "bytes": 26719,
+        "sha256": "43cbb687a11965cdc7bf3875f2f78d488b1a4b02236ff5cfdf7987c231a7a829"
+      },
+      {
+        "path": "lab/bob-preset.js",
+        "bytes": 1911,
+        "sha256": "4c3accac883235fce676027add6df63bb330a42bfd8bc700883796fd66a0075e"
+      },
+      {
+        "path": "lab/procedural-character.js",
+        "bytes": 15918,
+        "sha256": "f785101b739328ba6e09a284886bcc377fb12cc1238396eb5d0d9c5437c9c26b"
+      },
+      {
+        "path": "lab/rig-adapter.js",
+        "bytes": 4540,
+        "sha256": "ce7f777ea90061db3666cb91677dc8ece2016168f66aeae24404bbf9b2441ad3"
+      },
+      {
+        "path": "lab/runner-preset.js",
+        "bytes": 1903,
+        "sha256": "2d2a74bd675b2b9064b3b3e06366ecb01c610554b9279df95a9d06bddc116694"
+      },
+      {
+        "path": "lab/running-motion.js",
+        "bytes": 2326,
+        "sha256": "bc3441dd4a3135816f8e21f60493a497afac3f9d98dcca0e593d43c24a61dc73"
+      },
+      {
+        "path": "retarget.js",
+        "bytes": 21789,
+        "sha256": "fce40baf6e30b323eac3f05f4f7bd08c4729eec0f2067f63d5e187bf2795e063"
+      },
+      {
+        "path": "NOTICE",
+        "bytes": 2873,
+        "sha256": "7f55dc77df01c13d7183a0547605a52fe13015acd79031a94873e5706cb46225"
+      },
+      {
+        "path": "lab/characters/anime-bob-woman/source-reference.glb",
+        "bytes": 1564596,
+        "sha256": "bb423f50c44a0f1687f1b29b53f070572ecef82849df855ba9b0cafd03d29515"
+      },
+      {
+        "path": "lab/characters/anime-bob-woman/manifest.json",
+        "bytes": 11930,
+        "sha256": "d0861bc5e602724e2289081c3f355f334c55dddf549e9f59a80df4b8821a2d41"
+      },
+      {
+        "path": "lab/characters/anime-bob-woman/SOURCES.md",
+        "bytes": 4038,
+        "sha256": "237ea698a5a6bb5cccc8a5cc32e6d74e5bbd49ee20a00a30c28b33392de08283"
+      },
+      {
+        "path": "lab/characters/anime-bob-woman/running-plan.json",
+        "bytes": 166490,
+        "sha256": "234763d92d7ae9916b9b3be0428344b71c834cbfd0aadf67f370e4a205b87e87"
+      },
+      {
+        "path": "lab/characters/anime-bob-woman/anime-bob-woman-run.glb",
+        "bytes": 1408380,
+        "sha256": "61cbc287bfe70159889b6308f88191ab349e37798341b8af115bea5c4df1ccb2"
+      },
+      {
+        "path": "lab/characters/anime-bob-woman/assembled-anime-bob-woman.glb",
+        "bytes": 1294976,
+        "sha256": "0c46a762f5ca85b70ecb076a389a4d3a5df312e7ebd86b6f9505bd510122e7bb"
+      }
+    ],
+    "visualChecks": [
+      "actual bob preset default running",
+      "bob-source pre-reduction comparison and return to bob",
+      "neutral-grey head overlay correction and original material restoration",
+      "right-hand following at 0 and 0.4 seconds, both loose-fist running",
+      "wave at 1.2 seconds opens palm; switch back to run restores loose fist",
+      "complete running preview restored and continuous playback"
+    ],
+    "exportInspectionState": {
+      "surface": "grey",
+      "isolated": "bob_locks",
+      "explosion": 1,
+      "wireframe": true
+    },
+    "actualExportDownload": "/home/oai/share/46d9b822-63be-4311-bd38-189b372d5660/c151d5e6-6579-4259-bce1-3580e03a71a7",
+    "actualExport": {
+      "workflow": "deployed preset, current motion-plan retarget and export",
+      "fileSHA256": "f4174e47dab25944980bf7298e986516c0023a685b657e5458d5250790b53e45",
+      "bytes": 1665964,
+      "parts": 26,
+      "animatedBones": 58,
+      "tracks": 59,
+      "fingerTracks": 30,
+      "duration": 4,
+      "embeddedImages": 10,
+      "imagePixels": [
+        {
+          "image": 0,
+          "exactBytes": false,
+          "size": [
+            512,
+            512
+          ],
+          "maxChannelDifference": 1,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 1
+        },
+        {
+          "image": 1,
+          "exactBytes": false,
+          "size": [
+            512,
+            256
+          ],
+          "maxChannelDifference": 0,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 0
+        },
+        {
+          "image": 2,
+          "exactBytes": false,
+          "size": [
+            512,
+            128
+          ],
+          "maxChannelDifference": 2,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 1
+        },
+        {
+          "image": 3,
+          "exactBytes": false,
+          "size": [
+            512,
+            128
+          ],
+          "maxChannelDifference": 1,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 1
+        },
+        {
+          "image": 4,
+          "exactBytes": false,
+          "size": [
+            512,
+            128
+          ],
+          "maxChannelDifference": 1,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 1
+        },
+        {
+          "image": 5,
+          "exactBytes": false,
+          "size": [
+            512,
+            256
+          ],
+          "maxChannelDifference": 12,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 1
+        },
+        {
+          "image": 6,
+          "exactBytes": false,
+          "size": [
+            512,
+            256
+          ],
+          "maxChannelDifference": 1,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 1
+        },
+        {
+          "image": 7,
+          "exactBytes": false,
+          "size": [
+            512,
+            512
+          ],
+          "maxChannelDifference": 0,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 0
+        },
+        {
+          "image": 8,
+          "exactBytes": false,
+          "size": [
+            512,
+            512
+          ],
+          "maxChannelDifference": 155,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 1
+        },
+        {
+          "image": 9,
+          "exactBytes": false,
+          "size": [
+            256,
+            512
+          ],
+          "maxChannelDifference": 0,
+          "maxAlphaDifference": 0,
+          "maxPremultipliedChannelDifference": 0,
+          "maxOpaqueChannelDifference": 0,
+          "maxCutoutChannelDifference": 0
+        }
+      ],
+      "sampledPoses": 10,
+      "comparedVertices": 218000,
+      "maxError": 4.754598091922009e-07,
+      "inspectionStateExcluded": true
+    },
+    "textureInterpretation": "Canvas PNG round trip preserves exact alpha, opaque colours and 8-bit premultiplied channels. Raw low-alpha/invisible RGB can differ (maximum 155); cutout-visible alpha>=0.5 channels differ by at most 1. Raw RGBA and encoded bytes are not claimed identical.",
+    "screenshots": [
+      {
+        "file": "screenshots/bob-published-face.jpg",
+        "sha256": "6784ee23e4859b284ccddfb4afe39631cec9b44f221f359c57c65bf61e334e11"
+      },
+      {
+        "file": "screenshots/bob-published-grey-head.jpg",
+        "sha256": "0000c1706a22f0170f083d2ede26d51baf5cacfdcd9655e1d97ebc12da975bf4"
+      },
+      {
+        "file": "screenshots/bob-published-source-comparison.jpg",
+        "sha256": "8aa2dfdfe280ba8db26e2331615ad69d29a72fbf5962111ca31c567471d21942"
+      },
+      {
+        "file": "screenshots/bob-published-hands.jpg",
+        "sha256": "17fc28252506c566eaf4fbeec219b49decfb4820ebc3a764a39f2e1709f62199"
+      },
+      {
+        "file": "screenshots/bob-published-hands04.jpg",
+        "sha256": "5567fbae58898a5d59c5ce06a000dcd4d45923638b61327e47f33301f03bd727"
+      },
+      {
+        "file": "screenshots/bob-published-wave-open.jpg",
+        "sha256": "8444273f7fb6f2d727a01b909852e7c669e11ed3c8965f30752b70af882d9213"
+      },
+      {
+        "file": "screenshots/bob-published-preview.jpg",
+        "sha256": "ce41dbee0b37d68a1b3d4c715c58756a9fc5061c51766a4c92d65af9ed437c2e"
+      }
+    ]
   },
   "limits": [
     "No GPU WebGL validation",

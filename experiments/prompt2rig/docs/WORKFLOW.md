@@ -8,7 +8,7 @@
 
 ## 先选已有人物，再检查装配
 
-新增二次元波波头女性方案 `?model=bob`，运动背心 / 瑜伽裤与成年身体保留，头脸与短发独立替换；`?model=bob-source` 用于发束减面前比较。正常方案默认跑步松握拳。来源、48 项检查及实际浏览器发布范围见 [ANIME_BOB_WOMAN.md](ANIME_BOB_WOMAN.md)，不把本地导入检查混同于公开预设验收。
+已发布二次元波波头女性方案 `?model=bob`，运动背心 / 瑜伽裤与成年身体保留，头脸与短发独立替换；`?model=bob-source` 用于发束减面前比较。正常方案默认跑步松握拳。来源、48 项检查、公开预设播放 / 手型切换与实际网页导出范围见 [ANIME_BOB_WOMAN.md](ANIME_BOB_WOMAN.md)。
 
 默认加载 CharaBuilder 少年预设的减面装配体。原始少年、装配版和上一版灰模可直接对比。新增 [青年西装男士](https://giogyan90.github.io/3D_AItool/lab/?model=suit) 为独立选项；其来源、骨架修正、长袖权重和验证见 [SUIT_MAN.md](SUIT_MAN.md)。人物链接中的 `model` 参数可直接打开指定方案，未指定仍默认少年。先查源资产与比例，再看正、侧、背、斜侧、前后俯视；用原材质 / 灰模、线框、单件和拆解距离检查，随后做动作。具体拆件、补帽子与 T 恤、验证和复现命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。
 

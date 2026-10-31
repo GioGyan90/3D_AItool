@@ -1,6 +1,6 @@
 # 人物资产工作约定
 
-二次元波波头女性已建为独立 `bob` / `bob-source` 方案；继续此人物先读 [制作记录](docs/ANIME_BOB_WOMAN.md) 和浏览器发布状态报告。成年身体与运动服沿用原女性，头脸 / 发型为来源明确的 VRoid beta CC0 组件。当前工程 48 项检查通过，新增角色有自己的 242 姿势与头颈接缝检查；发布计划不代表网页已验收。
+二次元波波头女性已作为独立 `bob` / `bob-source` 方案公开发布；继续此人物先读 [制作记录](docs/ANIME_BOB_WOMAN.md) 和 [浏览器检查](docs/ANIME_BOB_WOMAN_BROWSER_VALIDATION.json)。成年身体与运动服沿用原女性，头脸 / 发型为来源明确的 VRoid beta CC0 组件。当前工程 48 项检查通过，新增角色有自己的 242 姿势与头颈接缝检查。15 个公开文件逐字节一致；实际网页导出保留 26 件人物、58 根动作骨骼、30 条指骨轨道和 10 张贴图，透明 PNG 重编码的实际范围见报告。Canvas CPU 已复查，GPU WebGL 未验证。
 
 继续人物、服装、配饰或动作任务前，阅读 [生产约定](docs/CHARACTER_PRODUCTION.md)，再按任务需要阅读 [动作流程](docs/WORKFLOW.md) 、[少年制作记录](docs/CHARABUILDER_BOY.md) 和 [西装青年记录](docs/SUIT_MAN.md)。
 
