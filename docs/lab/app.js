@@ -1,19 +1,20 @@
 import * as THREE from 'three';
-import { OrbitControls } from '../vendor/controls/OrbitControls.js?v=355115890893';
-import { Rig } from '../retarget.js?v=355115890893';
-import { createCharacter } from './character.js?v=355115890893';
-import { MOTIONS, bakeMotion } from './motions.js?v=355115890893';
-import { createRenderer } from './renderer.js?v=355115890893';
-import { importCharacter, exportCharacter } from './assets.js?v=355115890893';
-import { modelStats } from './optimize.js?v=355115890893';
-import { prepareRig, detectBones, MAPPABLE, REQUIRED } from './rig-adapter.js?v=355115890893';
-import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, PLAN_JOINTS } from './motion-plan.js?v=355115890893';
-import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js?v=355115890893';
-import { loadTeenPreset } from './teen-preset.js?v=355115890893';
-import { loadSuitPreset } from './suit-preset.js?v=355115890893';
-import { loadRunnerPreset } from './runner-preset.js?v=355115890893';
-import { makeRunningTake } from './running-motion.js?v=355115890893';
-import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js?v=355115890893';
+import { OrbitControls } from '../vendor/controls/OrbitControls.js?v=444eb157cd97';
+import { Rig } from '../retarget.js?v=444eb157cd97';
+import { createCharacter } from './character.js?v=444eb157cd97';
+import { MOTIONS, bakeMotion } from './motions.js?v=444eb157cd97';
+import { createRenderer } from './renderer.js?v=444eb157cd97';
+import { importCharacter, exportCharacter } from './assets.js?v=444eb157cd97';
+import { modelStats } from './optimize.js?v=444eb157cd97';
+import { prepareRig, detectBones, MAPPABLE, REQUIRED } from './rig-adapter.js?v=444eb157cd97';
+import { planToTake, retargetTake, applyRetarget, motionRequest, EXAMPLE_PLAN, PLAN_JOINTS } from './motion-plan.js?v=444eb157cd97';
+import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js?v=444eb157cd97';
+import { loadTeenPreset } from './teen-preset.js?v=444eb157cd97';
+import { loadSuitPreset } from './suit-preset.js?v=444eb157cd97';
+import { loadRunnerPreset } from './runner-preset.js?v=444eb157cd97';
+import { loadBobPreset } from './bob-preset.js?v=444eb157cd97';
+import { makeRunningTake } from './running-motion.js?v=444eb157cd97';
+import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js?v=444eb157cd97';
 
 const $=s=>document.querySelector(s),viewport=$('#viewport'),status=text=>$('#status').textContent=text;
 const bytes=n=>n>=1048576?(n/1048576).toFixed(2)+' MB':(n/1024).toFixed(1)+' KB';
@@ -30,8 +31,8 @@ try{
   const grid=new THREE.GridHelper(12,24,0xc2d0c1,0xd4ddd0);grid.position.y=-.01;scene.add(grid);
   const driverModel=createCharacter();driverModel.userData.motionCharacter=true;const driver=new Rig(driverModel);
   function makeProceduralAsset(){const root=createProceduralCharacter();return {root,rig:new Rig(root),sourceName:'自建人物 · 截面灰模 v1',animations:[],...detectBones(root)};}
-  const presetNames=['boy','suit','suit-source','runner','runner-source','original','cage'],requestedPreset=new URL(location.href).searchParams.get('model'),initialPreset=presetNames.includes(requestedPreset)?requestedPreset:'boy';
-  async function presetAsset(value){return value==='cage'?makeProceduralAsset():value.startsWith('runner')?loadRunnerPreset(value==='runner-source'):value.startsWith('suit')?loadSuitPreset(value==='suit-source'):loadTeenPreset(value==='original');}
+  const presetNames=['boy','suit','suit-source','runner','runner-source','bob','bob-source','original','cage'],requestedPreset=new URL(location.href).searchParams.get('model'),initialPreset=presetNames.includes(requestedPreset)?requestedPreset:'boy';
+  async function presetAsset(value){return value==='cage'?makeProceduralAsset():value.startsWith('bob')?loadBobPreset(value==='bob-source'):value.startsWith('runner')?loadRunnerPreset(value==='runner-source'):value.startsWith('suit')?loadSuitPreset(value==='suit-source'):loadTeenPreset(value==='original');}
   $('#model-select').value=initialPreset;
   let asset=await presetAsset(initialPreset),helper=null,mixer=null,nativeIndex=-1;
   const takes=[...MOTIONS.map(m=>({...m,...bakeMotion(driver,m),loop:true})),makeRunningTake(driver,planToTake)];

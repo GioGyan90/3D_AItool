@@ -12,6 +12,7 @@ import { API_DEFAULTS, resolveConfig, generatePlan } from './api.js';
 import { loadTeenPreset } from './teen-preset.js';
 import { loadSuitPreset } from './suit-preset.js';
 import { loadRunnerPreset } from './runner-preset.js';
+import { loadBobPreset } from './bob-preset.js';
 import { makeRunningTake } from './running-motion.js';
 import { createProceduralCharacter, getProceduralParts, setProceduralView, proceduralSettings, createPartExport } from './procedural-character.js';
 
@@ -30,8 +31,8 @@ try{
   const grid=new THREE.GridHelper(12,24,0xc2d0c1,0xd4ddd0);grid.position.y=-.01;scene.add(grid);
   const driverModel=createCharacter();driverModel.userData.motionCharacter=true;const driver=new Rig(driverModel);
   function makeProceduralAsset(){const root=createProceduralCharacter();return {root,rig:new Rig(root),sourceName:'自建人物 · 截面灰模 v1',animations:[],...detectBones(root)};}
-  const presetNames=['boy','suit','suit-source','runner','runner-source','original','cage'],requestedPreset=new URL(location.href).searchParams.get('model'),initialPreset=presetNames.includes(requestedPreset)?requestedPreset:'boy';
-  async function presetAsset(value){return value==='cage'?makeProceduralAsset():value.startsWith('runner')?loadRunnerPreset(value==='runner-source'):value.startsWith('suit')?loadSuitPreset(value==='suit-source'):loadTeenPreset(value==='original');}
+  const presetNames=['boy','suit','suit-source','runner','runner-source','bob','bob-source','original','cage'],requestedPreset=new URL(location.href).searchParams.get('model'),initialPreset=presetNames.includes(requestedPreset)?requestedPreset:'boy';
+  async function presetAsset(value){return value==='cage'?makeProceduralAsset():value.startsWith('bob')?loadBobPreset(value==='bob-source'):value.startsWith('runner')?loadRunnerPreset(value==='runner-source'):value.startsWith('suit')?loadSuitPreset(value==='suit-source'):loadTeenPreset(value==='original');}
   $('#model-select').value=initialPreset;
   let asset=await presetAsset(initialPreset),helper=null,mixer=null,nativeIndex=-1;
   const takes=[...MOTIONS.map(m=>({...m,...bakeMotion(driver,m),loop:true})),makeRunningTake(driver,planToTake)];

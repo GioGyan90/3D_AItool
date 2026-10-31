@@ -1,5 +1,7 @@
 # 人物资产工作约定
 
+二次元波波头女性已建为独立 `bob` / `bob-source` 方案；继续此人物先读 [制作记录](docs/ANIME_BOB_WOMAN.md) 和浏览器发布状态报告。成年身体与运动服沿用原女性，头脸 / 发型为来源明确的 VRoid beta CC0 组件。当前工程 48 项检查通过，新增角色有自己的 242 姿势与头颈接缝检查；发布计划不代表网页已验收。
+
 继续人物、服装、配饰或动作任务前，阅读 [生产约定](docs/CHARACTER_PRODUCTION.md)，再按任务需要阅读 [动作流程](docs/WORKFLOW.md) 、[少年制作记录](docs/CHARABUILDER_BOY.md) 和 [西装青年记录](docs/SUIT_MAN.md)。
 
 继续“背心、瑜伽裤女性跑步角色”时，另读 [该任务交接](docs/RUNNING_WOMAN_HANDOFF.md)，先核对其中基线与实际进度；文档中的计划不代表已经完成。

@@ -1,0 +1,359 @@
+{
+  "version": 1,
+  "date": "2026-10-31",
+  "source": {
+    "license": "CC0-1.0 source assets",
+    "completeBasePreserved": true,
+    "body": {
+      "asset": "Quaternius Superhero Female FullBody",
+      "path": "../running-woman/assembled-running-woman.glb",
+      "sha256": "e0cd65a169eab175529882c2fcf71abd115f433ea0376313ce1d800776cc0847",
+      "completeBase": "../running-woman/complete-source.glb",
+      "proportionsChanged": false
+    },
+    "face": {
+      "author": "pixiv VRoid Project",
+      "asset": "beta HairSample_Female facial and cranial components only",
+      "ageClaim": "No adult female body is claimed for this donor; adult body is the independently sourced Quaternius model."
+    },
+    "hair": {
+      "author": "pixiv VRoid Project",
+      "asset": "beta Sendagaya Shibu bob and scalp; no donor body or costume"
+    },
+    "repository": "https://github.com/GioGyan90/CharaBuilder",
+    "revision": "6ff7fa5c7b451c7318cf445038f1514a646343ea",
+    "hashes": {
+      "female-manifest.json": "2f2de6fd158f971ebf007513b3a172cfcfbabc2b7e7e7f288ff12b3e4dd20be0",
+      "female-3.b64": "4ca0b7ab8a04f4e6a3458468dc9ba46bb8a3cd010ef7d2cd6958d878e8254e8f",
+      "female-1.b64": "026bdcb8e6e4c3fbd6412e3d411b4d9fa0e0e611fcd31576fd807538081bcb54",
+      "female-2.b64": "5e3c73c12b2fc99445a68d0acf46448d6c72e8e5b46afca442f0259b0a104acf",
+      "female-0.b64": "9e9d99bbf84b0195fd561462ae816ac304251a4789cf16a0395b239bf8299f22",
+      "bob-manifest.json": "920acfa07cf9dcbe9e800d1175f87aebe44208c96b47746e8b3f9f6d0f2c9ea9",
+      "bob-0.b64": "9131f3a935a60aa8d5945f50490fe78edffd702349d57889f76f4b77446d1061",
+      "bob-2.b64": "f06bc2d08996e0938098d2c4302c76684cb8cafe0258cd524e8db5868cc9b0da",
+      "bob-1.b64": "2fb5c19baee69cd358802ce9c2440342fd417d331d18b7a3d4c318ed8c312274",
+      "female-0.png": "128ffab4f0baf7c722389d03197fce9458d11efd50f5271271002296cafe7040",
+      "female-1.png": "3aba9170ebb0fa1ffe315f0f2b45854c805457f3c5f3e56958fc4f184598e8ff",
+      "female-2.png": "93f883a11e30c1890f23ac376cfda094da36e3db5c846a2402fe4599acdd79fa",
+      "female-3.png": "494dd896031b6a59e755ec0464ddc396eb679a6dc2c96728487b48c087d3118d",
+      "female-4.png": "5225b408f1d6a6dc10140affecbe871eed7e01d99950052d1c01380d47285587",
+      "female-5.png": "40dfebb56b83bd14390da494cd996198f1cfb0d13fb3c0361929f1288bc48c3d",
+      "female-6.png": "8bcd776462bc1b4d12528cf73303d2714c2a432be5971fbbef2ec36bdc12f662",
+      "female-7.png": "c7b5bd359eed3ce7696c2f5ae1f20f4539772a826bda890e2a420966a7d37afe",
+      "bob-14.png": "ad95ac5a135da701059fc8a58f2a956130391ade43bed31c2a720ae335a740d4",
+      "bob-15.png": "84ca2772fb98e7d1f02c9e199cfe8308838edb2812abb34f1999c41ee290a433"
+    },
+    "officialLicenseURLs": [
+      "https://vroid.pixiv.help/hc/en-us/articles/4402614652569",
+      "https://vroid.pixiv.help/hc/en-us/articles/360012381793"
+    ]
+  },
+  "choices": {
+    "palette": {
+      "skin": "#f1c7b1",
+      "hair": "#5b3b34",
+      "line": "#493034",
+      "tank": "#16a59c",
+      "pants": "#29395c",
+      "shoe": "#f1f3e9"
+    },
+    "outfit": "Same full-length athletic tank, fitted yoga leggings and running shoes",
+    "style": "Anime facial geometry and chin-length bob; portable basic/rough materials, not full MToon",
+    "motion": "Existing authored running plan with both hands looseFist; actual independent validation required"
+  },
+  "before": {
+    "triangles": 35729,
+    "vertices": 32095,
+    "meshes": 26,
+    "bones": 71
+  },
+  "after": {
+    "triangles": 22099,
+    "vertices": 21800,
+    "meshes": 26,
+    "bones": 71
+  },
+  "sourceGLBBytes": 1564596,
+  "modelGLBBytes": 1294976,
+  "rig": {
+    "totalJoints": 71,
+    "motionTracks": 58,
+    "bodySkeletonChanged": false
+  },
+  "fitting": {
+    "xzScale": 0.88,
+    "lowerScale": 0.8480255865619887,
+    "upperScale": 0.9904549083441133,
+    "lowerY": 1.449,
+    "upperY": 1.462,
+    "chinY": 1.4744504722455543,
+    "sourceNeck": [
+      -0.00033792541955099994,
+      1.349669319,
+      -0.017203359599999996
+    ],
+    "sourceHead": [
+      -0.00033790030294529995,
+      1.421878799,
+      -0.007896410599999995
+    ],
+    "targetNeck": [
+      5.7884117997877536e-8,
+      1.4413429758407497,
+      -0.03842593944188415
+    ],
+    "targetHead": [
+      5.7884238704702124e-8,
+      1.5025784624730858,
+      -0.010316296387030396
+    ],
+    "targetTop": 1.708,
+    "neckRings": [
+      62,
+      32
+    ],
+    "bridgeTriangles": 94,
+    "facialVerticesUnaffectedByNeckWidening": true,
+    "neckMaximumGap": 0
+  },
+  "construction": {
+    "handSkinning": {
+      "transitionHalfWidth": 0.022,
+      "thumbRadialFade": [
+        0.018,
+        0.035
+      ],
+      "vertices": 7486,
+      "geometryChanged": false
+    },
+    "hemY": 0.9828606200442769,
+    "waistY": 1.022860620044277,
+    "ankleY": 0.1408710491191086,
+    "neckY": 1.4413429758407497,
+    "palette": {
+      "tank": "#16a59c",
+      "binding": "#9de4d2",
+      "pants": "#29395c",
+      "panel": "#465f87",
+      "hair": "#3e2929",
+      "shoe": "#f1f3e9",
+      "sole": "#c8ded9",
+      "accent": "#f5ac7b"
+    },
+    "openingBinding": {
+      "edges": 213,
+      "edgeEase": 0.002,
+      "skinOverlap": 0.012,
+      "returnsToSameBody": true,
+      "hemAllowanceUnchanged": true
+    },
+    "bodyMask": "Recomputed for sleeveless tank, not inherited from teen tee",
+    "waist": "Covered leggings waist stays inside tank; visible hips/legs preserve source anatomy",
+    "contact": "Sole surface vertical correction; no full foot IK"
+  },
+  "simplification": [
+    {
+      "part": "bob_scalp",
+      "before": 394,
+      "after": 388,
+      "requestedRatio": 0.7
+    },
+    {
+      "part": "bob_locks",
+      "before": 19436,
+      "after": 5812,
+      "requestedRatio": 0.22
+    }
+  ],
+  "parts": [
+    {
+      "id": "tank",
+      "label": "运动背心",
+      "vertices": 1203,
+      "triangles": 1913,
+      "provenance": "Same adult body topology, geometric neckline/armhole pattern, fitted allowance"
+    },
+    {
+      "id": "tank_binding",
+      "label": "领口与袖窿包边",
+      "vertices": 1230,
+      "triangles": 426,
+      "provenance": "Opening walls return into the same body surface; preserve source UV/skin anchors"
+    },
+    {
+      "id": "leggings_waist",
+      "label": "瑜伽裤腰胯",
+      "vertices": 340,
+      "triangles": 516,
+      "provenance": "Continuous adult pelvis/crotch/leg surface with original skin weights"
+    },
+    {
+      "id": "leggings_L",
+      "label": "左瑜伽裤腿",
+      "vertices": 497,
+      "triangles": 871,
+      "provenance": "Continuous adult pelvis/crotch/leg surface with original skin weights"
+    },
+    {
+      "id": "leggings_R",
+      "label": "右瑜伽裤腿",
+      "vertices": 497,
+      "triangles": 871,
+      "provenance": "Continuous adult pelvis/crotch/leg surface with original skin weights"
+    },
+    {
+      "id": "skin_L",
+      "label": "左肩臂与手",
+      "vertices": 1468,
+      "triangles": 2416,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "skin_R",
+      "label": "右肩臂与手",
+      "vertices": 1469,
+      "triangles": 2417,
+      "provenance": "Quaternius source surface"
+    },
+    {
+      "id": "shoe_L",
+      "label": "左运动鞋面与围边",
+      "vertices": 2444,
+      "triangles": 832,
+      "provenance": "Fitted adult foot surface plus full hull welt returning into the outsole plane, rigid to Foot"
+    },
+    {
+      "id": "laces_L",
+      "label": "左运动鞋带",
+      "vertices": 270,
+      "triangles": 384,
+      "provenance": "Six fitted crossing laces sampled on the actual shoe upper"
+    },
+    {
+      "id": "sole_L",
+      "label": "左运动鞋底",
+      "vertices": 144,
+      "triangles": 92,
+      "provenance": "Convex footprint from original foot, 29mm sole, bound to Foot"
+    },
+    {
+      "id": "shoe_R",
+      "label": "右运动鞋面与围边",
+      "vertices": 2444,
+      "triangles": 832,
+      "provenance": "Fitted adult foot surface plus full hull welt returning into the outsole plane, rigid to Foot"
+    },
+    {
+      "id": "laces_R",
+      "label": "右运动鞋带",
+      "vertices": 270,
+      "triangles": 384,
+      "provenance": "Six fitted crossing laces sampled on the actual shoe upper"
+    },
+    {
+      "id": "sole_R",
+      "label": "右运动鞋底",
+      "vertices": 144,
+      "triangles": 92,
+      "provenance": "Convex footprint from original foot, 29mm sole, bound to Foot"
+    },
+    {
+      "id": "anime_neck",
+      "label": "成年颈部",
+      "vertices": 837,
+      "triangles": 279,
+      "provenance": "Retained calibrated Quaternius adult neck; original upper head removed"
+    },
+    {
+      "id": "anime_skull",
+      "label": "二次元后脑与颈上段",
+      "vertices": 1158,
+      "triangles": 386,
+      "provenance": "VRoid beta HairSample_Female head skin only; adult neck contour fit"
+    },
+    {
+      "id": "anime_neck_bridge",
+      "label": "头颈连续接合",
+      "vertices": 94,
+      "triangles": 94,
+      "provenance": "Explicit zipped rings; shared surface positions/normals/skin weights at both boundaries"
+    },
+    {
+      "id": "anime_mouth",
+      "label": "口腔",
+      "vertices": 540,
+      "triangles": 496,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "anime_eye_white",
+      "label": "眼白",
+      "vertices": 142,
+      "triangles": 96,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "anime_eyeline",
+      "label": "眼线",
+      "vertices": 274,
+      "triangles": 384,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "anime_eyelash",
+      "label": "睫毛",
+      "vertices": 168,
+      "triangles": 224,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "anime_brows",
+      "label": "二次元眉毛",
+      "vertices": 110,
+      "triangles": 160,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "anime_iris",
+      "label": "虹膜",
+      "vertices": 122,
+      "triangles": 192,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "anime_eye_highlight",
+      "label": "眼睛高光",
+      "vertices": 122,
+      "triangles": 192,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "anime_face_skin",
+      "label": "二次元脸部",
+      "vertices": 833,
+      "triangles": 1350,
+      "provenance": "Original CC0 HairSample_Female facial geometry, UV and painted features; rigid Head binding"
+    },
+    {
+      "id": "bob_scalp",
+      "label": "波波头发底",
+      "vertices": 222,
+      "triangles": 388,
+      "provenance": "CC0 Sendagaya Shibu bob; source female scalp fit, head-space calibration; hairpin omitted"
+    },
+    {
+      "id": "bob_locks",
+      "label": "波波短发发束",
+      "vertices": 4758,
+      "triangles": 5812,
+      "provenance": "CC0 Sendagaya Shibu bob; source female scalp fit, head-space calibration; hairpin omitted"
+    }
+  ],
+  "limits": [
+    "Adult body proportions retained; anime face and bob are sourced components, not a new sculpture from zero.",
+    "Face is a neutral rigid-to-Head expression; blinking and lip animation are not authored.",
+    "Bob hair follows Head; no secondary hair simulation.",
+    "source-reference.glb is the pre-hair-reduction clothed assembly, not an unmasked female base.",
+    "Rendering and new character motion validation are recorded separately."
+  ]
+}

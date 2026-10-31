@@ -1,7 +1,7 @@
-import {parseCharacter} from './assets.js?v=355115890893';
-import {prepareRig} from './rig-adapter.js?v=355115890893';
-import {registerStudyModel} from './procedural-character.js?v=355115890893';
-import {modelStats} from './optimize.js?v=355115890893';
+import {parseCharacter} from './assets.js?v=444eb157cd97';
+import {prepareRig} from './rig-adapter.js?v=444eb157cd97';
+import {registerStudyModel} from './procedural-character.js?v=444eb157cd97';
+import {modelStats} from './optimize.js?v=444eb157cd97';
 const cache=new Map(),revision=new URL(import.meta.url).searchParams.get('v');
 async function bytes(name){if(!cache.has(name))cache.set(name,fetch((()=>{const url=new URL('./characters/teen-boy/'+name,import.meta.url);if(revision)url.searchParams.set('v',revision);return url;})()).then(r=>{if(!r.ok)throw Error('少年资源加载失败：'+r.status);return r.arrayBuffer();}));return (await cache.get(name)).slice(0);}
 export async function loadTeenPreset(original=false){

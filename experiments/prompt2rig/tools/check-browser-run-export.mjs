@@ -12,7 +12,7 @@ import {RUNNING_PLAN} from '../public/lab/running-motion.js';
 import {planToTake,applyRetarget} from '../public/lab/motion-plan.js';
 
 const filename=process.argv[2];if(!filename)throw Error('Pass the actual GLB downloaded through the public page export button');
-const imported=process.argv.includes('--imported'),browserBytes=new Uint8Array(await fs.readFile(filename)),sourceBytes=new Uint8Array(await fs.readFile(new URL('../public/lab/characters/running-woman/'+(imported?'running-woman-run.glb':'assembled-running-woman.glb'),import.meta.url)));
+const imported=process.argv.includes('--imported'),bob=process.argv.includes('--bob'),folder=bob?'anime-bob-woman/':'running-woman/',sourceName=bob?(imported?'anime-bob-woman-run.glb':'assembled-anime-bob-woman.glb'):(imported?'running-woman-run.glb':'assembled-running-woman.glb'),browserBytes=new Uint8Array(await fs.readFile(filename)),sourceBytes=new Uint8Array(await fs.readFile(new URL('../public/lab/characters/'+folder+sourceName,import.meta.url)));
 function geometryOnly(bytes){const {json,bin}=readGLB(bytes);for(const m of json.materials||[])delete m.pbrMetallicRoughness.baseColorTexture;json.images=[];json.textures=[];return writeGLB(json,bin);}
 const a=await parseCharacter(geometryOnly(sourceBytes)),b=await parseCharacter(geometryOnly(browserBytes));
 // The local-file review path uses the public page's standard import transform

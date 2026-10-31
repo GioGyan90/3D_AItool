@@ -38,4 +38,10 @@ Bundled Motion Lab character assets have separate provenance and licenses:
   - Business Man, Ultimate Modular Men Pack, by Quaternius, CC0-1.0;
     see public/lab/characters/suit-man/SOURCES.md for the exact asset license,
     pinned source file, hash, and adaptation scope.
+  - Adult running woman: Quaternius Universal Base Characters Standard, CC0-1.0;
+    see public/lab/characters/running-woman/SOURCES.md.
+  - Anime bob woman: the same adult body and project-authored sportswear, plus
+    pixiv VRoid Project beta HairSample_Female head and Sendagaya Shibu hair,
+    CC0-1.0; see public/lab/characters/anime-bob-woman/SOURCES.md for exact versions,
+    official license evidence, hashes and adaptation scope.
 These character additions do not include the non-commercial HQ model weights.

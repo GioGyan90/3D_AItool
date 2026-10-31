@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Rig, BONES } from '../retarget.js?v=355115890893';
+import { Rig, BONES } from '../retarget.js?v=444eb157cd97';
 
 export const REQUIRED=['Hips','Spine','Neck','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg','LeftFoot','RightFoot'];
 export const MAPPABLE=BONES.filter(n=>!/Hand(Thumb|Index|Middle|Ring|Pinky)/.test(n));
@@ -8,6 +8,7 @@ for(const [side,suffix,vrm] of [['Left','l','l'],['Right','r','r']])for(const [c
   aliases[side+canonical]=[side+canonical,...names.flatMap(n=>[`${n}_${suffix}`,`${suffix}_${n}`,`${side}${n}`,`j_bip_${vrm}_${n}`,`cc_base_${suffix}_${n}`])];
 }
 const normalize=s=>s.toLowerCase().replace(/^mixamorig\d*[:_]?/,'').replace(/[.\s:_-]/g,'');
+const athleticPresets=['quaternius-running-woman','anime-bob-woman'];
 export function detectBones(root,overrides={}){
   const bones=[];root.traverse(o=>{if(o.isBone)bones.push(o);});const map={};
   for(const canonical of MAPPABLE){
@@ -19,10 +20,10 @@ export function detectBones(root,overrides={}){
 }
 
 export function prepareRig(root,overrides={}){
-  root.traverse(o=>{if(o.userData.preset==='quaternius-running-woman'&&o.userData.soleGrounding)root.userData.soleGrounding=true;});
-  root.traverse(o=>{if(o.userData.preset==='quaternius-running-woman'&&Array.isArray(o.userData.legBend))root.userData.legBend=o.userData.legBend;});
+  root.traverse(o=>{if(athleticPresets.includes(o.userData.preset)&&o.userData.soleGrounding)root.userData.soleGrounding=true;});
+  root.traverse(o=>{if(athleticPresets.includes(o.userData.preset)&&Array.isArray(o.userData.legBend))root.userData.legBend=o.userData.legBend;});
   root.traverse(o=>{if(o.userData.preset==='charabuilder-boy'&&o.userData.shoulderRhythm)root.userData.shoulderRhythm=true;});
-  root.traverse(o=>{if(['quaternius-suit-man','quaternius-running-woman'].includes(o.userData.preset)&&Array.isArray(o.userData.forearmTwist))root.userData.forearmTwist=o.userData.forearmTwist;});
+  root.traverse(o=>{if(['quaternius-suit-man',...athleticPresets].includes(o.userData.preset)&&Array.isArray(o.userData.forearmTwist))root.userData.forearmTwist=o.userData.forearmTwist;});
   root.traverse(o=>{if(o.userData.preset==='quaternius-suit-man'&&o.userData.shoulderRhythm)root.userData.shoulderRhythm=o.userData.shoulderRhythm;});
   const detection=detectBones(root,overrides);if(detection.missing.length)return {...detection,rig:null};
   const entries=Object.entries(detection.map),names=entries.map(([,b])=>b.name);

@@ -1,4 +1,4 @@
-import { PLAN_SCHEMA, API_PLAN_SCHEMA, PLAN_INSTRUCTIONS, validatePlan } from './motion-plan.js?v=355115890893';
+import { PLAN_SCHEMA, API_PLAN_SCHEMA, PLAN_INSTRUCTIONS, validatePlan } from './motion-plan.js?v=444eb157cd97';
 export const API_DEFAULTS={provider:'openai',baseUrl:'https://api.openai.com/v1',model:'gpt-4.1-mini',protocol:'responses'};
 
 export function resolveConfig(config={}){

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { Track, trackToClip, basisQuat } from '../retarget.js?v=355115890893';
-import { prepareProceduralExport } from './procedural-character.js?v=355115890893';
-import { HAND_POSES, applyHandPoses } from './hand-poses.js?v=355115890893';
+import { Track, trackToClip, basisQuat } from '../retarget.js?v=444eb157cd97';
+import { prepareProceduralExport } from './procedural-character.js?v=444eb157cd97';
+import { HAND_POSES, applyHandPoses } from './hand-poses.js?v=444eb157cd97';
 
 export const PLAN_JOINTS=['Hips','Spine','Spine1','Spine2','Neck','Head','LeftShoulder','LeftArm','LeftForeArm','LeftHand','RightShoulder','RightArm','RightForeArm','RightHand','LeftUpLeg','LeftLeg','LeftFoot','RightUpLeg','RightLeg','RightFoot'];
 const vec=(min,max)=>({type:'array',items:{type:'number',minimum:min,maximum:max},minItems:3,maxItems:3});

@@ -13,6 +13,8 @@
 
 默认要求汇总见 [CHARACTER_DEFAULTS.md](CHARACTER_DEFAULTS.md)。手型实现与 44 项检查的实际发布状态见 [握拳更新报告](RUNNING_HANDS_VALIDATION.json)。
 
+2026-10-31 新增 [二次元波波头女性](ANIME_BOB_WOMAN.md)：成年身体和运动服保留，复用来源明确的 VRoid beta CC0 头脸与短发，重建真实头颈连接并独立验跑。`bob` / `bob-source` 为新选项；工程现有 48 项检查，公开预设验证范围见该人物的浏览器报告。
+
 ## 默认美术风格（用户于 2026-10-30 指定）
 
 后续新建角色默认采用**二次元低面建模风格**，以《塞尔达》《原神》的美术观感作为方向。素材选择、形体、头脸、发型、服装、配饰与材质统一按此目标制作；用户为某一角色另行指定风格时采用该角色的明确要求。
@@ -115,6 +117,6 @@ node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-waist.mjs 
 node --experimental-loader ./tests/vendor-loader.mjs tools/check-teen-arms.mjs
 ```
 
-重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。44 项工程测试（原有 36 项含西装人物 6 项，另加女性跑步 4 项、手型 4 项）；少年的 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json)、[衣裤间距报告](TEEN_WAIST_VALIDATION.json)、[手臂旋转报告](TEEN_ARM_ROTATION_VALIDATION.json) 与独立的 [女性跑步报告](RUNNING_WOMAN_VALIDATION.json) 各自限定覆盖范围，不替代任意新动作的验证。
+重建默认少年需要固定提交的 CharaBuilder 源仓库以及 Python Pillow、NumPy，命令见 [CHARABUILDER_BOY.md](CHARABUILDER_BOY.md)。48 项工程测试（原有 36 项含西装人物 6 项，另加女性跑步 4 项、手型 4 项、波波头女性 4 项）；少年的 [整段变形报告](TEEN_DEFORMATION_VALIDATION.json)、[衣裤间距报告](TEEN_WAIST_VALIDATION.json)、[手臂旋转报告](TEEN_ARM_ROTATION_VALIDATION.json)、独立的 [女性跑步报告](RUNNING_WOMAN_VALIDATION.json) 与 [波波头女性报告](ANIME_BOB_WOMAN_VALIDATION.json) 各自限定覆盖范围，不替代任意新动作的验证。
 
 公开预览：[GitHub Pages](https://giogyan90.github.io/3D_AItool/lab/)。修改运行时代码或模型后，从仓库根目录运行 `node experiments/prompt2rig/tools/build-pages.mjs`，连同根目录 `docs/` 输出提交并核对部署；只改本文等工程文档无需重新生成模型或网页资源。

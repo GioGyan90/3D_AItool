@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-31",
+  "character": "anime-bob-woman",
+  "status": "local asset and visual checks passed; public deployment pending",
+  "tests": {
+    "total": 48,
+    "passed": 48,
+    "failed": 0
+  },
+  "renderPath": "Canvas CPU compatibility; GPU WebGL not reviewed",
+  "localVisual": {
+    "workflow": "actual GLB import through existing public page, automatic optimization disabled; play native prepared clip",
+    "coloredFile": "anime-bob-woman-run.glb",
+    "greyFile": "same assembled model with actual neutral-grey inspection materials, paint overlays hidden, static rest clip",
+    "views": [
+      "front",
+      "side",
+      "back",
+      "three-quarter",
+      "front-top",
+      "rear-top",
+      "head front",
+      "head side"
+    ],
+    "motion": [
+      "0 seconds",
+      "0.4 seconds",
+      "continuous playback"
+    ],
+    "neckAndBobSilhouette": "reviewed; real neck bridge and closed scalp preserved",
+    "firstPassCorrection": "Recognize new face overlay material semantics in neutral-grey view; original view and complete export restore all overlays",
+    "screenshots": [
+      {
+        "file": "screenshots/bob-local-face-final.jpg",
+        "sha256": "4af138ef96fd42e5f6ec1393709518876a3b94901035901eaa07de7d5fce9a46"
+      },
+      {
+        "file": "screenshots/bob-local-run-phase0.jpg",
+        "sha256": "83b552acd9d932d8a66a88a3ef0737414c3f3775617a2ed6781081c37a2bc849"
+      },
+      {
+        "file": "screenshots/bob-local-run-side04.jpg",
+        "sha256": "b23f48d7fb784a509e8d95a44d3f034bedb4fe54664fc33deacebef038b78143"
+      },
+      {
+        "file": "screenshots/bob-clay-head-front.jpg",
+        "sha256": "56cac451f8ad54baa80743bf4748de58836b2d3eb4d5ae882a93d4459b717bc9"
+      },
+      {
+        "file": "screenshots/bob-clay-head-side.jpg",
+        "sha256": "b1218973a94f7ec49f3a1f64bfc887c6a7bff0e1a85131ce43ef5a4623dbbf5d"
+      },
+      {
+        "file": "screenshots/bob-clay-front.jpg",
+        "sha256": "d052bab2cbb1545f78ad862c15ac0aa1659fb9d3b8f5a80f8029922edd839899"
+      },
+      {
+        "file": "screenshots/bob-clay-side.jpg",
+        "sha256": "485b48f6a37f1cca9fd3fdb901f33aade1da6915f65ffe9ef60faf3b2aa4e0e0"
+      },
+      {
+        "file": "screenshots/bob-clay-back.jpg",
+        "sha256": "de2d4a91abcc8f88eb1fa2e2d4268162b6db20f71c3c86315448a316f26e3669"
+      },
+      {
+        "file": "screenshots/bob-clay-three-quarter.jpg",
+        "sha256": "d6bbbd278cbe5feb2995f2a79b39d3ad947aca805b62b2977efa011504946682"
+      },
+      {
+        "file": "screenshots/bob-clay-front-top.jpg",
+        "sha256": "c4622a4058fa43ca7be313651c598578bba3144ebef0722ca1b77fb8c6a9306d"
+      },
+      {
+        "file": "screenshots/bob-clay-rear-top.jpg",
+        "sha256": "3f5f1f6bcba6b2e6afb6cc49df3eabe2d72bcc38fda8c596871fd2a7feb865b7"
+      }
+    ]
+  },
+  "localBrowserExport": {
+    "buttonClicked": true,
+    "returnedPath": "/home/oai/share/46d9b822-63be-4311-bd38-189b372d5660/b613e9c7-5caf-474b-a5c1-45de72e947a9",
+    "verification": "Download path was returned but the browser file was unavailable to the shared filesystem after five-second polling; no actual browser-export numerical result is claimed."
+  },
+  "offlineExport": "Complete numerical result and pixel/image retention in ANIME_BOB_WOMAN_VALIDATION.json; does not substitute for deployed preset export",
+  "publicDeployment": {
+    "verified": false
+  },
+  "limits": [
+    "No GPU WebGL validation",
+    "No blinking or lip animation; hair rigidly follows Head",
+    "Sole-surface vertical correction, not full foot IK or guaranteed constant stance speed"
+  ]
+}

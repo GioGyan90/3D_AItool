@@ -124,7 +124,7 @@ export function getProceduralParts(root){return MODELS.get(root)?.parts||[];}
 export function registerStudyModel(root){
   const grey=new THREE.MeshStandardMaterial({color:0xb4b9b5,roughness:.9}),parts=[];
   root.traverse(mesh=>{if(!mesh.isMesh)return;const id=mesh.userData.partId||mesh.name;
-    const overlay=/FaceBrow|Eyelash|Eyeline|EyeHighlight/.test(id),color=new THREE.Color().setHSL((parts.length*.117)%1,.24,.64);
+    const semanticNames=[id,...(Array.isArray(mesh.material)?mesh.material:[mesh.material]).map(m=>m.name||'')].join(' '),overlay=/FaceBrow|Eyelash|Eyeline|EyeHighlight/i.test(semanticNames),color=new THREE.Color().setHSL((parts.length*.117)%1,.24,.64);
     parts.push({id,label:mesh.userData.partLabel||id,category:'prepared',mesh,geometry:mesh.geometry,rest:Float32Array.from(mesh.geometry.attributes.position.array),originalMaterial:mesh.material,material:new THREE.MeshStandardMaterial({color,roughness:.9}),offset:mesh.userData.explosionOffset||[0,.2,0],hideInClay:overlay});
   });
   MODELS.set(root,{parts,explosion:0,isolated:'all',surface:'original',wireframe:false,grey});return root;

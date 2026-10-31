@@ -1,0 +1,9406 @@
+{
+  "version": 1,
+  "name": "自然慢跑 · 原地循环",
+  "duration": 4,
+  "loop": true,
+  "hands": {
+    "left": "looseFist",
+    "right": "looseFist"
+  },
+  "frames": [
+    {
+      "t": 0,
+      "root": [
+        0,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0,
+            -0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -30,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -6,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.06666666666666667,
+      "root": [
+        0.003999999999999999,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            -0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -25,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.13333333333333333,
+      "root": [
+        0.006928203230275509,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            0,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.2,
+      "root": [
+        0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.5,
+            7.347880794884119e-17
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2,
+            -4.286263797015736e-17
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            1.1634144591899855e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.56168880302039,
+            -7.980385237885124,
+            94.03918080570797
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -43,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -1.1634144591899855e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.8794658654419,
+            7.921642134988724,
+            -81.92241209189879
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.26666666666666666,
+      "root": [
+        0.0069282032302755096,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.0310889132455356,
+            -0.5999999999999998
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688774,
+            0.3499999999999998
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688774,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            28,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.499999999999996,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.499999999999996,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.3333333333333333,
+      "root": [
+        0.003999999999999999,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            15,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -35,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.4,
+      "root": [
+        9.797174393178825e-19,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            4.286263797015736e-16,
+            -1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2.4492935982947064e-16,
+            0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2.4492935982947064e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3.6739403974420594e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -6,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -30,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.4666666666666667,
+      "root": [
+        -0.0039999999999999975,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7499999999999991,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0.9999999999999994,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0.9999999999999994,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.4999999999999991,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -25,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.5333333333333333,
+      "root": [
+        -0.006928203230275508,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.0310889132455348,
+            -0.6000000000000005
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.732050807568877,
+            0.3500000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.732050807568877,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.5980762113533156,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.500000000000009,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            0,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.500000000000009,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.6,
+      "root": [
+        -0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.5,
+            -2.2043642384652356e-16
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            2,
+            1.2858791391047207e-16
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -43,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -3.4902433775699565e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.8794658654419,
+            -7.921642134988724,
+            81.92241209189879
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            3.4902433775699565e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.56168880302039,
+            7.980385237885124,
+            -94.03918080570797
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.6666666666666666,
+      "root": [
+        -0.006928203230275509,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            28,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.7333333333333333,
+      "root": [
+        -0.0040000000000000036,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7500000000000016,
+            1.039230484541326
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.0000000000000009,
+            -0.6062177826491069
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.0000000000000009,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.5000000000000013,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -35,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.45448267190433,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            15,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.45448267190433,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.8,
+      "root": [
+        0,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0,
+            -0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -30,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -6,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.8666666666666667,
+      "root": [
+        0.003999999999999999,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            -0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -25,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 0.9333333333333333,
+      "root": [
+        0.006928203230275509,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            0,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1,
+      "root": [
+        0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.5,
+            7.347880794884119e-17
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2,
+            -4.286263797015736e-17
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            1.1634144591899855e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.56168880302039,
+            -7.980385237885124,
+            94.03918080570797
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -43,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -1.1634144591899855e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.8794658654419,
+            7.921642134988724,
+            -81.92241209189879
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.0666666666666667,
+      "root": [
+        0.0069282032302755096,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.0310889132455356,
+            -0.5999999999999998
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688774,
+            0.3499999999999998
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688774,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            28,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.499999999999996,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.499999999999996,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.1333333333333333,
+      "root": [
+        0.003999999999999999,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            15,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -35,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.2,
+      "root": [
+        9.797174393178825e-19,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            4.286263797015736e-16,
+            -1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2.4492935982947064e-16,
+            0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2.4492935982947064e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3.6739403974420594e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -6,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -30,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.2666666666666666,
+      "root": [
+        -0.0039999999999999975,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7499999999999991,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0.9999999999999994,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0.9999999999999994,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.4999999999999991,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -25,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.3333333333333333,
+      "root": [
+        -0.006928203230275508,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.0310889132455348,
+            -0.6000000000000005
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.732050807568877,
+            0.3500000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.732050807568877,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.5980762113533156,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.500000000000009,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            0,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.500000000000009,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.4,
+      "root": [
+        -0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.5,
+            -2.2043642384652356e-16
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            2,
+            1.2858791391047207e-16
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -43,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -3.4902433775699565e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.8794658654419,
+            -7.921642134988724,
+            81.92241209189879
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            3.4902433775699565e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.56168880302039,
+            7.980385237885124,
+            -94.03918080570797
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.4666666666666666,
+      "root": [
+        -0.006928203230275509,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            28,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.5333333333333334,
+      "root": [
+        -0.0040000000000000036,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7500000000000016,
+            1.039230484541326
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.0000000000000009,
+            -0.6062177826491069
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.0000000000000009,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.5000000000000013,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -35,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.45448267190433,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            15,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.45448267190433,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.6,
+      "root": [
+        0,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0,
+            -0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -30,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -6,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.6666666666666667,
+      "root": [
+        0.003999999999999999,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            -0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -25,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.7333333333333334,
+      "root": [
+        0.006928203230275509,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            0,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.8,
+      "root": [
+        0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.5,
+            7.347880794884119e-17
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2,
+            -4.286263797015736e-17
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            1.1634144591899855e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.56168880302039,
+            -7.980385237885124,
+            94.03918080570797
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -43,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -1.1634144591899855e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.8794658654419,
+            7.921642134988724,
+            -81.92241209189879
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.8666666666666667,
+      "root": [
+        0.0069282032302755096,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.0310889132455356,
+            -0.5999999999999998
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688774,
+            0.3499999999999998
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688774,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            28,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.499999999999996,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.499999999999996,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 1.9333333333333333,
+      "root": [
+        0.003999999999999999,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            15,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -35,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2,
+      "root": [
+        9.797174393178825e-19,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            4.286263797015736e-16,
+            -1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2.4492935982947064e-16,
+            0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2.4492935982947064e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3.6739403974420594e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -6,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -30,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.066666666666667,
+      "root": [
+        -0.0039999999999999975,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7499999999999991,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0.9999999999999994,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0.9999999999999994,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.4999999999999991,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -25,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.1333333333333333,
+      "root": [
+        -0.006928203230275508,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.0310889132455348,
+            -0.6000000000000005
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.732050807568877,
+            0.3500000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.732050807568877,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.5980762113533156,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.500000000000009,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            0,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.500000000000009,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.2,
+      "root": [
+        -0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.5,
+            -2.2043642384652356e-16
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            2,
+            1.2858791391047207e-16
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -43,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -3.4902433775699565e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.8794658654419,
+            -7.921642134988724,
+            81.92241209189879
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            3.4902433775699565e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.56168880302039,
+            7.980385237885124,
+            -94.03918080570797
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.2666666666666666,
+      "root": [
+        -0.006928203230275509,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            28,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.3333333333333335,
+      "root": [
+        -0.0040000000000000036,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7500000000000016,
+            1.039230484541326
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.0000000000000009,
+            -0.6062177826491069
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.0000000000000009,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.5000000000000013,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -35,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.45448267190433,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            15,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.45448267190433,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.4,
+      "root": [
+        0,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0,
+            -0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -30,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -6,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.466666666666667,
+      "root": [
+        0.003999999999999999,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            -0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -25,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.533333333333333,
+      "root": [
+        0.006928203230275509,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            0,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.6,
+      "root": [
+        0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.5,
+            7.347880794884119e-17
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2,
+            -4.286263797015736e-17
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            1.1634144591899855e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.56168880302039,
+            -7.980385237885124,
+            94.03918080570797
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -43,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -1.1634144591899855e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.8794658654419,
+            7.921642134988724,
+            -81.92241209189879
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.6666666666666665,
+      "root": [
+        0.0069282032302755096,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.0310889132455356,
+            -0.5999999999999998
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688774,
+            0.3499999999999998
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688774,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            28,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.499999999999996,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.499999999999996,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.7333333333333334,
+      "root": [
+        0.003999999999999999,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            15,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -35,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.8,
+      "root": [
+        9.797174393178825e-19,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            4.286263797015736e-16,
+            -1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2.4492935982947064e-16,
+            0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2.4492935982947064e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3.6739403974420594e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -6,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -30,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.8666666666666667,
+      "root": [
+        -0.0039999999999999975,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7499999999999991,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0.9999999999999994,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0.9999999999999994,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.4999999999999991,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -25,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 2.933333333333333,
+      "root": [
+        -0.006928203230275508,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.0310889132455348,
+            -0.6000000000000005
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.732050807568877,
+            0.3500000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.732050807568877,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.5980762113533156,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.500000000000009,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            0,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.500000000000009,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3,
+      "root": [
+        -0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.5,
+            -2.2043642384652356e-16
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            2,
+            1.2858791391047207e-16
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -43,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -3.4902433775699565e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.8794658654419,
+            -7.921642134988724,
+            81.92241209189879
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            3.4902433775699565e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.56168880302039,
+            7.980385237885124,
+            -94.03918080570797
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.066666666666667,
+      "root": [
+        -0.006928203230275509,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            28,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.1333333333333333,
+      "root": [
+        -0.0040000000000000036,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7500000000000016,
+            1.039230484541326
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.0000000000000009,
+            -0.6062177826491069
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.0000000000000009,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.5000000000000013,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -35,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.45448267190433,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            15,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.45448267190433,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.2,
+      "root": [
+        0,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0,
+            -0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -30,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -6,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.2666666666666666,
+      "root": [
+        0.003999999999999999,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            -0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -25,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.3333333333333335,
+      "root": [
+        0.006928203230275509,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            0,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.4,
+      "root": [
+        0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.5,
+            7.347880794884119e-17
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2,
+            -4.286263797015736e-17
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            18,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            1.1634144591899855e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.56168880302039,
+            -7.980385237885124,
+            94.03918080570797
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -43,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -1.1634144591899855e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.8794658654419,
+            7.921642134988724,
+            -81.92241209189879
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.466666666666667,
+      "root": [
+        0.0069282032302755096,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            3.0310889132455356,
+            -0.5999999999999998
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -1.7320508075688774,
+            0.3499999999999998
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -1.7320508075688774,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            28,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.499999999999996,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.4489478135299,
+            -7.9874747738755465,
+            93.22749676061325
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -40,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.499999999999996,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            88.9914077584861,
+            7.9365771223536274,
+            -82.7338790716794
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.533333333333333,
+      "root": [
+        0.003999999999999999,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            1.7499999999999998,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -0.9999999999999999,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -0.9999999999999999,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -1.4999999999999998,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            15,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            90.14053341779234,
+            -7.9987735828279485,
+            91.0098255473661
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -35,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.298222482679,
+            7.9693593495479105,
+            -84.95111488973949
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.6,
+      "root": [
+        9.797174393178825e-19,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            4.286263797015736e-16,
+            -1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            -2.4492935982947064e-16,
+            0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            -2.4492935982947064e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            -3.6739403974420594e-16,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -6,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -30,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.6666666666666665,
+      "root": [
+        -0.0039999999999999975,
+        -0.01785554,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7499999999999991,
+            -1.0392304845413265
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0.9999999999999994,
+            0.6062177826491071
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0.9999999999999994,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.4999999999999991,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -25,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            95,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -16.454482671904337,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -10,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            16.454482671904337,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.7333333333333334,
+      "root": [
+        -0.006928203230275508,
+        -0.03786895,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.0310889132455348,
+            -0.6000000000000005
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.732050807568877,
+            0.3500000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.732050807568877,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.5980762113533156,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            78,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -30,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -9.500000000000009,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            0,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            26,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -23,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            9.500000000000009,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.8,
+      "root": [
+        -0.008,
+        -0.00608841,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.5,
+            -2.2043642384652356e-16
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            2,
+            1.2858791391047207e-16
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            2,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            3,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -43,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            50,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            -3.4902433775699565e-15,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.8794658654419,
+            -7.921642134988724,
+            81.92241209189879
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            18,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            3.4902433775699565e-15,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.56168880302039,
+            7.980385237885124,
+            -94.03918080570797
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.8666666666666667,
+      "root": [
+        -0.006928203230275509,
+        -0.04347864,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -3.031088913245535,
+            0.6000000000000001
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.7320508075688772,
+            -0.35000000000000003
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.7320508075688772,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            2.598076211353316,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -40,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            28,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            8,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            9.500000000000002,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            88.9914077584861,
+            -7.9365771223536274,
+            82.7338790716794
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            28,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            42,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -20,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -9.500000000000002,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.4489478135299,
+            7.9874747738755465,
+            -93.22749676061325
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 3.933333333333333,
+      "root": [
+        -0.0040000000000000036,
+        -0.05485952,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            -1.7500000000000016,
+            1.039230484541326
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            1.0000000000000009,
+            -0.6062177826491069
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            1.0000000000000009,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            1.5000000000000013,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -35,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            16,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            16.45448267190433,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.298222482679,
+            -7.9693593495479105,
+            84.95111488973949
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            15,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            82,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -40,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -16.45448267190433,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            90.14053341779234,
+            7.9987735828279485,
+            -91.0098255473661
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "t": 4,
+      "root": [
+        0,
+        -0.0447566,
+        0
+      ],
+      "rotations": [
+        {
+          "joint": "Hips",
+          "degrees": [
+            3,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "Spine",
+          "degrees": [
+            3,
+            0,
+            -0.7
+          ]
+        },
+        {
+          "joint": "Spine1",
+          "degrees": [
+            2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Spine2",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Neck",
+          "degrees": [
+            -5,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "Head",
+          "degrees": [
+            -2,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftUpLeg",
+          "degrees": [
+            -30,
+            0,
+            -1.2
+          ]
+        },
+        {
+          "joint": "LeftLeg",
+          "degrees": [
+            18,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftFoot",
+          "degrees": [
+            12,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "LeftArm",
+          "degrees": [
+            19,
+            0,
+            -82
+          ]
+        },
+        {
+          "joint": "LeftForeArm",
+          "degrees": [
+            89.71897766221323,
+            -7.99509472701692,
+            87.98036105304666
+          ]
+        },
+        {
+          "joint": "LeftHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightUpLeg",
+          "degrees": [
+            -6,
+            0,
+            1.2
+          ]
+        },
+        {
+          "joint": "RightLeg",
+          "degrees": [
+            100,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightFoot",
+          "degrees": [
+            -45,
+            0,
+            0
+          ]
+        },
+        {
+          "joint": "RightArm",
+          "degrees": [
+            -19,
+            0,
+            82
+          ]
+        },
+        {
+          "joint": "RightForeArm",
+          "degrees": [
+            89.71897766221323,
+            7.99509472701692,
+            -87.98036105304666
+          ]
+        },
+        {
+          "joint": "RightHand",
+          "degrees": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}
