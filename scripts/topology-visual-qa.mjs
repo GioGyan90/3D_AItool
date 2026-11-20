@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {mkdir,writeFile,stat} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {chromium} from 'playwright';
 
 const folder='artifacts/topology-qa';
@@ -19,7 +20,10 @@ try{
     await new Promise(resolve=>setTimeout(resolve,400));
   }
   assert.ok(available,'Vite app did not start');
-  browser=await chromium.launch({headless:true,args:[
+  const executablePath=['/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium'].find(p=>existsSync(p));
+  if(!executablePath)throw Error('CI runner lacks system Chrome; install a browser explicitly');
+  console.log('[QA] Using system Chrome',executablePath);
+  browser=await chromium.launch({executablePath,headless:true,args:[
     '--no-sandbox','--use-gl=angle','--use-angle=swiftshader',
     '--enable-webgl','--enable-unsafe-swiftshader'
   ]});
