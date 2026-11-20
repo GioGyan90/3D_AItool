@@ -10,14 +10,14 @@ type V=[number,number,number];
 type Data=ControlMesh;
 type Props={
   data:Data; direction:string; selected:number|null;
-  selectedFace?:number|null; selectedEdge?:[number,number]|null;
+  selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
-  onSelectFace?:(i:number)=>void; onSelectEdge?:(face:number,slot:number)=>void;
+  onSelectFace?:(i:number,additive?:boolean)=>void; onSelectEdge?:(face:number,slot:number)=>void;
   onStartMove?:()=>void; xray?:boolean; showCage?:boolean;
 };
 const keyOf=(a:number,b:number)=>a<b?`${a}:${b}`:`${b}:${a}`;
 
-function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,showCage=true,orbit}:
+function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,showCage=true,orbit}:
   Omit<Props,'direction'>&{orbit:React.MutableRefObject<any>}){
   const [handle,setHandle]=useState<THREE.Group|null>(null);
   const dragging=useRef(false),transform=useRef<any>(null),dragIndex=useRef<number|null>(null);
@@ -44,9 +44,11 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
     points.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     const stickers=buildPaintStickerGeometry(data);
     const faceGeo=new THREE.BufferGeometry();
-    if(selectedFace!=null && data.faces[selectedFace]){
+    const visibleSelection=(selectedFaces?.length ? selectedFaces : selectedFace!=null ? [selectedFace] : [])
+      .filter(i=>i>=0&&i<data.faces.length);
+    if(visibleSelection.length){
       try{
-        const selectedIndices=triangulateFaces(data.vertices,[data.faces[selectedFace]]);
+        const selectedIndices=triangulateFaces(data.vertices,visibleSelection.map(i=>data.faces[i]));
         faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
         faceGeo.setIndex(selectedIndices);
       }catch{/* Keep the editor responsive if a manual face is invalid. */}
@@ -57,7 +59,7 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
         new THREE.Vector3(...data.vertices[selectedEdge[1]])),
       1,.008,6,false):null;
     return {mesh,lines,points,stickers,faceGeo,selectedEdgeTube,edgeOwners};
-  },[data,selectedFace,selectedEdge?.[0],selectedEdge?.[1]]);
+  },[data,selectedFace,selectedFaces,selectedEdge?.[0],selectedEdge?.[1]]);
   const faceForTriangle=useMemo(()=>data.faces.flatMap((f,i)=>Array(Math.max(0,f.length-2)).fill(i) as number[]),[data.faces]);
   useEffect(()=>()=>{mesh.dispose();lines.dispose();points.dispose();stickers.dispose();faceGeo.dispose();selectedEdgeTube?.dispose()},
     [mesh,lines,points,stickers,faceGeo,selectedEdgeTube]);
@@ -69,12 +71,12 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
     <mesh geometry={mesh} onPointerDown={e=>{
       if(e.faceIndex==null||!onSelectFace)return;
       const fi=faceForTriangle[e.faceIndex];
-      if(fi!==undefined){e.stopPropagation();onSelectFace(fi);}
+      if(fi!==undefined){e.stopPropagation();onSelectFace(fi,Boolean(e.shiftKey||e.ctrlKey||e.metaKey));}
     }}><meshStandardMaterial color={data.faceColors?.length ? "#161a22" : "#999999"} flatShading side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1}/></mesh>
     {data.faceColors?.length ? <mesh geometry={stickers} raycast={()=>null}>
       <meshStandardMaterial vertexColors flatShading side={THREE.DoubleSide} roughness={.45}/>
     </mesh> : null}
-    {selectedFace!=null&&<mesh geometry={faceGeo} raycast={()=>null}>
+    {(selectedFaces?.length||selectedFace!=null)&&<mesh geometry={faceGeo} raycast={()=>null}>
       <meshBasicMaterial color="#1eafff" transparent opacity={.22} depthWrite={false}
         side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={-2}/>
     </mesh>}
