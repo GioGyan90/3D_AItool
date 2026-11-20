@@ -318,8 +318,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   {geometry?<><section className="topo-inspector-card text-sm space-y-3">
   <div className="topo-inspector-heading">
     <strong>01 · 当前选择</strong>
-    <span className="text-xs text-neutral-500">顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</span>
+    <span className="topo-eyebrow">{selectedSummary}</span>
   </div>
+  <p className="topo-helptext">可在画布点选元素，或输入编号精确定位。</p>
   <div className="grid grid-cols-2 gap-2">
     <label className="text-xs text-neutral-400">控制面编号
       <input aria-label="控制面编号" className="mt-1 w-full rounded border border-neutral-700 bg-neutral-950 p-2 text-sm text-neutral-100" type="number"
@@ -361,10 +362,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}
 </section><section className="topo-inspector-card space-y-3">
   <div className="topo-inspector-heading"><h3>02 · 建模操作</h3><span className="topo-eyebrow">按任务切换</span></div>
-  <div className="grid grid-cols-4 gap-1 rounded bg-neutral-950 p-1">
-   {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label])=>
-     <button key={id} aria-pressed={toolPanel===id} className={'rounded py-2 text-xs '+(toolPanel===id?'bg-sky-800 text-white':'text-neutral-400 hover:bg-neutral-800')} onClick={()=>{setToolPanel(id);if(id==='topology'||id==='model')setShowCage(true);if(id==='paint')setShowCage(false)}}>{label}</button>)}
+  <div className="topo-tool-tabs" role="group" aria-label="建模工具分类">
+    {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label],i)=>
+      <button key={id} aria-label={label} aria-pressed={toolPanel===id} className="topo-tab"
+        onClick={()=>{setToolPanel(id);setLoopInfo('');if(id==='topology'||id==='model')setShowCage(true);if(id==='paint')setShowCage(false)}}>
+        <span className="topo-tab-number" aria-hidden="true">{String(i+1).padStart(2,'0')}</span>{label}
+      </button>)}
   </div>
+  <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
   {toolPanel==='topology'&&<div className="space-y-3">
     <div className="space-y-2 rounded border border-amber-700/40 bg-amber-950/20 p-3">
       <div className="font-medium text-amber-200">示例：单立方体 → 3×3 魔方</div>
