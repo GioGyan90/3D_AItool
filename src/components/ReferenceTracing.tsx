@@ -39,6 +39,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const dragRecorded=useRef(false);
  const [insetFraction,setInsetFraction]=useState(.25);
  const [xray,setXray]=useState(false);
+ const [showCage,setShowCage]=useState(!Boolean(sceneEdit?.mesh.faceColors?.length));
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
  const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>('topology');
  const [paintColor,setPaintColor]=useState<string>(RUBIK_FACE_COLORS.right);
@@ -130,7 +131,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const makeRubik=()=>{
    if(!isBaseBox||!geometry||draftDirty||faceDraft.length)return;
    operateMesh(createRubikControlMesh,'魔方六条环线完成：56 共享顶点 / 54 四边面，每个方向 9 格。');
-   setToolPanel('paint');setPreviewDirection('angle');
+   setToolPanel('paint');setPreviewDirection('angle');setShowCage(false);
  };
  const paintSelectedFace=(hex:string)=>{
    if(!geometry||selectedFace===null||draftDirty||faceDraft.length||busy.current)return;
@@ -197,16 +198,17 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
            {label}
          </button>
        ))}
-       <label className="ml-2 flex items-center gap-2 text-xs text-neutral-300"><input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>透视背面布线 X-Ray</label>
+       <button className={btn+' ml-auto'} aria-pressed={!showCage} onClick={()=>setShowCage(value=>!value)}>{showCage?'成品预览':'显示布线'}</button>
+        {showCage&&<label className="ml-2 flex items-center gap-2 text-xs text-neutral-300"><input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>背面布线 X-Ray</label>}
      </div>
      <div aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} xray={xray}
+       {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} xray={xray} showCage={showCage}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={setSelected} onMove={update}
   onSelectFace={fi=>{setSelectedFace(fi);setSelectedEdgeSlot(0);setError('')}}
   onSelectEdge={(fi,slot)=>{setSelectedFace(fi);setSelectedEdgeSlot(slot);setError('')}}
   onStartMove={remember}/>}
      </div>
-     <p className="text-neutral-400">点击蓝色顶点选点、橙色边线选环切起点、灰色面选控制面。拖动 XYZ 手柄移动顶点；空白处旋转。</p>
+     <p className="text-neutral-400">布线视图：蓝色顶点/橙色边线可编辑；成品预览隐藏这些辅助元素，仍可点选控制面进行配色。</p>
      {triangulationError && <p role="alert" className="text-amber-300">面暂不可三角化，预览仅显示点和线。{triangulationError}</p>}
    </div>
  );
