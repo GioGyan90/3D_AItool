@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview} from './TracePreview';
@@ -26,7 +27,10 @@ const views: {id:View,label:string,cell:number}[]=[{id:'front',label:'正面',ce
 const project=(v:V,view:View):[number,number]=>view==='front'?[v[0],v[1]]:view==='side'?[-v[2],v[1]]:view==='back'?[-v[0],v[1]]:view==='top'?[v[0],-v[2]]:[v[0],v[2]];
 const replaceProjection=(v:V,view:View,x:number,y:number):V=>view==='front'?[x,y,v[2]]:view==='side'?[v[0],y,-x]:view==='back'?[-x,y,v[2]]:view==='top'?[x,v[1],-y]:[x,v[1],y];
 const download=(blob:Blob,name:string)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-const btn='rounded border border-neutral-600 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-100 hover:bg-neutral-700 disabled:opacity-40';
+const btn='topo-button rounded border px-3 py-1.5 text-sm disabled:opacity-40';
+const RUBIK_COLOR_LABELS:Record<keyof typeof RUBIK_FACE_COLORS,string>={
+  right:'右 · 红',left:'左 · 橙',top:'上 · 白',bottom:'下 · 黄',front:'前 · 绿',back:'后 · 蓝',
+};
 const MAX_VERTICES=5000,MAX_FACES=10000,MAX_REFERENCES=30000,MAX_FILE=10*1024*1024,MAX_IMAGE=5*1024*1024;
 const readGeometry=(d:any):Geometry=>{let raw=d.vertices??d.verts,faces=Array.isArray(d.control)?d.control:d.faces;if(!Array.isArray(raw)||!Array.isArray(faces))throw Error('需要 vertices/verts 和 faces/control 数组');if(raw.length&&typeof raw[0]==='number'){if(raw.length%3)throw Error('顶点坐标数量不是 3 的倍数');raw=Array.from({length:raw.length/3},(_,i)=>raw.slice(3*i,3*i+3))}if(raw.length>MAX_VERTICES||faces.length>MAX_FACES||faces.reduce((n:number,f:any)=>n+(Array.isArray(f)?f.length:0),0)>MAX_REFERENCES)throw Error('超过限制：最多 5000 顶点、10000 控制面及 30000 个面顶点引用');if(raw.some((v:any)=>!Array.isArray(v)||v.length!==3||v.some((x:any)=>typeof x!=='number'||!Number.isFinite(x))))throw Error('顶点应是有限的 [x,y,z] 坐标');if(faces.some((f:any)=>!Array.isArray(f)||f.length<3||f.length>64||f.some((i:any)=>!Number.isInteger(i)||i<0||i>=raw.length)))throw Error('控制面索引无效');if(d.faceColors!==undefined&&(!Array.isArray(d.faceColors)||d.faceColors.length!==faces.length||d.faceColors.some((c:unknown)=>typeof c!=='string'||!/^#[0-9a-f]{6}$/i.test(c))))throw Error('逐面颜色必须与控制面数量一致且为 #RRGGBB');return {vertices:raw.map((v:number[])=>[...v] as V),faces:faces.map((f:number[])=>[...f]),...(d.faceColors?{faceColors:[...d.faceColors]}:{})}};
 
@@ -44,7 +48,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [cameraRevision,setCameraRevision]=useState(0);
  const [showCage,setShowCage]=useState(!Boolean(sceneEdit?.mesh.faceColors?.length));
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
- const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>('topology');
+ const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>(()=>sceneEdit?.mesh.faceColors?.length?'paint':'topology');
  const [paintColor,setPaintColor]=useState<string>(RUBIK_FACE_COLORS.right);
  const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
@@ -69,7 +73,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
      ? selectedFaces.includes(fi)?selectedFaces.filter(i=>i!==fi):[...selectedFaces,fi]
      : [fi];
    setSelectedFaces(next);setSelectedFace(next.length?next[next.length-1]:null);
-   setSelectedEdgeSlot(0);setError('');
+   setSelectedEdgeSlot(0);setError('');setLoopInfo('');
  };
  const chooseFaceGroup=(kind:'plane'|'color')=>{
    if(!geometry||selectedFace===null)return;
@@ -79,9 +83,18 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    setSelectedFaces(ids);
    setLoopInfo(`已选择 ${ids.length} 个${kind==='plane'?'共面':'同色'}控制面，可一次配色。`);
  };
- const clearFaces=()=>{setSelectedFace(null);setSelectedFaces([]);setError('')};
+ const clearFaces=()=>{setSelectedFace(null);setSelectedFaces([]);setLoopInfo('');setError('')};
  const selectedLoopFace=selectedFace===null?null:geometry?.faces[selectedFace];
  const selectedLoopEdge=selectedLoopFace?.length===4?[selectedLoopFace[selectedEdgeSlot],selectedLoopFace[(selectedEdgeSlot+1)%4]]:null;
+ const selectedSummary=selectedFaces.length>1?`已选 ${selectedFaces.length} 个控制面`:
+   selectedFace!==null?`面 #${selectedFace}`:
+   selected!==null?`顶点 #${selected}`:'未选择元素';
+ const tabDetails={
+   topology:'添加与分割边线 · 先选择四边面的一条边',
+   model:'移动顶点，或对选中控制面执行内插与挤出',
+   paint:'选择一个或多个控制面，统一设置颜色',
+   inspect:'核对顶点数量、面连接与网格完整性',
+ } as const;
  const meshQuality=useMemo(()=>{
    if(!geometry)return null;
    try{const {edges,boundaryEdges}=validateControlTopology(geometry);return {edges,boundaryEdges,error:''}}
@@ -101,6 +114,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    setPast(p=>[...p,snapshot()]);restoreSnapshot(future[future.length-1]);setFuture(f=>f.slice(0,-1));};
  const historyKey=(e:React.KeyboardEvent<HTMLDivElement>)=>{
    protectDraftKey(e);
+   if(e.key==='Escape' && !(e.target as Element).closest('input,textarea,[contenteditable="true"]') && !faceDraft.length){
+     if(selected!==null||selectedFace!==null){setSelected(null);clearFaces();e.preventDefault()}
+     return;
+   }
    if(!(e.ctrlKey||e.metaKey)||e.altKey||
      (e.target as Element).closest('input,textarea,[contenteditable="true"]'))return;
    const key=e.key.toLowerCase();
@@ -219,24 +236,25 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  };
  const spatialPreview = geometry && (
    <div className={sceneEdit
-     ? 'flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900'
+     ? 'topo-stage'
      : previewLarge
        ? 'fixed inset-4 z-[205] flex flex-col rounded border border-neutral-600 bg-neutral-900 p-3 shadow-xl'
        : undefined}>
-     <div className="flex min-h-10 flex-wrap items-center gap-1 border-b border-neutral-800 bg-neutral-950/60 px-3 py-2">
-       {!sceneEdit && (
-         <button className={btn} onClick={() => setPreviewLarge(value => !value)} aria-pressed={previewLarge}>
-           {previewLarge ? '恢复小预览' : '放大3D编辑'}
-         </button>
-       )}
-       {[['front', '正面'], ['back', '背面'], ['angle', '3/4'], ['low', '低角度']].map(([direction, label]) => (
-         <button key={direction} className={btn+(previewDirection===direction?' !border-sky-500 !bg-sky-900':'')} onClick={() => {setPreviewDirection(direction);setCameraRevision(n=>n+1)}} aria-pressed={previewDirection === direction}>
-           {label}
-         </button>
+     <div className="topo-camera-bar" role="toolbar" aria-label="三维视图工具栏">
+       {!sceneEdit && <button className={btn} onClick={()=>setPreviewLarge(value=>!value)} aria-pressed={previewLarge}>
+         {previewLarge?'恢复小预览':'放大 3D 编辑'}</button>}
+       <span className="topo-camera-label">观察角度</span>
+       {([['front','正面'],['back','背面'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
+         <button key={direction} className={btn} onClick={()=>{setPreviewDirection(direction);setCameraRevision(n=>n+1)}}
+           aria-pressed={previewDirection===direction} title={`切换到${label}机位`}>{label}</button>
        ))}
-       <button className={btn+' ml-auto'} onClick={()=>setCameraRevision(n=>n+1)} title="将镜头返回当前预设机位">重置视角</button>
-        <button className={btn} aria-pressed={!showCage} onClick={()=>setShowCage(value=>!value)}>{showCage?'成品预览':'显示布线'}</button>
-        {showCage&&<label className="ml-2 flex items-center gap-2 text-xs text-neutral-300"><input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>背面布线 X-Ray</label>}
+       <div className="topo-camera-actions">
+         <button className={btn} onClick={()=>setCameraRevision(n=>n+1)} title="返回当前预设机位">重置视角</button>
+         <button className={btn} aria-pressed={!showCage} onClick={()=>setShowCage(v=>!v)}>{showCage?'成品预览':'显示布线'}</button>
+         {showCage&&<label className="flex items-center gap-1 text-xs text-slate-300">
+           <input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>X-Ray
+         </label>}
+       </div>
      </div>
      <div aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
        {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
@@ -245,29 +263,28 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
   onStartMove={remember}/>}
      </div>
-     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-neutral-800 bg-neutral-950/70 px-3 py-2 text-xs text-neutral-400">
-  <span>{showCage?'编辑模式 · 点选顶点/边线/控制面':'成品模式 · 隐藏辅助线，仍可点选控制面'}</span>
-  <span>Shift + 点击面：多选 · 鼠标拖动空白：旋转</span>
- </div>
+     <div className="topo-stage-foot">
+       <span>{showCage?'编辑布线':'成品预览'} · {selectedSummary}</span>
+       <span>拖动空白旋转 · Shift + 点击多选 · Esc 清空选择</span>
+     </div>
      {triangulationError && <p role="alert" className="text-amber-300">面暂不可三角化，预览仅显示点和线。{triangulationError}</p>}
    </div>
  );
- return <div ref={dialogRef} onPointerDownCapture={protectDraft} onClickCapture={protectDraftClick} onKeyDownCapture={historyKey} className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-neutral-950 text-neutral-100" role="dialog" aria-modal="true" aria-label={sceneEdit ? "场景顶点编辑" : "顶点参考对照"}>
-  <fieldset disabled={loading} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"><header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-neutral-800 bg-neutral-950/95 px-3 py-2">
-  <div className="min-w-[165px] flex-1">
-    <h2 className="max-w-[550px] truncate text-sm font-semibold text-white" title={sceneEdit?.name}>
-      {sceneEdit ? sceneEdit.name : '顶点参考对照'}
-    </h2>
-    <p className="text-xs text-neutral-500">
-      {sceneEdit?'网格建模工作台':'参考建模工作台'} · {dirty?'尚未应用修改':'无待应用的模型修改'}
+ return <div ref={dialogRef} onPointerDownCapture={protectDraft} onClickCapture={protectDraftClick} onKeyDownCapture={historyKey} className="topo-shell fixed inset-0 z-[200] flex flex-col overflow-hidden" data-topology-workbench="true" role="dialog" aria-modal="true" aria-label={sceneEdit ? "场景顶点编辑" : "顶点参考对照"}>
+  <fieldset disabled={loading} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"><header className="topo-header">
+  <div className="topo-header-title">
+    <h2 className="truncate" title={sceneEdit?.name}>{sceneEdit ? sceneEdit.name : '顶点参考对照'}</h2>
+    <p>
+      <span className={'topo-status-dot'+(dirty||draftDirty||faceDraft.length?' is-dirty':'')}/>
+      {sceneEdit ? (dirty?'待应用到场景':'模型已同步') : (dirty||referenceDirty?'有未保存修改':'参考编辑模式')}
       {geometry?` · ${geometry.vertices.length} 顶点 / ${geometry.faces.length} 面`:''}
     </p>
   </div>
-  {sceneEdit? <div className="flex items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900/60 p-1">
-    <button className={btn+(projectSpatialView?' !border-sky-500 !bg-sky-900':'')} onClick={()=>setProjectSpatialView(true)} aria-pressed={projectSpatialView}>3D 编辑</button>
-    <button className={btn+(!projectSpatialView?' !border-sky-500 !bg-sky-900':'')} onClick={()=>setProjectSpatialView(false)} aria-pressed={!projectSpatialView}>正交编辑</button>
+  {sceneEdit ? <div className="topo-mode-switch" role="group" aria-label="编辑视图模式">
+    <button className={btn} onClick={()=>setProjectSpatialView(true)} aria-pressed={projectSpatialView}>3D 编辑</button>
+    <button className={btn} onClick={()=>setProjectSpatialView(false)} aria-pressed={!projectSpatialView}>正交编辑</button>
   </div>:
-  <div className="flex flex-wrap gap-1">
+  <div className="topo-header-actions">
     {backup&&<button className={btn} disabled={dirty||referenceDirty||draftDirty||faceDraft.length>0} onClick={restoreBackup}>恢复新建前状态</button>}
     <button className={btn} disabled={dirty||draftDirty||faceDraft.length>0||!!backup} onClick={newMesh}>新建空网格</button>
     <label className={btn+' cursor-pointer'}>导入参考图<input aria-label="导入参考图" type="file" accept="image/png,image/jpeg,image/webp" disabled={referenceDirty} className="hidden" onChange={loadImage}/></label>
@@ -275,28 +292,38 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <button className={btn} disabled={!geometry} onClick={save}>保存顶点 JSON</button>
     <button className={btn} disabled={!geometry?.faces.length} onClick={exportGlb}>导出 GLB</button>
   </div>}
-  <div className="flex items-center gap-1">
+  <div className="topo-header-actions" role="group" aria-label="编辑历史">
     <button className={btn} disabled={!past.length||draftDirty||faceDraft.length>0} onClick={undoMesh} title="Ctrl+Z">撤销</button>
     <button className={btn} disabled={!future.length||draftDirty||faceDraft.length>0} onClick={redoMesh} title="Ctrl+Shift+Z / Ctrl+Y">重做</button>
   </div>
-  {sceneEdit&&<button className={btn+' border-sky-500 !bg-sky-900 font-semibold'} disabled={!dirty||!geometry?.faces.length||draftDirty||faceDraft.length>0||Boolean(triangulationError)} onClick={applyToScene}>应用到场景</button>}
-  <button className={btn+' !px-3'} data-trace-close onClick={closeEditor} aria-label={sceneEdit?'关闭场景顶点编辑':'关闭顶点参考对照'} title="关闭">×</button>
+  {sceneEdit&&<button className={btn+' topo-primary'} disabled={!dirty||!geometry?.faces.length||draftDirty||faceDraft.length>0||Boolean(triangulationError)}
+     onClick={applyToScene}>应用到场景</button>}
+  <button className={btn+' !px-3'} data-trace-close onClick={closeEditor}
+    aria-label={sceneEdit?'关闭场景顶点编辑':'关闭顶点参考对照'} title="关闭">×</button>
 </header>
-  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"><div className="flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden p-2 lg:min-h-0 lg:p-3">
+  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"><div className="topo-viewport flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden p-2 lg:min-h-0 lg:p-3">
    {sceneEdit && projectSpatialView ? spatialPreview : <>
    <div className="mb-2 flex flex-wrap gap-2">{views.map(v=><button key={v.id} className={btn+(view===v.id?' !border-blue-400 !bg-blue-900':'')} onClick={()=>{setView(v.id);setSelected(null)}} aria-pressed={view===v.id}>{v.label}</button>)}</div>
    <div className="mb-2 flex flex-wrap items-center gap-2">{([['select','选择/移动'],['point','放置顶点'],['face','连接成面']] as const).map(([id,label])=><button key={id} className={btn+(mode===id?' !border-blue-400 !bg-blue-900':'')} disabled={!geometry||(faceDraft.length>0&&id!=='face')} onClick={()=>{setMode(id)}} aria-pressed={mode===id}>{label}</button>)}{mode==='select'&&<label>拖动约束 <select aria-label="拖动约束" className="bg-neutral-800 p-1" value={constraint} onChange={e=>setConstraint(e.target.value as typeof constraint)}><option value="both">横竖均可</option><option value="horizontal">仅水平</option><option value="vertical">仅垂直</option></select></label>}{mode==='point'&&<label>隐藏轴坐标（{view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）<input aria-label={`顶点 新顶点隐藏轴坐标（${view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）`} className="ml-2 w-24 bg-neutral-800 p-1" type="text" inputMode="decimal" data-trace-draft="true" data-dirty={depthText!==String(depth)} value={depthText} onChange={e=>{setDepthText(e.target.value);setDraftDirty(e.target.value!==String(depth))}} onBlur={()=>{const n=Number(depthText);if(depthText.trim()!==''&&Number.isFinite(n)){setDepth(n);setDepthText(String(n));setDraftDirty(false)}else setError('隐藏轴坐标无效，请输入有限数字后再放点')}}/></label>}{mode==='face'&&<><span>待连接：{faceDraft.join(' → ')||'无'}（尚未保存）</span><button className={btn} disabled={selected===null||faceDraft.includes(selected)} onClick={()=>selected!==null&&setFaceDraft(old=>[...old,selected])}>添加选中点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft(old=>old.slice(0,-1))}>撤销上一个点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft([])}>清空待连接</button><button className={btn} disabled={faceDraft.length<3} onClick={finishFace}>完成面</button></>}</div><div className="min-h-[300px] flex-1 overflow-auto bg-neutral-800"><svg ref={svg} onPointerDown={canvasPoint} viewBox="0 0 1000 1000" className="mx-auto block h-full max-h-[min(80vh,900px)] w-full touch-none select-none" onPointerMove={pointer} onPointerUp={()=>setDrag(false)} onPointerCancel={()=>setDrag(false)}><defs><clipPath id="trace-crop"><rect width="1000" height="1000"/></clipPath></defs><rect width="1000" height="1000" fill="#e9e9e9"/>{image&&<g clipPath="url(#trace-crop)" opacity={opacity}><image href={image} x={grid?-(cell%3)*1000:0} y={grid?-Math.floor(cell/3)*1000:0} width={grid?3000:1000} height={grid?3000:1000} preserveAspectRatio="xMidYMid meet"/></g>}
     {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();chooseFace(quad.face);setSelectedEdgeSlot(quad.slot);setToolPanel('topology');setLoopInfo('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
    </>}
   </div>
-  <aside className="min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 bg-neutral-950 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<p className="text-amber-300">{sceneEdit ? '完成待连接的面后，点击「应用到场景」写入图层。' : '当前工作区有未保存修改或待连接的面；替换内容前请先完成或清空待连接，并保存 JSON。'}</p>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
+  <aside className="topo-inspector min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(error||loopInfo||dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<div className="topo-inspector-feedback space-y-2">
+    {error&&<p role="alert" className="topo-message is-error">{error}</p>}
+    {!error&&loopInfo&&<p role="status" className="topo-message">{loopInfo}</p>}
+    {faceDraft.length>0&&<p className="topo-message is-warning">正在连接控制面：已选 {faceDraft.length} 个顶点，请完成或清空。</p>}
+    {!faceDraft.length&&(dirty||referenceDirty||draftDirty)&&<p className="topo-helptext">
+      {sceneEdit?'当前修改尚未应用，关闭会丢失修改。':'当前工作区有未保存修改，请保存 JSON。'}
+    </p>}
+  </div>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
   <summary className="cursor-pointer font-medium text-neutral-200">参考图与正交视图参数</summary>
   <div className="mt-3 space-y-2"><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></div></details>}
-  {geometry?<><section className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-sm space-y-2">
-  <div className="flex items-center justify-between gap-2">
-    <strong className="font-medium text-neutral-200">选择与坐标</strong>
-    <span className="text-xs text-neutral-500">顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</span>
+  {geometry?<><section className="topo-inspector-card text-sm space-y-3">
+  <div className="topo-inspector-heading">
+    <strong>01 · 当前选择</strong>
+    <span className="topo-eyebrow">{selectedSummary}</span>
   </div>
+  <p className="topo-helptext">可在画布点选元素，或输入编号精确定位。</p>
   <div className="grid grid-cols-2 gap-2">
     <label className="text-xs text-neutral-400">控制面编号
       <input aria-label="控制面编号" className="mt-1 w-full rounded border border-neutral-700 bg-neutral-950 p-2 text-sm text-neutral-100" type="number"
@@ -336,26 +363,29 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       return tag?<p>顶点来源：{String(tag.source??'未记录')}{tag.depth?` · ${String(tag.depth)}`:''}</p>:<p>此顶点暂无参考来源记录。</p>})()}
     <p>正交视图按面绕序近似隐藏背面；可在 3D 视图检查遮挡。</p>
   </div>}
-</section><section className="rounded-xl border border-neutral-700 bg-neutral-900/60 p-3 space-y-3">
-  <div className="flex justify-between gap-2"><h3 className="font-semibold text-sky-200">建模工具</h3><span className="text-xs text-neutral-400">按任务选择 · 逐步造型</span></div>
-  <div className="grid grid-cols-4 gap-1 rounded bg-neutral-950 p-1">
-   {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label])=>
-     <button key={id} aria-pressed={toolPanel===id} className={'rounded py-2 text-xs '+(toolPanel===id?'bg-sky-800 text-white':'text-neutral-400 hover:bg-neutral-800')} onClick={()=>{setToolPanel(id);if(id==='topology'||id==='model')setShowCage(true);if(id==='paint')setShowCage(false)}}>{label}</button>)}
+</section><section className="topo-inspector-card space-y-3">
+  <div className="topo-inspector-heading"><h3>02 · 建模操作</h3><span className="topo-eyebrow">按任务切换</span></div>
+  <div className="topo-tool-tabs" role="group" aria-label="建模工具分类">
+    {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label],i)=>
+      <button key={id} aria-label={label} aria-pressed={toolPanel===id} className="topo-tab"
+        onClick={()=>{setToolPanel(id);setLoopInfo('');if(id==='topology'||id==='model')setShowCage(true);if(id==='paint')setShowCage(false)}}>
+        <span className="topo-tab-number" aria-hidden="true">{String(i+1).padStart(2,'0')}</span>{label}
+      </button>)}
   </div>
+  <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
   {toolPanel==='topology'&&<div className="space-y-3">
-    <div className="space-y-2 rounded border border-amber-700/40 bg-amber-950/20 p-3">
-      <div className="font-medium text-amber-200">示例：单立方体 → 3×3 魔方</div>
-      <p className="text-xs text-neutral-300">沿 X、Y、Z 各插入两条真实的连续环线，保持共享顶点，不创建 27 个独立立方体。</p>
-      <button className={btn+' w-full border-amber-500/50 !bg-amber-900/30'} onClick={makeRubik} disabled={!isBaseBox||draftDirty||faceDraft.length>0}>六次环切 · 生成魔方</button>
-      {!isBaseBox&&<p className="text-xs text-neutral-500">仅原始 8 顶点立方体可使用，避免覆盖已编辑几何体。</p>}
-    </div>
-    <p className="text-xs text-neutral-400">选择 3D 或正交视图中的边线，再调整切割位置。</p>
+    {isBaseBox&&<div className="space-y-2 rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
+      <div className="topo-tool-label">入门案例 · 从立方体开始</div>
+      <p className="topo-helptext">六次真实环切，生成共享顶点的 3×3 魔方网格。</p>
+      <button className={btn+' w-full'} onClick={makeRubik} disabled={draftDirty||faceDraft.length>0}>六次环切 · 生成魔方</button>
+    </div>}
+    <p className="topo-helptext">点击橙色边线或输入面编号，再调整切割比例。</p>
     {selectedLoopFace?.length===4?
       <label className="block text-xs">起始面 #{selectedFace} · 边
         <select aria-label="布线起始边" className="mt-1 w-full rounded bg-neutral-800 p-2" value={selectedEdgeSlot} onChange={e=>setSelectedEdgeSlot(Number(e.target.value))}>
           {selectedLoopFace.map((id,i)=><option key={i} value={i}>边 {i+1} · {id} → {selectedLoopFace[(i+1)%4]}</option>)}
         </select>
-      </label>:<p className="text-xs text-amber-300">请选择一个四边面上的边线或输入控制面编号。</p>}
+      </label>:<p className="topo-empty-state">尚未选中四边面。在画布上选择一条橙色边线。</p>}
     <label className="block text-xs">切割比例：{Math.round(loopFraction*100)}%
       <input aria-label="布线位置" className="mt-1 w-full" type="range" min=".05" max=".95" step=".05" value={loopFraction} onChange={e=>setLoopFraction(Number(e.target.value))}/>
     </label>
@@ -363,10 +393,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn+' !bg-sky-900'} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addEdgeLoop}>连续环线</button>
       <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割</button>
     </div>
-    <p className="text-xs text-neutral-500">局部切割自动重构邻面，避免 T 型悬空端点。</p>
+    <p className="topo-helptext">局部切割仅影响选中的面，并自动修复相邻共享边。</p>
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
-    <p className="text-xs text-neutral-400">选择顶点可拖动塑形；选择控制面可内插或挤出。操作可逐步撤销。</p>
+    <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
     <div className="space-y-2 rounded-lg border border-neutral-700 bg-neutral-950/50 p-3">
       <div className="text-xs font-medium text-neutral-200">对称顶点编辑 · 实时</div>
       <div className="grid grid-cols-3 gap-2">
@@ -393,7 +423,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     </details>
   </div>}
   {toolPanel==='paint'&&<div className="space-y-3">
-    <p className="text-xs text-neutral-400">点选控制面；Shift + 点击可追加/取消选择。可按共面或颜色一次选中一组。</p>
+    <p className="topo-helptext">Shift + 点击可多选面，也可按共面或颜色批量选取。</p>
     <div className="flex items-center justify-between text-sm">
       <span>{selectedFaces.length? `已选 ${selectedFaces.length} 面 · 主面 #${selectedFace}`:'尚未选择控制面'}</span>
       <button className="text-xs text-sky-300 disabled:opacity-40" disabled={!selectedFaces.length} onClick={clearFaces}>清空选择</button>
@@ -402,11 +432,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn} disabled={selectedFace===null} onClick={()=>chooseFaceGroup('plane')}>选择同一平面</button>
       <button className={btn} disabled={selectedFace===null||!geometry.faceColors} onClick={()=>chooseFaceGroup('color')}>选择相同颜色</button>
     </div>
-    <div className="grid grid-cols-3 gap-2">
+    <div className="topo-color-picker">
       {Object.entries(RUBIK_FACE_COLORS).map(([name,color])=>
-        <button key={name} aria-label={`涂色 ${name}`} title={name} className="h-10 rounded border border-white/20 disabled:opacity-40" style={{backgroundColor:color}}
-          disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(color)}>
-          {geometry.faceColors?.[selectedFace??-1]===color?'✓':''}
+        <button key={name} aria-label={`涂色 ${name}`}
+          aria-pressed={selectedFace!==null&&geometry.faceColors?.[selectedFace]===color}
+          title={`将已选控制面涂为${RUBIK_COLOR_LABELS[name as keyof typeof RUBIK_FACE_COLORS]}`}
+          className="topo-color-swatch" disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(color)}>
+          <span className="topo-color-disc" style={{backgroundColor:color}} aria-hidden="true"/>
+          <span>{RUBIK_COLOR_LABELS[name as keyof typeof RUBIK_FACE_COLORS]}</span>
         </button>)}
     </div>
     <label className="flex items-center gap-2 text-xs">自选颜色
@@ -414,17 +447,30 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <span>{paintColor}</span>
     </label>
     <button className={btn+' w-full'} disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(paintColor)}>应用到已选面</button>
-    <button className={btn+' w-full'} disabled={!geometry.faceColors||draftDirty} onClick={removeFaceColors}>清空全部面颜色</button>
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs text-slate-400">
+      <summary className="cursor-pointer">更多配色操作</summary>
+      <p className="topo-helptext mt-2">清空后将还原为普通控制网格，可通过撤销恢复。</p>
+      <button className={btn+' topo-danger mt-2 w-full'} disabled={!geometry.faceColors||draftDirty}
+        onClick={removeFaceColors}>清空全部面颜色</button>
+    </details>
   </div>}
-  {toolPanel==='inspect'&&<div className="space-y-2 text-xs">
-    <p>顶点 <strong>{geometry.vertices.length}</strong> · 控制面 <strong>{geometry.faces.length}</strong></p>
-    <p>已着色面 <strong>{geometry.faceColors?.length??0}</strong> · 已移动顶点 <strong>{edited.length}</strong></p>
-    <p className="text-neutral-400">X-Ray 开关控制背面边线显示。有效几何体必须保留共享边与正确面绕序。</p>
-    <p className="text-neutral-400">共享边：{meshQuality?.error?'校验失败':meshQuality?.edges??0} · 开放边：{meshQuality?.boundaryEdges??'—'}</p>
-    {meshQuality?.error?<p role="alert" className="text-rose-300">{meshQuality.error}</p>:<p className="text-emerald-300">面绕序和边引用检查通过</p>}
-    <p className="text-neutral-500">待补齐：真正的边倒角、任意多边面自由刀切、桥接和魔方层组转动。</p>
+  {toolPanel==='inspect'&&<div className="space-y-3 text-xs">
+    <div className="topo-mini-stats">
+      <div><strong>{geometry.vertices.length}</strong><span>控制顶点</span></div>
+      <div><strong>{geometry.faces.length}</strong><span>控制面</span></div>
+      <div><strong>{meshQuality?.error?'—':meshQuality?.edges??'—'}</strong><span>共享边</span></div>
+    </div>
+    <div className={meshQuality?.error?'topo-message is-error':'topo-message'}>
+      <strong>{meshQuality?.error?'拓扑检查失败':'基础拓扑检查通过'}</strong>
+      <p className="mt-1">{meshQuality?.error||`开放边：${meshQuality?.boundaryEdges??'—'} · 已着色面：${geometry.faceColors?.length??0} · 修改顶点：${edited.length}`}</p>
+    </div>
+    <p className="topo-helptext">检查共享边、面绕序与非流形结构。可旋转三维画面或打开 X-Ray 检查背面。</p>
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs text-slate-400">
+      <summary className="cursor-pointer">尚未支持的高级功能</summary>
+      <p className="topo-helptext mt-2">后续包括真实边倒角、任意多边面自由刀切、桥接和可转动魔方层组。</p>
+    </details>
   </div>}
-  {loopInfo&&<p role="status" className="rounded bg-sky-950/30 p-2 text-xs text-sky-300">{loopInfo}</p>}
+  
 </section></>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
   {!sceneEdit && geometry && <>
     <button className={btn} onClick={() => setPreview(value => !value)} aria-expanded={preview}>
@@ -433,5 +479,5 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     {preview && spatialPreview}
   </>}
   {sceneEdit && !projectSpatialView && triangulationError && <p role="alert" className="text-amber-300">{triangulationError}</p>}
-{!imageSquare&&<p className="text-amber-300">参考图非正方形，已保持原始比例并关闭九宫格切分。</p>}{!sceneEdit && <p className="text-neutral-400">按顺序连接顶点时须自行保证轮廓及绕序；未使用的点也可以保存。模型与参考需先手动调整比例和中心。GLB 导出按控制面投影耳切，退化或自相交面会阻止导出；参考图及各视角的标定参数会随 JSON 保存。</p>}{error&&<p className="text-red-400" role="alert">{error}</p>}</aside></div></fieldset>{loading&&<div className="absolute inset-0 z-[210] flex items-center justify-center bg-black/60 text-white" role="status">加载中，暂不能编辑…</div>}</div>;
+{!imageSquare&&<p className="text-amber-300">参考图非正方形，已保持原始比例并关闭九宫格切分。</p>}{!sceneEdit && <p className="text-neutral-400">按顺序连接顶点时须自行保证轮廓及绕序；未使用的点也可以保存。模型与参考需先手动调整比例和中心。GLB 导出按控制面投影耳切，退化或自相交面会阻止导出；参考图及各视角的标定参数会随 JSON 保存。</p>}</aside></div></fieldset>{loading&&<div className="absolute inset-0 z-[210] flex items-center justify-center bg-black/60 text-white" role="status">加载中，暂不能编辑…</div>}</div>;
 }

@@ -36,7 +36,7 @@ try{
   await dialog.waitFor();
   const counts=async(v,f)=>{
     console.log('[QA] Expected counts',v,f);
-    await dialog.getByText(`顶点 ${v} · 控制面 ${f}`).waitFor({timeout:15000});
+    await dialog.getByText(new RegExp(`${v} 顶点 / ${f} 面`)).waitFor({timeout:15000});
     notes.checks.push(`vertices=${v},faces=${f}`);
   };
   const selectFace=async n=>{
@@ -61,10 +61,18 @@ try{
     notes.shots.push({name,path,size:file.size});
   };
   await counts(8,6);
+  await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).waitFor();
+  assert.equal(await dialog.getByRole('button',{name:'布线',exact:true}).getAttribute('aria-pressed'),'true');
   await screenshot('00-cube-angle');
   // The wizard must genuinely convert the single 8-vertex base cube.
   await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).click();
   await counts(56,54);
+  assert.equal(await dialog.getByRole('button',{name:'配色',exact:true}).getAttribute('aria-pressed'),'true',
+    'painting tab should auto-focus after Rubik generation');
+  await dialog.getByRole('button',{name:'布线',exact:true}).click();
+  assert.equal(await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).count(),0,
+    'once subdivided, training shortcut must be hidden');
+  await dialog.getByRole('button',{name:'配色',exact:true}).click();
   await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
   await screenshot('00-rubik-from-cube');
   await dialog.getByRole('button',{name:'显示布线',exact:true}).click();
@@ -109,7 +117,7 @@ try{
   await page.getByRole('button',{name:'编辑顶点',exact:true}).click();
   const reopened=page.getByRole('dialog',{name:/场景顶点编辑/});
   await reopened.waitFor();
-  await reopened.getByText('顶点 18 · 控制面 17').waitFor();
+  await reopened.getByText(/18 顶点 \/ 17 面/).waitFor();
   notes.checks.push('applied and reopened same 18/17 control cage');
   await reopened.getByRole('button',{name:'关闭场景顶点编辑'}).click();
   await reopened.waitFor({state:'hidden'});
@@ -131,6 +139,12 @@ try{
   const visual=await dialog.getByLabel('3D 旋转预览').boundingBox();
   assert.ok(side&&side.width>=290&&side.width<=410,'inspector width should stay compact');
   assert.ok(visual&&visual.width>=800&&visual.height>=250,'3D preview needs usable space');
+  assert.ok(await dialog.getByText('02 · 建模操作').isVisible());
+  assert.ok(await dialog.getByText('01 · 当前选择').isVisible());
+  assert.ok(await dialog.getByRole('group',{name:'建模工具分类'}).isVisible());
+  const asideBackground=await dialog.locator('aside').evaluate(el=>getComputedStyle(el).backgroundColor);
+  assert.notEqual(asideBackground,'rgba(0, 0, 0, 0)','inspector must have a distinct background');
+  notes.checks.push('clear inspector hierarchy and separated tool navigation');
   const uiPath=`${folder}/11-workbench-paint.png`;
   await page.screenshot({path:uiPath,animations:'disabled'});
   notes.shots.push({name:'11-workbench-paint',path:uiPath,size:(await stat(uiPath)).size});
@@ -166,6 +180,11 @@ try{
   await dialog.getByLabel('顶点 X').press('Tab');
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   notes.checks.push('symmetry axes enabled and coordinate edit undoable');
+  await dialog.getByRole('button',{name:'检查',exact:true}).click();
+  await dialog.getByText('基础拓扑检查通过').waitFor();
+  const inspectPath=`${folder}/14-inspect-panel.png`;
+  await page.screenshot({path:inspectPath,animations:'disabled'});
+  notes.shots.push({name:'14-inspect-panel',path:inspectPath,size:(await stat(inspectPath)).size});
   await dialog.getByRole('button',{name:'配色',exact:true}).click();
   const desktopPath=`${folder}/12-workbench-refined-desktop.png`;
   await page.screenshot({path:desktopPath,animations:'disabled'});
@@ -182,6 +201,15 @@ try{
     notes.shots.push({name:label,path,size:(await stat(path)).size});
     console.log('[RESPONSIVE QA]',JSON.stringify({label,width,height,asideBox,previewBox}));
     if(label==='mobile'){
+      for(const name of ['撤销','重做','应用到场景']){
+        const action=dialog.getByRole('button',{name,exact:true});
+        const bounds=await action.boundingBox();
+        assert.ok(bounds&&bounds.width>bounds.height*1.15&&bounds.height<=45,
+          `mobile header action ${name} rendered as a vertical label: ${JSON.stringify(bounds)}`);
+        assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width+2,
+          `mobile header action ${name} outside viewport`);
+      }
+      notes.checks.push('mobile header buttons remain horizontally readable');
       const jpeg=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
       console.log('RESPONSIVE_MOBILE_JPEG:'+jpeg.toString('base64'));
     }
