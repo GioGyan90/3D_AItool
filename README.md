@@ -31,4 +31,4 @@ npm run dev
 
 **当前边界：** 只支持沿连通四边面插入完整环线，遇到三角面、多边面、非流形边等不安全连接会拒绝操作；不支持自由刀切、挤出、内插或局部重新布线。带倒角、自定义锚点或形变的基础形状暂不允许直接转换，以免破坏既有造型。转换后的控制网格可使用已有的顶点编辑功能。
 
-测试：`npm run test:topology`；类型检查：`npm run lint`；在线版生成：`npm run build:pages`。源文件提交不会自动更新 `docs/studio/` 已发布的静态产物。
+测试：`npm run test:topology`；类型检查：`npm run lint`；在线版生成：`npm run build:pages`。已配置 GitHub Actions：类型检查和拓扑测试通过后自动构建并写回 `docs/studio/`。静态资源已更新后仍需 GitHub Pages 部署生效；如看到旧版请查看 Actions / Pages 状态并强制刷新。
