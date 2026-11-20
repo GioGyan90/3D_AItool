@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { createHalfFaceTrace } from './assets/halfFaceTrace';
 import { triangulateFaces } from './components/traceGeometry';
 import type { AnimationData, ControlMesh, NodeType, SceneNode } from './types';
 
@@ -249,32 +248,5 @@ export function parseStudioProject(raw: unknown): StudioProject {
     format: 'shape3d-studio', version: 1, name: raw.name,
     nodes, animation: validateAnimation(raw.animation),
     selectedIds: [...new Set(raw.selectedIds)].filter(id => nodeIds.has(id)),
-  };
-}
-
-export function createHalfFaceProject(): StudioProject {
-  const { vertices, faces } = createHalfFaceTrace();
-  // The source cage points backward in Studio coordinates. Reverse each
-  // polygon around its first vertex without changing the face or vertex IDs.
-  const controlMesh: ControlMesh = {
-    vertices,
-    faces: faces.map(([first, ...rest]) => [first, ...rest.reverse()]),
-  };
-  const floorOffset = -Math.min(...vertices.map(vertex => vertex[1]));
-  const head: SceneNode = {
-    id: 'half-face-study', name: '半脸头模', type: 'csg', parentId: null,
-    position: [0, floorOffset, 0], rotation: [0, 0, 0], scale: [1, 1, 1],
-    color: '#c58b6c', parameters: {}, material: { roughness: 0.85, metalness: 0 },
-    visible: true, controlMesh, geometryData: buildEditableGeometry(controlMesh),
-  };
-  const ambient: SceneNode = {
-    id: 'ambient-light', name: 'Ambient Light', type: 'ambientLight', parentId: null,
-    position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1], color: '#ffffff',
-    parameters: { intensity: 1.1, environment: 'none' }, visible: true, locked: true,
-  };
-  return {
-    format: 'shape3d-studio', version: 1, name: '半脸头模',
-    nodes: [ambient, head], selectedIds: [head.id],
-    animation: { tracks: [], duration: 60, loopStart: 0, loopEnd: 3 },
   };
 }

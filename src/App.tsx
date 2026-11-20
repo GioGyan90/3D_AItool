@@ -10,7 +10,7 @@ import { AICommander } from './components/AICommander';
 import { UVEditor } from './components/UVEditor';
 import { BoneRigEditor } from './components/BoneRigEditor';
 import { SceneNode, NodeType, PropertyTrack, AnimationData, Keyframe, ControlMesh } from './types';
-import { buildEditableGeometry, createHalfFaceProject, parseStudioProject } from './studioProject';
+import { buildEditableGeometry, parseStudioProject } from './studioProject';
 import type { StudioProject } from './studioProject';
 import { Timeline } from './components/Timeline';
 import { CodeEditor } from './components/CodeEditor';
@@ -2083,7 +2083,6 @@ return mesh;` : undefined,
                 项目 <ChevronDown className="w-3 h-3" />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-[#181818] border-[#2e2e2e] text-[#e0e0e0]">
-                <DropdownMenuItem onClick={() => openProject(createHalfFaceProject())}>打开半脸项目</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => projectFileInput.current?.click()}>打开项目文件</DropdownMenuItem>
                 <DropdownMenuItem onClick={saveProject}>保存项目</DropdownMenuItem>
               </DropdownMenuContent>
