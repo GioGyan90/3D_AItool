@@ -266,22 +266,21 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
      {triangulationError && <p role="alert" className="text-amber-300">面暂不可三角化，预览仅显示点和线。{triangulationError}</p>}
    </div>
  );
- return <div ref={dialogRef} onPointerDownCapture={protectDraft} onClickCapture={protectDraftClick} onKeyDownCapture={historyKey} className="fixed inset-0 z-[200] flex flex-col overflow-hidden bg-neutral-950 text-neutral-100" role="dialog" aria-modal="true" aria-label={sceneEdit ? "场景顶点编辑" : "顶点参考对照"}>
-  <fieldset disabled={loading} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"><header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-neutral-800 bg-neutral-950/95 px-3 py-2">
-  <div className="min-w-[165px] flex-1">
-    <h2 className="max-w-[550px] truncate text-sm font-semibold text-white" title={sceneEdit?.name}>
-      {sceneEdit ? sceneEdit.name : '顶点参考对照'}
-    </h2>
-    <p className="text-xs text-neutral-500">
-      {sceneEdit?'网格建模工作台':'参考建模工作台'} · {dirty?'尚未应用修改':'无待应用的模型修改'}
+ return <div ref={dialogRef} onPointerDownCapture={protectDraft} onClickCapture={protectDraftClick} onKeyDownCapture={historyKey} className="topo-shell fixed inset-0 z-[200] flex flex-col overflow-hidden" data-topology-workbench="true" role="dialog" aria-modal="true" aria-label={sceneEdit ? "场景顶点编辑" : "顶点参考对照"}>
+  <fieldset disabled={loading} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"><header className="topo-header">
+  <div className="topo-header-title">
+    <h2 className="truncate" title={sceneEdit?.name}>{sceneEdit ? sceneEdit.name : '顶点参考对照'}</h2>
+    <p>
+      <span className={'topo-status-dot'+(dirty||draftDirty||faceDraft.length?' is-dirty':'')}/>
+      {sceneEdit ? (dirty?'待应用到场景':'模型已同步') : (dirty||referenceDirty?'有未保存修改':'参考编辑模式')}
       {geometry?` · ${geometry.vertices.length} 顶点 / ${geometry.faces.length} 面`:''}
     </p>
   </div>
-  {sceneEdit? <div className="flex items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900/60 p-1">
-    <button className={btn+(projectSpatialView?' !border-sky-500 !bg-sky-900':'')} onClick={()=>setProjectSpatialView(true)} aria-pressed={projectSpatialView}>3D 编辑</button>
-    <button className={btn+(!projectSpatialView?' !border-sky-500 !bg-sky-900':'')} onClick={()=>setProjectSpatialView(false)} aria-pressed={!projectSpatialView}>正交编辑</button>
+  {sceneEdit ? <div className="topo-mode-switch" role="group" aria-label="编辑视图模式">
+    <button className={btn} onClick={()=>setProjectSpatialView(true)} aria-pressed={projectSpatialView}>3D 编辑</button>
+    <button className={btn} onClick={()=>setProjectSpatialView(false)} aria-pressed={!projectSpatialView}>正交编辑</button>
   </div>:
-  <div className="flex flex-wrap gap-1">
+  <div className="topo-header-actions">
     {backup&&<button className={btn} disabled={dirty||referenceDirty||draftDirty||faceDraft.length>0} onClick={restoreBackup}>恢复新建前状态</button>}
     <button className={btn} disabled={dirty||draftDirty||faceDraft.length>0||!!backup} onClick={newMesh}>新建空网格</button>
     <label className={btn+' cursor-pointer'}>导入参考图<input aria-label="导入参考图" type="file" accept="image/png,image/jpeg,image/webp" disabled={referenceDirty} className="hidden" onChange={loadImage}/></label>
@@ -289,12 +288,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <button className={btn} disabled={!geometry} onClick={save}>保存顶点 JSON</button>
     <button className={btn} disabled={!geometry?.faces.length} onClick={exportGlb}>导出 GLB</button>
   </div>}
-  <div className="flex items-center gap-1">
+  <div className="topo-header-actions" role="group" aria-label="编辑历史">
     <button className={btn} disabled={!past.length||draftDirty||faceDraft.length>0} onClick={undoMesh} title="Ctrl+Z">撤销</button>
     <button className={btn} disabled={!future.length||draftDirty||faceDraft.length>0} onClick={redoMesh} title="Ctrl+Shift+Z / Ctrl+Y">重做</button>
   </div>
-  {sceneEdit&&<button className={btn+' border-sky-500 !bg-sky-900 font-semibold'} disabled={!dirty||!geometry?.faces.length||draftDirty||faceDraft.length>0||Boolean(triangulationError)} onClick={applyToScene}>应用到场景</button>}
-  <button className={btn+' !px-3'} data-trace-close onClick={closeEditor} aria-label={sceneEdit?'关闭场景顶点编辑':'关闭顶点参考对照'} title="关闭">×</button>
+  {sceneEdit&&<button className={btn+' topo-primary'} disabled={!dirty||!geometry?.faces.length||draftDirty||faceDraft.length>0||Boolean(triangulationError)}
+     onClick={applyToScene}>应用到场景</button>}
+  <button className={btn+' !px-3'} data-trace-close onClick={closeEditor}
+    aria-label={sceneEdit?'关闭场景顶点编辑':'关闭顶点参考对照'} title="关闭">×</button>
 </header>
   <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"><div className="flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden p-2 lg:min-h-0 lg:p-3">
    {sceneEdit && projectSpatialView ? spatialPreview : <>
