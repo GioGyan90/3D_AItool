@@ -173,3 +173,159 @@ export function insertQuadEdgeLoop(
   }
   return {vertices, faces};
 }
+
+
+/** Verify the indexed control cage, not the triangulated render buffers. */
+export function validateControlTopology(mesh: ControlMesh): {edges: number; boundaryEdges: number} {
+  if (mesh.vertices.length > 5000 || mesh.faces.length > 10000 ||
+      mesh.faces.reduce((sum, face) => sum + face.length, 0) > 30000)
+    throw new Error('控制网格超出 5000 顶点 / 10000 面 / 30000 引用限制。');
+  for (const p of mesh.vertices)
+    if (p.length !== 3 || !p.every(Number.isFinite))
+      throw new Error('控制网格包含无效顶点坐标。');
+  const owners = new Map<string, {from: number; to: number}[]>();
+  for (const face of mesh.faces) {
+    if (face.length < 3 || face.length > 64 || new Set(face).size !== face.length)
+      throw new Error('控制面包含重复顶点或不合法的面。');
+    for (let i = 0; i < face.length; i++) {
+      const a = face[i], b = face[(i + 1) % face.length];
+      if (!Number.isInteger(a) || !Number.isInteger(b) ||
+          a < 0 || b < 0 || a >= mesh.vertices.length || b >= mesh.vertices.length)
+        throw new Error('控制面引用了不存在的顶点。');
+      const key = keyOf(a, b), entries = owners.get(key) ?? [];
+      entries.push({from: a, to: b});
+      if (entries.length > 2) throw new Error('控制网格包含非流形边（超过两个相邻面）。');
+      owners.set(key, entries);
+    }
+  }
+  for (const entries of owners.values()) {
+    if (entries.length === 2 &&
+        (entries[0].from !== entries[1].to || entries[0].to !== entries[1].from))
+      throw new Error('相邻面的共享边绕序相同，请先修复法线方向。');
+  }
+  return {edges: owners.size, boundaryEdges: [...owners.values()].filter(x => x.length === 1).length};
+}
+
+function finishTopologyEdit(vertices: V[], faces: number[][]): ControlMesh {
+  const next = {vertices, faces};
+  validateControlTopology(next);
+  return next;
+}
+
+/**
+ * Local quad cut. Unlike a partial edge loop, this ALSO divides both neighboring
+ * faces at the cut edges: every midpoint has the same index on both sides,
+ * and no face is left with a hanging T-junction. Only the selected quad
+ * continues as two quads; its neighbors acquire a small triangle + polygon.
+ */
+export function splitQuadLocally(
+  mesh: ControlMesh, faceIndex: number, slot: number, fraction = 0.5,
+): ControlMesh {
+  validateControlTopology(mesh);
+  const f = mesh.faces[faceIndex];
+  if (!f || f.length !== 4 || !Number.isInteger(slot) || slot < 0 || slot > 3)
+    throw new Error('局部切割需要选中四边面及其起始边。');
+  if (!(fraction > 0.01 && fraction < 0.99)) throw new Error('切割位置必须在 1%–99% 之间。');
+  const vertices = mesh.vertices.map(v => vertex(...v));
+  const cut = new Map<string, number>();
+  const pointOn = (a: number, b: number, t: number) => {
+    const id = vertices.length, A = mesh.vertices[a], B = mesh.vertices[b];
+    vertices.push(vertex(A[0] * (1-t) + B[0]*t, A[1]*(1-t)+B[1]*t, A[2]*(1-t)+B[2]*t));
+    cut.set(keyOf(a, b), id);
+    return id;
+  };
+  const [a, b, c, d] = [0,1,2,3].map(i => f[(slot+i)%4]);
+  const p = pointOn(a,b,fraction);
+  const q = pointOn(c,d,1-fraction);
+  const faces: number[][] = [];
+  mesh.faces.forEach((face, fi) => {
+    if (fi === faceIndex) {
+      faces.push([a,p,q,d], [p,b,c,q]);
+      return;
+    }
+    const slots = face.map((v,i) => cut.has(keyOf(v,face[(i+1)%face.length])) ? i : -1).filter(i=>i>=0);
+    if (slots.length > 1)
+      throw new Error('相邻面同时接触两条切割边，无法安全局部布线。');
+    if (!slots.length) {faces.push([...face]); return;}
+    const i=slots[0];
+    // Rotate until shared edge is first, then triangulate exactly once
+    // without leaving a collinear vertex inside a polygon boundary.
+    const rotated = [...face.slice(i), ...face.slice(0,i)];
+    const mid = cut.get(keyOf(rotated[0],rotated[1]))!;
+    faces.push([rotated[rotated.length-1],rotated[0],mid]);
+    faces.push([mid,...rotated.slice(1)]);
+  });
+  return finishTopologyEdit(vertices,faces);
+}
+
+/** Create a ring of QUADS around one selected face without touching neighbors. */
+export function insetControlFace(mesh: ControlMesh, faceIndex: number, fraction=0.25): ControlMesh {
+  validateControlTopology(mesh);
+  const face = mesh.faces[faceIndex];
+  if (!face) throw new Error('请先选择需要内插的控制面。');
+  if (!(fraction > .01 && fraction < .95)) throw new Error('内插比例必须在 1%–95% 之间。');
+  const center: V = [0,0,0];
+  face.forEach(id=>mesh.vertices[id].forEach((n,k)=>{center[k]+=n/face.length}));
+  const vertices = mesh.vertices.map(v=>vertex(...v));
+  const inner = face.map(id => {
+    const p = mesh.vertices[id], next = vertices.length;
+    vertices.push(vertex(...p.map((value,k)=>value*(1-fraction)+center[k]*fraction) as V));
+    return next;
+  });
+  const faces = mesh.faces.flatMap((f,i)=>i===faceIndex
+    ? [...f.map((a,k)=>[a,f[(k+1)%f.length],inner[(k+1)%f.length],inner[k]]),inner]
+    : [[...f]]);
+  return finishTopologyEdit(vertices,faces);
+}
+
+/** Extrude a selected face along its own outward normal; keep the old border shared. */
+export function extrudeControlFace(mesh: ControlMesh, faceIndex: number, distance=0.2): ControlMesh {
+  validateControlTopology(mesh);
+  const face = mesh.faces[faceIndex];
+  if (!face) throw new Error('请先选择需要挤出的控制面。');
+  if (!Number.isFinite(distance) || Math.abs(distance)<1e-6 || Math.abs(distance)>100)
+    throw new Error('挤出距离必须为非零有限值且不超过 100。');
+  // Newell's stable polygon normal for triangles, quads and n-gons.
+  const normal: V = [0,0,0];
+  face.forEach((id,i)=>{
+    const a=mesh.vertices[id],b=mesh.vertices[face[(i+1)%face.length]];
+    normal[0]+=(a[1]-b[1])*(a[2]+b[2]);
+    normal[1]+=(a[2]-b[2])*(a[0]+b[0]);
+    normal[2]+=(a[0]-b[0])*(a[1]+b[1]);
+  });
+  const length = Math.hypot(...normal);
+  if (length<1e-10) throw new Error('无法计算退化控制面的挤出法线。');
+  const vertices=mesh.vertices.map(v=>vertex(...v));
+  const top=face.map(id=>{
+    const p=mesh.vertices[id],next=vertices.length;
+    vertices.push(vertex(...p.map((v,k)=>v+distance*normal[k]/length) as V));
+    return next;
+  });
+  const sides=face.map((id,i)=>[id,face[(i+1)%face.length],top[(i+1)%face.length],top[i]]);
+  const faces=mesh.faces.flatMap((f,i)=>i===faceIndex?[top,...sides]:[[...f]]);
+  return finishTopologyEdit(vertices,faces);
+}
+
+/**
+ * Mirror a true half-model over X=0. Seam vertices are welded, seam-only
+ * caps are removed (so they do not become internal duplicate faces), and
+ * mirrored face winding is reversed to preserve outward surface normals.
+ */
+export function mirrorControlMeshX(mesh: ControlMesh, tolerance=1e-6): ControlMesh {
+  validateControlTopology(mesh);
+  const xs=mesh.vertices.map(v=>v[0]),min=Math.min(...xs),max=Math.max(...xs);
+  if (!xs.length || min < -tolerance && max > tolerance)
+    throw new Error('X 镜像需要先制作 X≥0 或 X≤0 的半模型，不能镜像跨越中心线的完整物体。');
+  if (!xs.some(x=>Math.abs(x)<=tolerance) || !xs.some(x=>Math.abs(x)>tolerance))
+    throw new Error('X 镜像要求中心线上有可焊接顶点，并存在至少一个非中心顶点。');
+  const vertices=mesh.vertices.map(v=>vertex(Math.abs(v[0])<=tolerance?0:v[0],v[1],v[2]));
+  const mapped=new Map<number,number>();
+  mesh.vertices.forEach((p,i)=>{
+    if (Math.abs(p[0])<=tolerance) {mapped.set(i,i);return;}
+    mapped.set(i,vertices.length);
+    vertices.push(vertex(-p[0],p[1],p[2]));
+  });
+  const sourceFaces=mesh.faces.filter(f=>!f.every(i=>Math.abs(mesh.vertices[i][0])<=tolerance));
+  const faces=[...sourceFaces.map(f=>[...f]),...sourceFaces.map(f=>f.map(i=>mapped.get(i)!).reverse())];
+  return finishTopologyEdit(vertices,faces);
+}
