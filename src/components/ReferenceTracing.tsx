@@ -296,7 +296,19 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <p className="text-xs text-neutral-500">局部切割自动重构邻面，避免 T 型悬空端点。</p>
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
-    <p className="text-xs text-neutral-400">选择一个控制面后执行操作，所有步骤可撤销。</p>
+    <p className="text-xs text-neutral-400">选择顶点可拖动塑形；选择控制面可内插或挤出。操作可逐步撤销。</p>
+    <div className="space-y-2 rounded-lg border border-neutral-700 bg-neutral-950/50 p-3">
+      <div className="text-xs font-medium text-neutral-200">对称顶点编辑 · 实时</div>
+      <div className="grid grid-cols-3 gap-2">
+        {(['x','y','z'] as const).map(axis=><label key={axis} className="flex cursor-pointer items-center justify-center gap-1.5 rounded border border-neutral-700 px-2 py-2 text-xs">
+          <input type="checkbox" aria-label={`对称 ${axis.toUpperCase()}`} checked={symmetryAxes.includes(axis)}
+            onChange={e=>setSymmetryAxes(old=>e.target.checked?[...old,axis]:old.filter(a=>a!==axis))}/>
+          {axis.toUpperCase()}
+        </label>)}
+      </div>
+      <p className="text-xs text-neutral-500">围绕 X/Y/Z=0 镜像移动已有对称点；中线自动约束，不会生成多余顶点。没有对称点时仅移动当前点。</p>
+    </div>
+    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>
     <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
       <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
     </label>
@@ -311,8 +323,15 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     </details>
   </div>}
   {toolPanel==='paint'&&<div className="space-y-3">
-    <p className="text-xs text-neutral-300">面颜色保留于控制网格与 JSON / GLB；彩色贴纸不增加控制面。</p>
-    <div className="text-sm">{selectedFace===null?'请在 3D 视图中点选一个控制面':`当前选中控制面 #${selectedFace}`}</div>
+    <p className="text-xs text-neutral-400">点选控制面；Shift + 点击可追加/取消选择。可按共面或颜色一次选中一组。</p>
+    <div className="flex items-center justify-between text-sm">
+      <span>{selectedFaces.length? `已选 ${selectedFaces.length} 面 · 主面 #${selectedFace}`:'尚未选择控制面'}</span>
+      <button className="text-xs text-sky-300 disabled:opacity-40" disabled={!selectedFaces.length} onClick={clearFaces}>清空选择</button>
+    </div>
+    <div className="grid grid-cols-2 gap-2">
+      <button className={btn} disabled={selectedFace===null} onClick={()=>chooseFaceGroup('plane')}>选择同一平面</button>
+      <button className={btn} disabled={selectedFace===null||!geometry.faceColors} onClick={()=>chooseFaceGroup('color')}>选择相同颜色</button>
+    </div>
     <div className="grid grid-cols-3 gap-2">
       {Object.entries(RUBIK_FACE_COLORS).map(([name,color])=>
         <button key={name} aria-label={`涂色 ${name}`} title={name} className="h-10 rounded border border-white/20 disabled:opacity-40" style={{backgroundColor:color}}
@@ -324,14 +343,16 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <input aria-label="自定义面颜色" type="color" value={paintColor} onChange={e=>setPaintColor(e.target.value)}/>
       <span>{paintColor}</span>
     </label>
-    <button className={btn+' w-full'} disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(paintColor)}>应用到选中面</button>
+    <button className={btn+' w-full'} disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(paintColor)}>应用到已选面</button>
     <button className={btn+' w-full'} disabled={!geometry.faceColors||draftDirty} onClick={removeFaceColors}>清空全部面颜色</button>
   </div>}
   {toolPanel==='inspect'&&<div className="space-y-2 text-xs">
     <p>顶点 <strong>{geometry.vertices.length}</strong> · 控制面 <strong>{geometry.faces.length}</strong></p>
     <p>已着色面 <strong>{geometry.faceColors?.length??0}</strong> · 已移动顶点 <strong>{edited.length}</strong></p>
     <p className="text-neutral-400">X-Ray 开关控制背面边线显示。有效几何体必须保留共享边与正确面绕序。</p>
-    <p className="text-neutral-500">后续缺失：任意多边面刀切、边桥接、对称实时拖点、转动魔方层组与 UV。</p>
+    <p className="text-neutral-400">共享边：{meshQuality?.error?'校验失败':meshQuality?.edges??0} · 开放边：{meshQuality?.boundaryEdges??'—'}</p>
+    {meshQuality?.error?<p role="alert" className="text-rose-300">{meshQuality.error}</p>:<p className="text-emerald-300">面绕序和边引用检查通过</p>}
+    <p className="text-neutral-500">待补齐：真正的边倒角、任意多边面自由刀切、桥接和魔方层组转动。</p>
   </div>}
   {loopInfo&&<p role="status" className="rounded bg-sky-950/30 p-2 text-xs text-sky-300">{loopInfo}</p>}
 </section><div>顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</div><label className="block">控制面编号<input aria-label="控制面编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={Math.max(0,geometry.faces.length-1)} value={selectedFace??''} onChange={e=>{if(e.target.value===''){setSelectedFace(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.faces.length){setSelectedFace(n);setSelectedEdgeSlot(0)}}}/></label>{selectedFace!==null&&geometry.faces[selectedFace]&&<div>面 #{selectedFace}：{geometry.faces[selectedFace].join(' → ')} <button className={btn} disabled={faceDraft.length>0} title={faceDraft.length?"请先完成或清空待连接的面":"删除此控制面"} onClick={deleteFace}>删除此面</button></div>}<label className="block">选择顶点编号<input aria-label="选择顶点编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={geometry.vertices.length-1} value={selected??''} onChange={e=>{if(e.target.value===''){setSelected(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.vertices.length)setSelected(n)}} /></label><p className="text-neutral-400">默认按控制面绕序近似隐藏背面，并非完整遮挡检测；隐藏或重叠的点可按编号选择。已修改 {edited.length} 点，原始来源记录保留但不代表修改后仍与原测点一致。</p>{selected!==null&&<><div>选中顶点 #{selected}{edited.includes(selected)?' · 已修改':''}</div><button className={btn} disabled={faceDraft.length>0||geometry.faces.some(f=>f.includes(selected))} title={faceDraft.length?'请先完成或清空待连接的面':geometry.faces.some(f=>f.includes(selected))?'该点仍被控制面引用，请先删除相关面':'删除未被引用的顶点'} onClick={deleteVertex}>删除未引用顶点</button>{geometry.faces.some(f=>f.includes(selected))&&<p className="text-neutral-400">该点仍被控制面引用，请先删除相关面。</p>}{(()=>{const tags=(sourceMetadata.meta as any)?.tags,tag=Array.isArray(tags)?tags[selected]:null;return tag?<dl className="break-words text-neutral-300"><dt>来源</dt><dd>{String(tag.source??'未记录')}{tag.row?` · ${tag.row}`:''}</dd>{Array.isArray(tag.frontPixel)&&<><dt>正面像素</dt><dd>{tag.frontPixel.join(', ')}</dd></>}{tag.depth&&<><dt>深度依据</dt><dd>{String(tag.depth)}</dd></>}</dl>:<p className="text-neutral-400">该点暂无参考来源记录。</p>})()}<div className="grid grid-cols-3 gap-2">{(['X','Y','Z'] as const).map((axis,i)=><CoordinateInput key={`${selected}:${axis}`} axis={axis} value={geometry.vertices[selected][i]} onDraft={setDraftDirty} onCommit={n=>{const v=[...geometry.vertices[selected]] as V;v[i]=n;remember();update(selected,v)}}/>)}</div></>}</>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
