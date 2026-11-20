@@ -137,3 +137,61 @@ test('reject invalid mirror, non-manifold input, unsafe fractions and zero extru
   broken.faces.push([...broken.faces[0]]);
   assert.throws(()=>validateControlTopology(broken),/非流形边/);
 });
+
+import {createRubikBuildSteps,createRubikControlMesh,RUBIK_FACE_COLORS} from '../src/components/rubikPreset';
+import {buildEditableGeometry} from '../src/studioProject';
+import * as THREE from 'three';
+
+test('Rubik example is constructed by precisely six genuine quad edge-loop insertions',()=>{
+  const steps=createRubikBuildSteps();
+  assert.equal(steps.length,7);
+  assert.equal(steps[0].vertices.length,8);
+  assert.equal(steps[0].faces.length,6);
+  steps.forEach((step,i)=>{
+    checkClosed(step);
+    assert.ok(step.faces.every(f=>f.length===4));
+    if(i){
+      assert.ok(step.vertices.length>steps[i-1].vertices.length);
+      assert.ok(step.faces.length>steps[i-1].faces.length);
+    }
+  });
+  assert.equal(steps[6].vertices.length,56,'no duplicated seam vertices');
+  assert.equal(steps[6].faces.length,54,'six sides with nine quads each');
+  assert.equal(validateControlTopology(steps[6]).edges,108);
+});
+test('Rubik paints 9 independent stickers for each of six faces without modifying cage topology',()=>{
+  const mesh=createRubikControlMesh();
+  assert.equal(mesh.vertices.length,56);
+  assert.equal(mesh.faces.length,54);
+  assert.equal(mesh.faceColors?.length,54);
+  for(const color of Object.values(RUBIK_FACE_COLORS))
+    assert.equal(mesh.faceColors!.filter(x=>x===color).length,9,color);
+  checkClosed(mesh);
+  const parsed=new THREE.BufferGeometryLoader().parse(buildEditableGeometry(mesh));
+  assert.equal(parsed.getAttribute('position').count,648,'108 dark shell + 108 sticker triangles');
+  assert.ok(parsed.getAttribute('color'),'per triangle paint for scene render');
+  parsed.dispose();
+});
+test('paint follows control faces when making local cuts, loops, inset and extrude',()=>{
+  const rubik=createRubikControlMesh();
+  const inFace=0;
+  const inset=insetControlFace(rubik,inFace,.16);
+  checkClosed(inset);
+  assert.equal(inset.faceColors?.length,inset.faces.length);
+  const extruded=extrudeControlFace(inset,4,.08);
+  checkClosed(extruded);
+  assert.equal(extruded.faceColors?.length,extruded.faces.length);
+  const locallySplit=splitQuadLocally(rubik,0,0,.5);
+  checkClosed(locallySplit);
+  assert.equal(locallySplit.faceColors?.length,locallySplit.faces.length);
+  const simple=createPrimitiveControlMesh('box');
+  simple.faceColors=Array(6).fill('#ff0000');
+  const loop=insertQuadEdgeLoop(simple,0,0,.3);
+  checkClosed(loop);
+  assert.equal(loop.faceColors?.length,loop.faces.length);
+});
+test('invalid face color lists are rejected before reaching render or JSON',()=>{
+  const colored=createRubikControlMesh();
+  colored.faceColors=Array(3).fill('#ff0000');
+  assert.throws(()=>validateControlTopology(colored),/颜色记录/);
+});
