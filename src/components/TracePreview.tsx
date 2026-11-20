@@ -11,11 +11,11 @@ type Props={
   selectedFace?:number|null; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
   onSelectFace?:(i:number)=>void; onSelectEdge?:(face:number,slot:number)=>void;
-  onStartMove?:()=>void;
+  onStartMove?:()=>void; xray?:boolean;
 };
 const keyOf=(a:number,b:number)=>a<b?`${a}:${b}`:`${b}:${a}`;
 
-function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,orbit}:
+function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,orbit}:
   Omit<Props,'direction'>&{orbit:React.MutableRefObject<any>}){
   const [handle,setHandle]=useState<THREE.Group|null>(null);
   const dragging=useRef(false),transform=useRef<any>(null),dragIndex=useRef<number|null>(null);
@@ -67,7 +67,7 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
       if(e.faceIndex==null||!onSelectFace)return;
       const fi=faceForTriangle[e.faceIndex];
       if(fi!==undefined){e.stopPropagation();onSelectFace(fi);}
-    }}><meshStandardMaterial color="#999999" flatShading side={THREE.DoubleSide}/></mesh>
+    }}><meshStandardMaterial color="#999999" flatShading side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1}/></mesh>
     {selectedFace!=null&&<mesh geometry={faceGeo} raycast={()=>null}>
       <meshBasicMaterial color="#1eafff" transparent opacity={.22} depthWrite={false}
         side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={-2}/>
@@ -79,14 +79,14 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
       if(!pair)return;
       const quad=edgeOwners.get(pair);
       if(quad){e.stopPropagation();onSelectEdge(quad.face,quad.slot);}
-    }}><lineBasicMaterial color="#ff791a" depthTest={false}/></lineSegments>
+    }}><lineBasicMaterial color="#ff791a" depthTest={!xray} depthWrite={false}/></lineSegments>
     {selectedEdgeTube&&<mesh geometry={selectedEdgeTube} raycast={()=>null}>
       <meshBasicMaterial color="#39e8ff" depthTest={false}/>
     </mesh>}
     <points geometry={points} onPointerDown={e=>{
       e.stopPropagation();if(e.index===undefined||dragging.current||transform.current?.axis)return;
       onSelect(e.index);
-    }}><pointsMaterial color="#48a4ff" size={.045} sizeAttenuation depthTest={false}/></points>
+    }}><pointsMaterial color="#48a4ff" size={.045} sizeAttenuation depthTest={!xray} depthWrite={false}/></points>
     {current&&<group ref={setHandle} position={current}>
       <mesh><sphereGeometry args={[.027,10,10]}/><meshBasicMaterial color="#f6b72f" depthTest={false}/></mesh>
     </group>}
