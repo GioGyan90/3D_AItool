@@ -122,8 +122,20 @@ try{
   await screenshot('09-rubik-front');
   await dialog.getByRole('button',{name:'低角度',exact:true}).first().click();
   await screenshot('10-rubik-low');
-  // Painting is reversible and must survive apply/reopen.
+  // Check the complete workbench layout rather than only the canvas:
+  // a narrow properties inspector and enough room for the 3D model.
   await dialog.getByRole('button',{name:'配色',exact:true}).click();
+  const side=await dialog.locator('aside').boundingBox();
+  const visual=await dialog.getByLabel('3D 旋转预览').boundingBox();
+  assert.ok(side&&side.width>=290&&side.width<=410,'inspector width should stay compact');
+  assert.ok(visual&&visual.width>=800&&visual.height>=250,'3D preview needs usable space');
+  const uiPath=`${folder}/11-workbench-paint.png`;
+  await page.screenshot({path:uiPath,animations:'disabled'});
+  notes.shots.push({name:'11-workbench-paint',path:uiPath,size:(await stat(uiPath)).size});
+  const uiJpeg=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
+  console.log('RUBIK_UI_JPEG:'+uiJpeg.toString('base64'));
+  notes.checks.push('paint inspector fits beside 3D viewport');
+  // Painting is reversible and must survive apply/reopen.
   await selectFace(0);
   await dialog.getByRole('button',{name:'涂色 right'}).click();
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
