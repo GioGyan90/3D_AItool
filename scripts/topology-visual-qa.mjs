@@ -201,6 +201,15 @@ try{
     notes.shots.push({name:label,path,size:(await stat(path)).size});
     console.log('[RESPONSIVE QA]',JSON.stringify({label,width,height,asideBox,previewBox}));
     if(label==='mobile'){
+      for(const name of ['撤销','重做','应用到场景']){
+        const action=dialog.getByRole('button',{name,exact:true});
+        const bounds=await action.boundingBox();
+        assert.ok(bounds&&bounds.width>=48&&bounds.height<=45,
+          `mobile header action ${name} rendered as a vertical label: ${JSON.stringify(bounds)}`);
+        assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width+2,
+          `mobile header action ${name} outside viewport`);
+      }
+      notes.checks.push('mobile header buttons remain horizontally readable');
       const jpeg=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
       console.log('RESPONSIVE_MOBILE_JPEG:'+jpeg.toString('base64'));
     }
