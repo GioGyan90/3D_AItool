@@ -9,7 +9,8 @@
     "build:pages": "vite build --mode pages --configLoader runner",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:topology": "tsx --test tests/meshTopology.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
