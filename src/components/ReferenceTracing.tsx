@@ -233,24 +233,25 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  };
  const spatialPreview = geometry && (
    <div className={sceneEdit
-     ? 'flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900'
+     ? 'topo-stage'
      : previewLarge
        ? 'fixed inset-4 z-[205] flex flex-col rounded border border-neutral-600 bg-neutral-900 p-3 shadow-xl'
        : undefined}>
-     <div className="flex min-h-10 flex-wrap items-center gap-1 border-b border-neutral-800 bg-neutral-950/60 px-3 py-2">
-       {!sceneEdit && (
-         <button className={btn} onClick={() => setPreviewLarge(value => !value)} aria-pressed={previewLarge}>
-           {previewLarge ? '恢复小预览' : '放大3D编辑'}
-         </button>
-       )}
-       {[['front', '正面'], ['back', '背面'], ['angle', '3/4'], ['low', '低角度']].map(([direction, label]) => (
-         <button key={direction} className={btn+(previewDirection===direction?' !border-sky-500 !bg-sky-900':'')} onClick={() => {setPreviewDirection(direction);setCameraRevision(n=>n+1)}} aria-pressed={previewDirection === direction}>
-           {label}
-         </button>
+     <div className="topo-camera-bar" role="toolbar" aria-label="三维视图工具栏">
+       {!sceneEdit && <button className={btn} onClick={()=>setPreviewLarge(value=>!value)} aria-pressed={previewLarge}>
+         {previewLarge?'恢复小预览':'放大 3D 编辑'}</button>}
+       <span className="topo-camera-label">观察角度</span>
+       {([['front','正面'],['back','背面'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
+         <button key={direction} className={btn} onClick={()=>{setPreviewDirection(direction);setCameraRevision(n=>n+1)}}
+           aria-pressed={previewDirection===direction} title={`切换到${label}机位`}>{label}</button>
        ))}
-       <button className={btn+' ml-auto'} onClick={()=>setCameraRevision(n=>n+1)} title="将镜头返回当前预设机位">重置视角</button>
-        <button className={btn} aria-pressed={!showCage} onClick={()=>setShowCage(value=>!value)}>{showCage?'成品预览':'显示布线'}</button>
-        {showCage&&<label className="ml-2 flex items-center gap-2 text-xs text-neutral-300"><input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>背面布线 X-Ray</label>}
+       <div className="topo-camera-actions">
+         <button className={btn} onClick={()=>setCameraRevision(n=>n+1)} title="返回当前预设机位">重置视角</button>
+         <button className={btn} aria-pressed={!showCage} onClick={()=>setShowCage(v=>!v)}>{showCage?'成品预览':'显示布线'}</button>
+         {showCage&&<label className="flex items-center gap-1 text-xs text-slate-300">
+           <input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>X-Ray
+         </label>}
+       </div>
      </div>
      <div aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
        {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
@@ -259,10 +260,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
   onStartMove={remember}/>}
      </div>
-     <div className="flex flex-wrap items-center justify-between gap-2 border-t border-neutral-800 bg-neutral-950/70 px-3 py-2 text-xs text-neutral-400">
-  <span>{showCage?'编辑模式 · 点选顶点/边线/控制面':'成品模式 · 隐藏辅助线，仍可点选控制面'}</span>
-  <span>Shift + 点击面：多选 · 鼠标拖动空白：旋转</span>
- </div>
+     <div className="topo-stage-foot">
+       <span>{showCage?'编辑布线':'成品预览'} · {selectedSummary}</span>
+       <span>拖动空白旋转 · Shift + 点击多选 · Esc 清空选择</span>
+     </div>
      {triangulationError && <p role="alert" className="text-amber-300">面暂不可三角化，预览仅显示点和线。{triangulationError}</p>}
    </div>
  );
@@ -297,14 +298,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   <button className={btn+' !px-3'} data-trace-close onClick={closeEditor}
     aria-label={sceneEdit?'关闭场景顶点编辑':'关闭顶点参考对照'} title="关闭">×</button>
 </header>
-  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"><div className="flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden p-2 lg:min-h-0 lg:p-3">
+  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"><div className="topo-viewport flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden p-2 lg:min-h-0 lg:p-3">
    {sceneEdit && projectSpatialView ? spatialPreview : <>
    <div className="mb-2 flex flex-wrap gap-2">{views.map(v=><button key={v.id} className={btn+(view===v.id?' !border-blue-400 !bg-blue-900':'')} onClick={()=>{setView(v.id);setSelected(null)}} aria-pressed={view===v.id}>{v.label}</button>)}</div>
    <div className="mb-2 flex flex-wrap items-center gap-2">{([['select','选择/移动'],['point','放置顶点'],['face','连接成面']] as const).map(([id,label])=><button key={id} className={btn+(mode===id?' !border-blue-400 !bg-blue-900':'')} disabled={!geometry||(faceDraft.length>0&&id!=='face')} onClick={()=>{setMode(id)}} aria-pressed={mode===id}>{label}</button>)}{mode==='select'&&<label>拖动约束 <select aria-label="拖动约束" className="bg-neutral-800 p-1" value={constraint} onChange={e=>setConstraint(e.target.value as typeof constraint)}><option value="both">横竖均可</option><option value="horizontal">仅水平</option><option value="vertical">仅垂直</option></select></label>}{mode==='point'&&<label>隐藏轴坐标（{view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）<input aria-label={`顶点 新顶点隐藏轴坐标（${view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）`} className="ml-2 w-24 bg-neutral-800 p-1" type="text" inputMode="decimal" data-trace-draft="true" data-dirty={depthText!==String(depth)} value={depthText} onChange={e=>{setDepthText(e.target.value);setDraftDirty(e.target.value!==String(depth))}} onBlur={()=>{const n=Number(depthText);if(depthText.trim()!==''&&Number.isFinite(n)){setDepth(n);setDepthText(String(n));setDraftDirty(false)}else setError('隐藏轴坐标无效，请输入有限数字后再放点')}}/></label>}{mode==='face'&&<><span>待连接：{faceDraft.join(' → ')||'无'}（尚未保存）</span><button className={btn} disabled={selected===null||faceDraft.includes(selected)} onClick={()=>selected!==null&&setFaceDraft(old=>[...old,selected])}>添加选中点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft(old=>old.slice(0,-1))}>撤销上一个点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft([])}>清空待连接</button><button className={btn} disabled={faceDraft.length<3} onClick={finishFace}>完成面</button></>}</div><div className="min-h-[300px] flex-1 overflow-auto bg-neutral-800"><svg ref={svg} onPointerDown={canvasPoint} viewBox="0 0 1000 1000" className="mx-auto block h-full max-h-[min(80vh,900px)] w-full touch-none select-none" onPointerMove={pointer} onPointerUp={()=>setDrag(false)} onPointerCancel={()=>setDrag(false)}><defs><clipPath id="trace-crop"><rect width="1000" height="1000"/></clipPath></defs><rect width="1000" height="1000" fill="#e9e9e9"/>{image&&<g clipPath="url(#trace-crop)" opacity={opacity}><image href={image} x={grid?-(cell%3)*1000:0} y={grid?-Math.floor(cell/3)*1000:0} width={grid?3000:1000} height={grid?3000:1000} preserveAspectRatio="xMidYMid meet"/></g>}
     {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();chooseFace(quad.face);setSelectedEdgeSlot(quad.slot);setToolPanel('topology');setLoopInfo('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
    </>}
   </div>
-  <aside className="min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 bg-neutral-950 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<p className="text-amber-300">{sceneEdit ? '完成待连接的面后，点击「应用到场景」写入图层。' : '当前工作区有未保存修改或待连接的面；替换内容前请先完成或清空待连接，并保存 JSON。'}</p>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
+  <aside className="topo-inspector min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<p className="text-amber-300">{sceneEdit ? '完成待连接的面后，点击「应用到场景」写入图层。' : '当前工作区有未保存修改或待连接的面；替换内容前请先完成或清空待连接，并保存 JSON。'}</p>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
   <summary className="cursor-pointer font-medium text-neutral-200">参考图与正交视图参数</summary>
   <div className="mt-3 space-y-2"><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></div></details>}
   {geometry?<><section className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-sm space-y-2">
