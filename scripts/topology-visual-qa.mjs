@@ -36,7 +36,7 @@ try{
   await dialog.waitFor();
   const counts=async(v,f)=>{
     console.log('[QA] Expected counts',v,f);
-    await dialog.getByText(`顶点 ${v} · 控制面 ${f}`).waitFor({timeout:15000});
+    await dialog.getByText(new RegExp(`${v} 顶点 / ${f} 面`)).waitFor({timeout:15000});
     notes.checks.push(`vertices=${v},faces=${f}`);
   };
   const selectFace=async n=>{
@@ -61,10 +61,18 @@ try{
     notes.shots.push({name,path,size:file.size});
   };
   await counts(8,6);
+  await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).waitFor();
+  assert.equal(await dialog.getByRole('button',{name:'布线',exact:true}).getAttribute('aria-pressed'),'true');
   await screenshot('00-cube-angle');
   // The wizard must genuinely convert the single 8-vertex base cube.
   await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).click();
   await counts(56,54);
+  assert.equal(await dialog.getByRole('button',{name:'配色',exact:true}).getAttribute('aria-pressed'),'true',
+    'painting tab should auto-focus after Rubik generation');
+  await dialog.getByRole('button',{name:'布线',exact:true}).click();
+  assert.equal(await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).count(),0,
+    'once subdivided, training shortcut must be hidden');
+  await dialog.getByRole('button',{name:'配色',exact:true}).click();
   await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
   await screenshot('00-rubik-from-cube');
   await dialog.getByRole('button',{name:'显示布线',exact:true}).click();
@@ -109,7 +117,7 @@ try{
   await page.getByRole('button',{name:'编辑顶点',exact:true}).click();
   const reopened=page.getByRole('dialog',{name:/场景顶点编辑/});
   await reopened.waitFor();
-  await reopened.getByText('顶点 18 · 控制面 17').waitFor();
+  await reopened.getByText(/18 顶点 \/ 17 面/).waitFor();
   notes.checks.push('applied and reopened same 18/17 control cage');
   await reopened.getByRole('button',{name:'关闭场景顶点编辑'}).click();
   await reopened.waitFor({state:'hidden'});
