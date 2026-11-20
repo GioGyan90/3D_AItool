@@ -113,7 +113,7 @@ test('extrusion creates raised cap and true attached side walls, with manifold n
 test('inset then extrude forms a complex low-poly structure without remeshing',()=>{
   const base=createPrimitiveControlMesh('box');
   const inset=insetControlFace(base,0,.3);
-  const extruded=extrudeControlFace(inset,5,.4);
+  const extruded=extrudeControlFace(inset,4,.4);
   checkClosed(extruded);
   assert.equal(base.vertices.length,8);
   assert.equal(extruded.vertices.length,16);
