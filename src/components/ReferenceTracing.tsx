@@ -306,7 +306,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <label className="text-xs text-neutral-400">顶点编号
       <input aria-label="选择顶点编号" className="mt-1 w-full rounded border border-neutral-700 bg-neutral-950 p-2 text-sm text-neutral-100" type="number"
         min="0" max={Math.max(0,geometry.vertices.length-1)} value={selected??''}
-        onChange={e=>{if(e.target.value===''){setSelected(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.vertices.length)setSelected(n)}}/>
+        onChange={e=>{if(e.target.value===''){setSelected(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.vertices.length){setSelected(n);setShowCage(true);setToolPanel('model')}}}/>
     </label>
   </div>
   {selectedFace!==null&&geometry.faces[selectedFace]&&
@@ -340,7 +340,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   <div className="flex justify-between gap-2"><h3 className="font-semibold text-sky-200">建模工具</h3><span className="text-xs text-neutral-400">按任务选择 · 逐步造型</span></div>
   <div className="grid grid-cols-4 gap-1 rounded bg-neutral-950 p-1">
    {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label])=>
-     <button key={id} aria-pressed={toolPanel===id} className={'rounded py-2 text-xs '+(toolPanel===id?'bg-sky-800 text-white':'text-neutral-400 hover:bg-neutral-800')} onClick={()=>setToolPanel(id)}>{label}</button>)}
+     <button key={id} aria-pressed={toolPanel===id} className={'rounded py-2 text-xs '+(toolPanel===id?'bg-sky-800 text-white':'text-neutral-400 hover:bg-neutral-800')} onClick={()=>{setToolPanel(id);if(id==='topology'||id==='model')setShowCage(true);if(id==='paint')setShowCage(false)}}>{label}</button>)}
   </div>
   {toolPanel==='topology'&&<div className="space-y-3">
     <div className="space-y-2 rounded border border-amber-700/40 bg-amber-950/20 p-3">
