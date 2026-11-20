@@ -1,11 +1,19 @@
 name: Shape3D topology validation
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/topology-visual-qa.mjs'
+      - '.github/workflows/topology-ci.yml'
   push:
     branches: [main]
     paths:
       - 'src/**'
       - 'tests/**'
+      - 'scripts/topology-visual-qa.mjs'
       - 'package.json'
       - 'package-lock.json'
       - 'vite.config.ts'
@@ -32,6 +40,19 @@ jobs:
         run: npm run test:topology
       - name: Build public studio
         run: npm run build:pages
+      - name: Install headless browser for multi-angle visual QA
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Capture and inspect topology in actual WebGL canvas
+        run: node scripts/topology-visual-qa.mjs
+      - name: Upload multi-angle topology screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shape3d-topology-screenshots
+          path: artifacts/topology-qa/
+          retention-days: 14
       - name: Attach generated site for review
         uses: actions/upload-artifact@v4
         with:
@@ -39,6 +60,7 @@ jobs:
           path: docs/studio/
           retention-days: 7
       - name: Commit refreshed static studio
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
