@@ -13,7 +13,7 @@ type Props={
   selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
   onSelectFace?:(i:number,additive?:boolean)=>void; onSelectEdge?:(face:number,slot:number)=>void;
-  onStartMove?:()=>void; xray?:boolean; showCage?:boolean;
+  onStartMove?:()=>void; xray?:boolean; showCage?:boolean; cameraRevision?:number;
 };
 const keyOf=(a:number,b:number)=>a<b?`${a}:${b}`:`${b}:${a}`;
 
@@ -104,7 +104,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
       onMouseUp={()=>{dragging.current=false;dragIndex.current=null;if(orbit.current)orbit.current.enabled=true}}/>}
   </>;
 }
-function Camera({direction,bounds,orbit}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>}){
+function Camera({direction,bounds,orbit,revision}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>,revision:number}){
   const {camera,invalidate,size}=useThree();
   useEffect(()=>{
     const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],angle:[3,1.2,4],low:[3,-2,4]};
@@ -117,7 +117,7 @@ function Camera({direction,bounds,orbit}:{direction:string,bounds:{center:THREE.
     camera.up.set(0,1,0);camera.lookAt(bounds.center);camera.updateProjectionMatrix();
     if(orbit.current){orbit.current.target.copy(bounds.center);orbit.current.update()}
     invalidate();
-  },[camera,direction,invalidate,bounds,orbit,size.width,size.height]);
+  },[camera,direction,revision,invalidate,bounds,orbit,size.width,size.height]);
   return null;
 }
 export function TracePreview(props:Props){
@@ -133,7 +133,7 @@ export function TracePreview(props:Props){
     <color attach="background" args={['#303030']}/>
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={1.3}/>
     <Shape {...props} orbit={orbit}/>
-    <Camera direction={props.direction} bounds={bounds} orbit={orbit}/>
+    <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit}/>
     <OrbitControls ref={orbit} makeDefault/>
   </Canvas>;
 }
