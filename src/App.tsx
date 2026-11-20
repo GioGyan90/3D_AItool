@@ -11,6 +11,7 @@ import { UVEditor } from './components/UVEditor';
 import { BoneRigEditor } from './components/BoneRigEditor';
 import { SceneNode, NodeType, PropertyTrack, AnimationData, Keyframe, ControlMesh } from './types';
 import { buildEditableGeometry, parseStudioProject } from './studioProject';
+import { createPrimitiveControlMesh } from './components/meshTopology';
 import type { StudioProject } from './studioProject';
 import { Timeline } from './components/Timeline';
 import { CodeEditor } from './components/CodeEditor';
@@ -1881,6 +1882,60 @@ return mesh;` : undefined,
     }
   };
 
+  const startTopologyModeling = () => {
+    if (!selectedNode) {
+      const mesh = createPrimitiveControlMesh('box');
+      const newId = crypto.randomUUID();
+      const created: SceneNode = {
+        id: newId, name: '布线基础立方体', type: 'csg', parentId: null,
+        position: [0, .5, 0], rotation: [0, 0, 0], scale: [1, 1, 1],
+        color: '#4a90e2', parameters: {}, visible: true,
+        controlMesh: mesh, geometryData: buildEditableGeometry(mesh),
+      };
+      const next = [...nodes, created];
+      setNodes(next);
+      setSelectedIds([newId]);
+      pushHistory(next, [newId]);
+      setEditingControlMeshId(newId);
+      return;
+    }
+    if (selectedNode.locked) {
+      setProjectError('该图层已锁定，请先解锁后再进行布线。');
+      return;
+    }
+    if (selectedNode.controlMesh) {
+      setEditingControlMeshId(selectedNode.id);
+      return;
+    }
+    if (selectedNode.type !== 'box' && selectedNode.type !== 'sphere' && selectedNode.type !== 'cylinder') {
+      setProjectError('首版基础形布线支持立方体、球体、圆柱体及已有控制网格。');
+      return;
+    }
+    const params = selectedNode.parameters;
+    const hasDeformations = Boolean(
+      params.bend || params.taper || params.stretch || params.inflate ||
+      params.bevelRadius || params.anchorPoints?.length ||
+      params.twist?.some(v => v !== 0) ||
+      params.asymmetricScale?.some(v => v !== 0) ||
+      params.edgeShift?.some(v => v !== 0)
+    );
+    if (hasDeformations) {
+      setProjectError('该基础形状有形变或倒角。请先移除形变，再转换为低面控制网格，以免改变原有造型。');
+      return;
+    }
+    const mesh = createPrimitiveControlMesh(
+      selectedNode.type,
+      selectedNode.parameters.radius || .5,
+    );
+    const nextNodes = nodes.map(node => node.id === selectedNode.id
+      ? {...node, type: 'csg' as const, parameters: {}, controlMesh: mesh,
+          geometryData: buildEditableGeometry(mesh)}
+      : node);
+    setNodes(nextNodes);
+    pushHistory(nextNodes, selectedIds);
+    setEditingControlMeshId(selectedNode.id);
+  };
+
   const applySceneMesh = (mesh: ControlMesh) => {
     const layer = nodes.find(node => node.id === editingControlMeshId);
     if (!layer?.controlMesh || layer.locked) throw Error('该图层已不存在或已锁定。');
@@ -2091,6 +2146,7 @@ return mesh;` : undefined,
             <button onClick={editSelectedVertices} disabled={!!selectedNode?.controlMesh && selectedNode.locked} className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider disabled:opacity-40" title={selectedNode?.controlMesh ? '编辑当前图层的顶点' : '多视图顶点参考对照'}>
               {selectedNode?.controlMesh ? '编辑顶点' : '顶点对照'}
             </button>
+            <button onClick={startTopologyModeling} className="bg-sky-950/70 hover:bg-sky-900 text-sky-200 border border-sky-700/50 px-3 py-1 rounded text-[11px] font-bold tracking-wider" title="从基础形状开始，沿四边面插入环线并移动顶点">布线建模</button>
             <label className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1.5">
               <Upload className="w-3 h-3" />
               IMPORT
