@@ -305,12 +305,19 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();chooseFace(quad.face);setSelectedEdgeSlot(quad.slot);setToolPanel('topology');setLoopInfo('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
    </>}
   </div>
-  <aside className="topo-inspector min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<p className="text-amber-300">{sceneEdit ? '完成待连接的面后，点击「应用到场景」写入图层。' : '当前工作区有未保存修改或待连接的面；替换内容前请先完成或清空待连接，并保存 JSON。'}</p>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
+  <aside className="topo-inspector min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(error||loopInfo||dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<div className="topo-inspector-feedback space-y-2">
+    {error&&<p role="alert" className="topo-message is-error">{error}</p>}
+    {!error&&loopInfo&&<p role="status" className="topo-message">{loopInfo}</p>}
+    {faceDraft.length>0&&<p className="topo-message is-warning">正在连接控制面：已选 {faceDraft.length} 个顶点，请完成或清空。</p>}
+    {!faceDraft.length&&(dirty||referenceDirty||draftDirty)&&<p className="topo-helptext">
+      {sceneEdit?'当前修改尚未应用，关闭会丢失修改。':'当前工作区有未保存修改，请保存 JSON。'}
+    </p>}
+  </div>{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
   <summary className="cursor-pointer font-medium text-neutral-200">参考图与正交视图参数</summary>
   <div className="mt-3 space-y-2"><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></div></details>}
-  {geometry?<><section className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-sm space-y-2">
-  <div className="flex items-center justify-between gap-2">
-    <strong className="font-medium text-neutral-200">选择与坐标</strong>
+  {geometry?<><section className="topo-inspector-card text-sm space-y-3">
+  <div className="topo-inspector-heading">
+    <strong>01 · 当前选择</strong>
     <span className="text-xs text-neutral-500">顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</span>
   </div>
   <div className="grid grid-cols-2 gap-2">
@@ -352,8 +359,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       return tag?<p>顶点来源：{String(tag.source??'未记录')}{tag.depth?` · ${String(tag.depth)}`:''}</p>:<p>此顶点暂无参考来源记录。</p>})()}
     <p>正交视图按面绕序近似隐藏背面；可在 3D 视图检查遮挡。</p>
   </div>}
-</section><section className="rounded-xl border border-neutral-700 bg-neutral-900/60 p-3 space-y-3">
-  <div className="flex justify-between gap-2"><h3 className="font-semibold text-sky-200">建模工具</h3><span className="text-xs text-neutral-400">按任务选择 · 逐步造型</span></div>
+</section><section className="topo-inspector-card space-y-3">
+  <div className="topo-inspector-heading"><h3>02 · 建模操作</h3><span className="topo-eyebrow">按任务切换</span></div>
   <div className="grid grid-cols-4 gap-1 rounded bg-neutral-950 p-1">
    {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label])=>
      <button key={id} aria-pressed={toolPanel===id} className={'rounded py-2 text-xs '+(toolPanel===id?'bg-sky-800 text-white':'text-neutral-400 hover:bg-neutral-800')} onClick={()=>{setToolPanel(id);if(id==='topology'||id==='model')setShowCage(true);if(id==='paint')setShowCage(false)}}>{label}</button>)}
@@ -440,7 +447,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     {meshQuality?.error?<p role="alert" className="text-rose-300">{meshQuality.error}</p>:<p className="text-emerald-300">面绕序和边引用检查通过</p>}
     <p className="text-neutral-500">待补齐：真正的边倒角、任意多边面自由刀切、桥接和魔方层组转动。</p>
   </div>}
-  {loopInfo&&<p role="status" className="rounded bg-sky-950/30 p-2 text-xs text-sky-300">{loopInfo}</p>}
+  
 </section></>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
   {!sceneEdit && geometry && <>
     <button className={btn} onClick={() => setPreview(value => !value)} aria-expanded={preview}>
@@ -449,5 +456,5 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     {preview && spatialPreview}
   </>}
   {sceneEdit && !projectSpatialView && triangulationError && <p role="alert" className="text-amber-300">{triangulationError}</p>}
-{!imageSquare&&<p className="text-amber-300">参考图非正方形，已保持原始比例并关闭九宫格切分。</p>}{!sceneEdit && <p className="text-neutral-400">按顺序连接顶点时须自行保证轮廓及绕序；未使用的点也可以保存。模型与参考需先手动调整比例和中心。GLB 导出按控制面投影耳切，退化或自相交面会阻止导出；参考图及各视角的标定参数会随 JSON 保存。</p>}{error&&<p className="text-red-400" role="alert">{error}</p>}</aside></div></fieldset>{loading&&<div className="absolute inset-0 z-[210] flex items-center justify-center bg-black/60 text-white" role="status">加载中，暂不能编辑…</div>}</div>;
+{!imageSquare&&<p className="text-amber-300">参考图非正方形，已保持原始比例并关闭九宫格切分。</p>}{!sceneEdit && <p className="text-neutral-400">按顺序连接顶点时须自行保证轮廓及绕序；未使用的点也可以保存。模型与参考需先手动调整比例和中心。GLB 导出按控制面投影耳切，退化或自相交面会阻止导出；参考图及各视角的标定参数会随 JSON 保存。</p>}</aside></div></fieldset>{loading&&<div className="absolute inset-0 z-[210] flex items-center justify-center bg-black/60 text-white" role="status">加载中，暂不能编辑…</div>}</div>;
 }
