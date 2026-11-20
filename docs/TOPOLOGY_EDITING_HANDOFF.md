@@ -28,7 +28,7 @@
 - `npm run test:topology`
 - `npm run build:pages`
 - 实际启动浏览器观察：按钮与面板出现、正交视图点击橙色边线、切线后点数/面数变化、三维预览更新、拖动新顶点、应用到场景、保存重开项目。
-- **本轮 GitHub connector 完成源码提交，但无本地完整构建环境，也没有重新生成 `docs/studio/` 静态页面；线上 Pages 仍可能显示旧版。不要把源码提交当成已经发布。**
+- **本轮 GitHub Actions 已运行 `npm ci`、`lint`、`test:topology`、`build:pages` 全部通过，并自动提交最新 `docs/studio/` 构建产物（提交 `f77932f`）。Pages 对该提交的构建与部署记录已成功；仍需在真实浏览器中进行交互视觉验收。**
 
 ## 下一阶段优先顺序
 
