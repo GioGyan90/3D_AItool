@@ -44,3 +44,17 @@
 - 先拓扑、后曲面坐标、再细分；控制新面数。
 - 多机位截图复查，发现结构错误应修订边线与节点关系，而非盲目增加密度。
 - 用户默认授权常规代码修改、提交、合并；不要就这些步骤重复确认。
+
+## 2026-11-20 后续：局部造型与交互回归
+
+实现分支：`feat/topology-local-tools-20261120`。
+
+- `meshTopology.ts`：新增 `validateControlTopology`（共享边、绕序、非流形和硬限制）、`splitQuadLocally`（一面切割并自动重构相邻面的共享边）、`insetControlFace`（围绕所选面添加四边面环）、`extrudeControlFace`（沿 Newell 法线添加盖面和侧壁）、`mirrorControlMeshX`（X=0 半模型焊接，删中线封盖）。
+- `TracePreview.tsx`：允许真实 3D 场景选面、选边，高亮面与选中边；捕获 TransformControls 拖拽开始用于撤销栈。
+- `ReferenceTracing.tsx`：增加五项可执行操作入口、50 条历史、键盘与按钮撤销/重做；正交边线加粗便于选取。
+- `tests/meshTopology.test.ts`：新增闭合/定向流形、欧拉示性数、三角化一致性和各项造型组合断言。
+- `scripts/topology-visual-qa.mjs`：启动 Chromium / WebGL，在真实 UI 中完成环切、撤销、重做、局部切割、内插、挤出，并输出多角度截图；CI 上传 screenshot artifact。
+
+**使用限制**：局部切割会在邻接面引入三角面（而非强制传播全局四边面环）。X 镜像只接受在 X=0 存在中线顶点的单侧网格。当前还未添加多边面自由刀切、Bridge/Loop Connect、独立侧边微调、局部化模型细分与对称编辑约束。后续应优先补足交互式鼠标局部布线和法线视觉验收，避免规则密集重网格化。
+
+**发布验收**：必须核对对应 PR 的 CI 和 Playwright 截图工件；只有类型检查、拓扑/页面测试通过且 Pages 已实际部署后才能声称线上版本更新。
