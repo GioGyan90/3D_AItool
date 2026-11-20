@@ -28,6 +28,9 @@ const project=(v:V,view:View):[number,number]=>view==='front'?[v[0],v[1]]:view==
 const replaceProjection=(v:V,view:View,x:number,y:number):V=>view==='front'?[x,y,v[2]]:view==='side'?[v[0],y,-x]:view==='back'?[-x,y,v[2]]:view==='top'?[x,v[1],-y]:[x,v[1],y];
 const download=(blob:Blob,name:string)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 const btn='topo-button rounded border px-3 py-1.5 text-sm disabled:opacity-40';
+const RUBIK_COLOR_LABELS:Record<keyof typeof RUBIK_FACE_COLORS,string>={
+  right:'右 · 红',left:'左 · 橙',top:'上 · 白',bottom:'下 · 黄',front:'前 · 绿',back:'后 · 蓝',
+};
 const MAX_VERTICES=5000,MAX_FACES=10000,MAX_REFERENCES=30000,MAX_FILE=10*1024*1024,MAX_IMAGE=5*1024*1024;
 const readGeometry=(d:any):Geometry=>{let raw=d.vertices??d.verts,faces=Array.isArray(d.control)?d.control:d.faces;if(!Array.isArray(raw)||!Array.isArray(faces))throw Error('需要 vertices/verts 和 faces/control 数组');if(raw.length&&typeof raw[0]==='number'){if(raw.length%3)throw Error('顶点坐标数量不是 3 的倍数');raw=Array.from({length:raw.length/3},(_,i)=>raw.slice(3*i,3*i+3))}if(raw.length>MAX_VERTICES||faces.length>MAX_FACES||faces.reduce((n:number,f:any)=>n+(Array.isArray(f)?f.length:0),0)>MAX_REFERENCES)throw Error('超过限制：最多 5000 顶点、10000 控制面及 30000 个面顶点引用');if(raw.some((v:any)=>!Array.isArray(v)||v.length!==3||v.some((x:any)=>typeof x!=='number'||!Number.isFinite(x))))throw Error('顶点应是有限的 [x,y,z] 坐标');if(faces.some((f:any)=>!Array.isArray(f)||f.length<3||f.length>64||f.some((i:any)=>!Number.isInteger(i)||i<0||i>=raw.length)))throw Error('控制面索引无效');if(d.faceColors!==undefined&&(!Array.isArray(d.faceColors)||d.faceColors.length!==faces.length||d.faceColors.some((c:unknown)=>typeof c!=='string'||!/^#[0-9a-f]{6}$/i.test(c))))throw Error('逐面颜色必须与控制面数量一致且为 #RRGGBB');return {vertices:raw.map((v:number[])=>[...v] as V),faces:faces.map((f:number[])=>[...f]),...(d.faceColors?{faceColors:[...d.faceColors]}:{})}};
 
@@ -429,11 +432,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn} disabled={selectedFace===null} onClick={()=>chooseFaceGroup('plane')}>选择同一平面</button>
       <button className={btn} disabled={selectedFace===null||!geometry.faceColors} onClick={()=>chooseFaceGroup('color')}>选择相同颜色</button>
     </div>
-    <div className="grid grid-cols-3 gap-2">
+    <div className="topo-color-picker">
       {Object.entries(RUBIK_FACE_COLORS).map(([name,color])=>
-        <button key={name} aria-label={`涂色 ${name}`} title={name} className="h-10 rounded border border-white/20 disabled:opacity-40" style={{backgroundColor:color}}
-          disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(color)}>
-          {geometry.faceColors?.[selectedFace??-1]===color?'✓':''}
+        <button key={name} aria-label={`涂色 ${name}`}
+          aria-pressed={selectedFace!==null&&geometry.faceColors?.[selectedFace]===color}
+          title={`将已选控制面涂为${RUBIK_COLOR_LABELS[name as keyof typeof RUBIK_FACE_COLORS]}`}
+          className="topo-color-swatch" disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(color)}>
+          <span className="topo-color-disc" style={{backgroundColor:color}} aria-hidden="true"/>
+          <span>{RUBIK_COLOR_LABELS[name as keyof typeof RUBIK_FACE_COLORS]}</span>
         </button>)}
     </div>
     <label className="flex items-center gap-2 text-xs">自选颜色
@@ -441,15 +447,28 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <span>{paintColor}</span>
     </label>
     <button className={btn+' w-full'} disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(paintColor)}>应用到已选面</button>
-    <button className={btn+' w-full'} disabled={!geometry.faceColors||draftDirty} onClick={removeFaceColors}>清空全部面颜色</button>
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs text-slate-400">
+      <summary className="cursor-pointer">更多配色操作</summary>
+      <p className="topo-helptext mt-2">清空后将还原为普通控制网格，可通过撤销恢复。</p>
+      <button className={btn+' topo-danger mt-2 w-full'} disabled={!geometry.faceColors||draftDirty}
+        onClick={removeFaceColors}>清空全部面颜色</button>
+    </details>
   </div>}
-  {toolPanel==='inspect'&&<div className="space-y-2 text-xs">
-    <p>顶点 <strong>{geometry.vertices.length}</strong> · 控制面 <strong>{geometry.faces.length}</strong></p>
-    <p>已着色面 <strong>{geometry.faceColors?.length??0}</strong> · 已移动顶点 <strong>{edited.length}</strong></p>
-    <p className="text-neutral-400">X-Ray 开关控制背面边线显示。有效几何体必须保留共享边与正确面绕序。</p>
-    <p className="text-neutral-400">共享边：{meshQuality?.error?'校验失败':meshQuality?.edges??0} · 开放边：{meshQuality?.boundaryEdges??'—'}</p>
-    {meshQuality?.error?<p role="alert" className="text-rose-300">{meshQuality.error}</p>:<p className="text-emerald-300">面绕序和边引用检查通过</p>}
-    <p className="text-neutral-500">待补齐：真正的边倒角、任意多边面自由刀切、桥接和魔方层组转动。</p>
+  {toolPanel==='inspect'&&<div className="space-y-3 text-xs">
+    <div className="topo-mini-stats">
+      <div><strong>{geometry.vertices.length}</strong><span>控制顶点</span></div>
+      <div><strong>{geometry.faces.length}</strong><span>控制面</span></div>
+      <div><strong>{meshQuality?.error?'—':meshQuality?.edges??'—'}</strong><span>共享边</span></div>
+    </div>
+    <div className={meshQuality?.error?'topo-message is-error':'topo-message'}>
+      <strong>{meshQuality?.error?'拓扑检查失败':'基础拓扑检查通过'}</strong>
+      <p className="mt-1">{meshQuality?.error||`开放边：${meshQuality?.boundaryEdges??'—'} · 已着色面：${geometry.faceColors?.length??0} · 修改顶点：${edited.length}`}</p>
+    </div>
+    <p className="topo-helptext">检查共享边、面绕序与非流形结构。可旋转三维画面或打开 X-Ray 检查背面。</p>
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs text-slate-400">
+      <summary className="cursor-pointer">尚未支持的高级功能</summary>
+      <p className="topo-helptext mt-2">后续包括真实边倒角、任意多边面自由刀切、桥接和可转动魔方层组。</p>
+    </details>
   </div>}
   
 </section></>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
