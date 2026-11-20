@@ -3,6 +3,8 @@ export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extr
 export interface ControlMesh {
   vertices: [number, number, number][];
   faces: number[][];
+  /** Optional color per control face, preserved through topology operations. */
+  faceColors?: string[];
 }
 
 export interface SceneNode {
