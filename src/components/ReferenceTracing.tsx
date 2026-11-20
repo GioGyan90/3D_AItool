@@ -266,7 +266,51 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    </>}
   </div>
   <aside className="min-h-0 w-full shrink-0 space-y-3 overflow-y-auto border-t border-neutral-800 bg-neutral-950 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<p className="text-amber-300">{sceneEdit ? '完成待连接的面后，点击「应用到场景」写入图层。' : '当前工作区有未保存修改或待连接的面；替换内容前请先完成或清空待连接，并保存 JSON。'}</p>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></>}
-  {geometry?<><section className="rounded-xl border border-neutral-700 bg-neutral-900/60 p-3 space-y-3">
+  {geometry?<><section className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-sm space-y-2">
+  <div className="flex items-center justify-between gap-2">
+    <strong className="font-medium text-neutral-200">选择与坐标</strong>
+    <span className="text-xs text-neutral-500">顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</span>
+  </div>
+  <div className="grid grid-cols-2 gap-2">
+    <label className="text-xs text-neutral-400">控制面编号
+      <input aria-label="控制面编号" className="mt-1 w-full rounded border border-neutral-700 bg-neutral-950 p-2 text-sm text-neutral-100" type="number"
+        min="0" max={Math.max(0,geometry.faces.length-1)} value={selectedFace??''}
+        onChange={e=>{if(e.target.value===''){clearFaces();return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.faces.length)chooseFace(n)}}/>
+    </label>
+    <label className="text-xs text-neutral-400">顶点编号
+      <input aria-label="选择顶点编号" className="mt-1 w-full rounded border border-neutral-700 bg-neutral-950 p-2 text-sm text-neutral-100" type="number"
+        min="0" max={Math.max(0,geometry.vertices.length-1)} value={selected??''}
+        onChange={e=>{if(e.target.value===''){setSelected(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.vertices.length)setSelected(n)}}/>
+    </label>
+  </div>
+  {selectedFace!==null&&geometry.faces[selectedFace]&&
+    <div className="truncate text-xs text-sky-300" title={geometry.faces[selectedFace].join(' → ')}>
+      面 #{selectedFace}：{geometry.faces[selectedFace].join(' → ')}
+      {selectedFaces.length>1?` · 共选 ${selectedFaces.length} 面`:''}
+    </div>}
+  {selected!==null&&geometry.vertices[selected]&&<div className="space-y-2 rounded-lg border border-neutral-800 p-2">
+    <div className="text-xs text-sky-200">顶点 #{selected} · 精确坐标{edited.includes(selected)?'（已修改）':''}</div>
+    <div className="grid grid-cols-3 gap-2">
+      {(['X','Y','Z'] as const).map((axis,i)=><CoordinateInput key={`${selected}:${axis}`} axis={axis}
+        value={geometry.vertices[selected][i]} onDraft={setDraftDirty}
+        onCommit={n=>{const v=[...geometry.vertices[selected]] as V;v[i]=n;remember();update(selected,v)}}/>)}
+    </div>
+    {symmetryAxes.length>0&&<p className="text-xs text-neutral-500">对称编辑：{symmetryAxes.join(', ').toUpperCase()}</p>}
+  </div>}
+  <button className="text-xs text-neutral-400 hover:text-white" onClick={()=>setAdvancedOpen(v=>!v)}
+    aria-expanded={advancedOpen}>{advancedOpen?'收起高级操作 −':'高级操作与来源 +'} </button>
+  {advancedOpen&&<div className="space-y-2 rounded-lg border border-neutral-800 p-2 text-xs text-neutral-400">
+    {selectedFace!==null&&<button className={btn+' w-full'} disabled={faceDraft.length>0}
+      onClick={deleteFace}>删除选中控制面（不自动补洞）</button>}
+    {selected!==null&&<button className={btn+' w-full'}
+      disabled={faceDraft.length>0||geometry.faces.some(f=>f.includes(selected))}
+      onClick={deleteVertex}>删除未引用顶点</button>}
+    {selected!==null&&geometry.faces.some(f=>f.includes(selected))&&<p>顶点仍被控制面引用，无法直接删除。</p>}
+    {selected!==null&&(()=>{const tags=(sourceMetadata.meta as any)?.tags,tag=Array.isArray(tags)?tags[selected]:null;
+      return tag?<p>顶点来源：{String(tag.source??'未记录')}{tag.depth?` · ${String(tag.depth)}`:''}</p>:<p>此顶点暂无参考来源记录。</p>})()}
+    <p>正交视图按面绕序近似隐藏背面；可在 3D 视图检查遮挡。</p>
+  </div>}
+</section><section className="rounded-xl border border-neutral-700 bg-neutral-900/60 p-3 space-y-3">
   <div className="flex justify-between gap-2"><h3 className="font-semibold text-sky-200">建模工具</h3><span className="text-xs text-neutral-400">按任务选择 · 逐步造型</span></div>
   <div className="grid grid-cols-4 gap-1 rounded bg-neutral-950 p-1">
    {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label])=>
@@ -355,7 +399,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <p className="text-neutral-500">待补齐：真正的边倒角、任意多边面自由刀切、桥接和魔方层组转动。</p>
   </div>}
   {loopInfo&&<p role="status" className="rounded bg-sky-950/30 p-2 text-xs text-sky-300">{loopInfo}</p>}
-</section><div>顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</div><label className="block">控制面编号<input aria-label="控制面编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={Math.max(0,geometry.faces.length-1)} value={selectedFace??''} onChange={e=>{if(e.target.value===''){setSelectedFace(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.faces.length){setSelectedFace(n);setSelectedEdgeSlot(0)}}}/></label>{selectedFace!==null&&geometry.faces[selectedFace]&&<div>面 #{selectedFace}：{geometry.faces[selectedFace].join(' → ')} <button className={btn} disabled={faceDraft.length>0} title={faceDraft.length?"请先完成或清空待连接的面":"删除此控制面"} onClick={deleteFace}>删除此面</button></div>}<label className="block">选择顶点编号<input aria-label="选择顶点编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={geometry.vertices.length-1} value={selected??''} onChange={e=>{if(e.target.value===''){setSelected(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.vertices.length)setSelected(n)}} /></label><p className="text-neutral-400">默认按控制面绕序近似隐藏背面，并非完整遮挡检测；隐藏或重叠的点可按编号选择。已修改 {edited.length} 点，原始来源记录保留但不代表修改后仍与原测点一致。</p>{selected!==null&&<><div>选中顶点 #{selected}{edited.includes(selected)?' · 已修改':''}</div><button className={btn} disabled={faceDraft.length>0||geometry.faces.some(f=>f.includes(selected))} title={faceDraft.length?'请先完成或清空待连接的面':geometry.faces.some(f=>f.includes(selected))?'该点仍被控制面引用，请先删除相关面':'删除未被引用的顶点'} onClick={deleteVertex}>删除未引用顶点</button>{geometry.faces.some(f=>f.includes(selected))&&<p className="text-neutral-400">该点仍被控制面引用，请先删除相关面。</p>}{(()=>{const tags=(sourceMetadata.meta as any)?.tags,tag=Array.isArray(tags)?tags[selected]:null;return tag?<dl className="break-words text-neutral-300"><dt>来源</dt><dd>{String(tag.source??'未记录')}{tag.row?` · ${tag.row}`:''}</dd>{Array.isArray(tag.frontPixel)&&<><dt>正面像素</dt><dd>{tag.frontPixel.join(', ')}</dd></>}{tag.depth&&<><dt>深度依据</dt><dd>{String(tag.depth)}</dd></>}</dl>:<p className="text-neutral-400">该点暂无参考来源记录。</p>})()}<div className="grid grid-cols-3 gap-2">{(['X','Y','Z'] as const).map((axis,i)=><CoordinateInput key={`${selected}:${axis}`} axis={axis} value={geometry.vertices[selected][i]} onDraft={setDraftDirty} onCommit={n=>{const v=[...geometry.vertices[selected]] as V;v[i]=n;remember();update(selected,v)}}/>)}</div></>}</>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
+</section></>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
   {!sceneEdit && geometry && <>
     <button className={btn} onClick={() => setPreview(value => !value)} aria-expanded={preview}>
       {preview ? '收起 3D 预览' : '显示 3D 预览'}
