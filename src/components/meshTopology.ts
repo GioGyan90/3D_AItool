@@ -160,18 +160,24 @@ export function insertQuadEdgeLoop(
   }
 
   const faces: number[][] = [];
+  const faceColors: string[] = [];
   mesh.faces.forEach((face, i) => {
     const hit = visited.get(i);
-    if (!hit) { faces.push([...face]); return; }
+    if (!hit) {
+      faces.push([...face]);
+      if (mesh.faceColors) faceColors.push(mesh.faceColors[i]);
+      return;
+    }
     const a = face[hit.slot], b = face[(hit.slot + 1) % 4];
     const c = face[(hit.slot + 2) % 4], d = face[(hit.slot + 3) % 4];
     const p = cuts.get(keyOf(a, b))!.id, q = cuts.get(keyOf(c, d))!.id;
     faces.push([a, p, q, d], [p, b, c, q]);
+    if (mesh.faceColors) faceColors.push(mesh.faceColors[i],mesh.faceColors[i]);
   });
   if (faces.length > 10000 || faces.reduce((n, f) => n + f.length, 0) > 30000) {
     throw new Error('超过控制面或顶点引用数量上限。');
   }
-  return {vertices, faces};
+  return {vertices, faces,...(mesh.faceColors ? {faceColors} : {})};
 }
 
 
@@ -180,6 +186,9 @@ export function validateControlTopology(mesh: ControlMesh): {edges: number; boun
   if (mesh.vertices.length > 5000 || mesh.faces.length > 10000 ||
       mesh.faces.reduce((sum, face) => sum + face.length, 0) > 30000)
     throw new Error('控制网格超出 5000 顶点 / 10000 面 / 30000 引用限制。');
+  if (mesh.faceColors && (mesh.faceColors.length!==mesh.faces.length ||
+      mesh.faceColors.some(color=>!/^#[0-9a-f]{6}$/i.test(color))))
+    throw new Error('每个控制面必须有一条有效的 #RRGGBB 颜色记录。');
   for (const p of mesh.vertices)
     if (p.length !== 3 || !p.every(Number.isFinite))
       throw new Error('控制网格包含无效顶点坐标。');
@@ -206,8 +215,8 @@ export function validateControlTopology(mesh: ControlMesh): {edges: number; boun
   return {edges: owners.size, boundaryEdges: [...owners.values()].filter(x => x.length === 1).length};
 }
 
-function finishTopologyEdit(vertices: V[], faces: number[][]): ControlMesh {
-  const next = {vertices, faces};
+function finishTopologyEdit(vertices: V[], faces: number[][], faceColors?: string[]): ControlMesh {
+  const next = {vertices, faces,...(faceColors ? {faceColors} : {})};
   validateControlTopology(next);
   return next;
 }
@@ -238,24 +247,28 @@ export function splitQuadLocally(
   const p = pointOn(a,b,fraction);
   const q = pointOn(c,d,1-fraction);
   const faces: number[][] = [];
+  const faceColors: string[] = [];
+  const push = (fi:number,...pieces:number[][]) => {
+    faces.push(...pieces);
+    if (mesh.faceColors) faceColors.push(...pieces.map(()=>mesh.faceColors![fi]));
+  };
   mesh.faces.forEach((face, fi) => {
     if (fi === faceIndex) {
-      faces.push([a,p,q,d], [p,b,c,q]);
+      push(fi,[a,p,q,d], [p,b,c,q]);
       return;
     }
     const slots = face.map((v,i) => cut.has(keyOf(v,face[(i+1)%face.length])) ? i : -1).filter(i=>i>=0);
     if (slots.length > 1)
       throw new Error('相邻面同时接触两条切割边，无法安全局部布线。');
-    if (!slots.length) {faces.push([...face]); return;}
+    if (!slots.length) {push(fi,[...face]); return;}
     const i=slots[0];
     // Rotate until shared edge is first, then triangulate exactly once
     // without leaving a collinear vertex inside a polygon boundary.
     const rotated = [...face.slice(i), ...face.slice(0,i)];
     const mid = cut.get(keyOf(rotated[0],rotated[1]))!;
-    faces.push([rotated[rotated.length-1],rotated[0],mid]);
-    faces.push([mid,...rotated.slice(1)]);
+    push(fi,[rotated[rotated.length-1],rotated[0],mid], [mid,...rotated.slice(1)]);
   });
-  return finishTopologyEdit(vertices,faces);
+  return finishTopologyEdit(vertices,faces,mesh.faceColors?faceColors:undefined);
 }
 
 /** Create a ring of QUADS around one selected face without touching neighbors. */
@@ -275,7 +288,8 @@ export function insetControlFace(mesh: ControlMesh, faceIndex: number, fraction=
   const faces = mesh.faces.flatMap((f,i)=>i===faceIndex
     ? [...f.map((a,k)=>[a,f[(k+1)%f.length],inner[(k+1)%f.length],inner[k]]),inner]
     : [[...f]]);
-  return finishTopologyEdit(vertices,faces);
+  const colors=mesh.faceColors?.flatMap((value,i)=>Array(i===faceIndex?face.length+1:1).fill(value));
+  return finishTopologyEdit(vertices,faces,colors);
 }
 
 /** Extrude a selected face along its own outward normal; keep the old border shared. */
@@ -303,7 +317,8 @@ export function extrudeControlFace(mesh: ControlMesh, faceIndex: number, distanc
   });
   const sides=face.map((id,i)=>[id,face[(i+1)%face.length],top[(i+1)%face.length],top[i]]);
   const faces=mesh.faces.flatMap((f,i)=>i===faceIndex?[top,...sides]:[[...f]]);
-  return finishTopologyEdit(vertices,faces);
+  const colors=mesh.faceColors?.flatMap((value,i)=>Array(i===faceIndex?face.length+1:1).fill(value));
+  return finishTopologyEdit(vertices,faces,colors);
 }
 
 /**
@@ -325,7 +340,9 @@ export function mirrorControlMeshX(mesh: ControlMesh, tolerance=1e-6): ControlMe
     mapped.set(i,vertices.length);
     vertices.push(vertex(-p[0],p[1],p[2]));
   });
-  const sourceFaces=mesh.faces.filter(f=>!f.every(i=>Math.abs(mesh.vertices[i][0])<=tolerance));
+  const indices=mesh.faces.map((_,i)=>i).filter(fi=>!mesh.faces[fi].every(i=>Math.abs(mesh.vertices[i][0])<=tolerance));
+  const sourceFaces=indices.map(i=>mesh.faces[i]);
   const faces=[...sourceFaces.map(f=>[...f]),...sourceFaces.map(f=>f.map(i=>mapped.get(i)!).reverse())];
-  return finishTopologyEdit(vertices,faces);
+  const colors=mesh.faceColors && [...indices.map(i=>mesh.faceColors![i]),...indices.map(i=>mesh.faceColors![i])];
+  return finishTopologyEdit(vertices,faces,colors);
 }

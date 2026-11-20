@@ -52,7 +52,7 @@ try{
     const path=`${folder}/${name}.png`;
     await region.screenshot({path,animations:'disabled'});
     const file=await stat(path);
-    if(['01-loop-front','03-loop-three-quarter','05-local-cut','07-extruded-inset'].includes(name)){
+    if(['01-loop-front','03-loop-three-quarter','05-local-cut','07-extruded-inset','00-rubik-from-cube','08-rubik-angle','09-rubik-front','10-rubik-low'].includes(name)){
       const jpeg=await region.screenshot({type:'jpeg',quality:35,animations:'disabled'});
       console.log('TOPOLOGY_QA_JPEG_'+name+':'+jpeg.toString('base64'));
     }
@@ -62,6 +62,16 @@ try{
   };
   await counts(8,6);
   await screenshot('00-cube-angle');
+  // The wizard must genuinely convert the single 8-vertex base cube.
+  await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).click();
+  await counts(56,54);
+  await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
+  await screenshot('00-rubik-from-cube');
+  await dialog.getByRole('button',{name:'显示布线',exact:true}).click();
+  await dialog.getByRole('button',{name:'成品预览',exact:true}).click();
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  await counts(8,6);
+  await dialog.getByRole('button',{name:'布线',exact:true}).click();
   await selectFace(0);
   await dialog.getByRole('button',{name:'连续环线'}).click();
   await counts(12,10);
@@ -83,11 +93,12 @@ try{
   await counts(10,9);
   await screenshot('05-local-cut');
   await selectFace(0);
-  await dialog.getByRole('button',{name:'面内插 Inset'}).click();
+  await dialog.getByRole('button',{name:'塑形',exact:true}).click();
+  await dialog.getByRole('button',{name:'面内插 · Inset'}).click();
   await counts(14,13);
   await screenshot('06-inset');
   await selectFace(4); // inner cap created after four ring quads
-  await dialog.getByRole('button',{name:'面挤出 Extrude'}).click();
+  await dialog.getByRole('button',{name:'面挤出 · Extrude'}).click();
   await counts(18,17);
   await screenshot('07-extruded-inset');
   // Committing the working cage into the scene must preserve the generated
@@ -100,6 +111,40 @@ try{
   await reopened.waitFor();
   await reopened.getByText('顶点 18 · 控制面 17').waitFor();
   notes.checks.push('applied and reopened same 18/17 control cage');
+  await reopened.getByRole('button',{name:'关闭场景顶点编辑'}).click();
+  await reopened.waitFor({state:'hidden'});
+  // New scene sample should be a persistent colored model, not 27 boxlets.
+  await page.getByRole('button',{name:'魔方示例',exact:true}).click();
+  await counts(56,54);
+  await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
+  await screenshot('08-rubik-angle');
+  await dialog.getByRole('button',{name:'正面',exact:true}).first().click();
+  await screenshot('09-rubik-front');
+  await dialog.getByRole('button',{name:'低角度',exact:true}).first().click();
+  await screenshot('10-rubik-low');
+  // Check the complete workbench layout rather than only the canvas:
+  // a narrow properties inspector and enough room for the 3D model.
+  await dialog.getByRole('button',{name:'配色',exact:true}).click();
+  const side=await dialog.locator('aside').boundingBox();
+  const visual=await dialog.getByLabel('3D 旋转预览').boundingBox();
+  assert.ok(side&&side.width>=290&&side.width<=410,'inspector width should stay compact');
+  assert.ok(visual&&visual.width>=800&&visual.height>=250,'3D preview needs usable space');
+  const uiPath=`${folder}/11-workbench-paint.png`;
+  await page.screenshot({path:uiPath,animations:'disabled'});
+  notes.shots.push({name:'11-workbench-paint',path:uiPath,size:(await stat(uiPath)).size});
+  const uiJpeg=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
+  console.log('RUBIK_UI_JPEG:'+uiJpeg.toString('base64'));
+  notes.checks.push('paint inspector fits beside 3D viewport');
+  // Painting is reversible and must survive apply/reopen.
+  await selectFace(0);
+  await dialog.getByRole('button',{name:'涂色 right'}).click();
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  await dialog.getByRole('button',{name:'重做',exact:true}).click();
+  await dialog.getByRole('button',{name:'应用到场景'}).click();
+  await dialog.waitFor({state:'hidden'});
+  await page.getByRole('button',{name:'编辑顶点',exact:true}).click();
+  await counts(56,54);
+  notes.checks.push('Rubik face painting persisted through undo/redo and scene application');
   assert.deepEqual(notes.errors,[],'Unhandled errors occurred in browser');
   console.log('Topology browser QA passed',JSON.stringify(notes));
 }catch(error){

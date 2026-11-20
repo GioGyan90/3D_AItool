@@ -3,25 +3,27 @@ import {Canvas, useThree} from '@react-three/fiber';
 import {OrbitControls, TransformControls} from '@react-three/drei';
 import * as THREE from 'three';
 import {triangulateFaces} from './traceGeometry';
+import {buildPaintStickerGeometry} from '../studioProject';
+import type {ControlMesh} from '../types';
 
 type V=[number,number,number];
-type Data={vertices:V[],faces:number[][]};
+type Data=ControlMesh;
 type Props={
   data:Data; direction:string; selected:number|null;
   selectedFace?:number|null; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
   onSelectFace?:(i:number)=>void; onSelectEdge?:(face:number,slot:number)=>void;
-  onStartMove?:()=>void; xray?:boolean;
+  onStartMove?:()=>void; xray?:boolean; showCage?:boolean;
 };
 const keyOf=(a:number,b:number)=>a<b?`${a}:${b}`:`${b}:${a}`;
 
-function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,orbit}:
+function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,showCage=true,orbit}:
   Omit<Props,'direction'>&{orbit:React.MutableRefObject<any>}){
   const [handle,setHandle]=useState<THREE.Group|null>(null);
   const dragging=useRef(false),transform=useRef<any>(null),dragIndex=useRef<number|null>(null);
   const selectedRef=useRef(selected);
   selectedRef.current=selected;
-  const {mesh,lines,points,faceGeo,selectedEdgeTube,edgeOwners}=useMemo(()=>{
+  const {mesh,lines,points,stickers,faceGeo,selectedEdgeTube,edgeOwners}=useMemo(()=>{
     const pos=data.vertices.flat(),edgeSet=new Map<string,[number,number]>();
     const edgeOwners=new Map<string,{face:number;slot:number}>();
     let idx:number[]=[];
@@ -40,6 +42,7 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
     lines.setAttribute('position',new THREE.Float32BufferAttribute(edgePos,3));
     const points=new THREE.BufferGeometry();
     points.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    const stickers=buildPaintStickerGeometry(data);
     const faceGeo=new THREE.BufferGeometry();
     if(selectedFace!=null && data.faces[selectedFace]){
       try{
@@ -53,11 +56,11 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
         new THREE.Vector3(...data.vertices[selectedEdge[0]]),
         new THREE.Vector3(...data.vertices[selectedEdge[1]])),
       1,.008,6,false):null;
-    return {mesh,lines,points,faceGeo,selectedEdgeTube,edgeOwners};
+    return {mesh,lines,points,stickers,faceGeo,selectedEdgeTube,edgeOwners};
   },[data,selectedFace,selectedEdge?.[0],selectedEdge?.[1]]);
   const faceForTriangle=useMemo(()=>data.faces.flatMap((f,i)=>Array(Math.max(0,f.length-2)).fill(i) as number[]),[data.faces]);
-  useEffect(()=>()=>{mesh.dispose();lines.dispose();points.dispose();faceGeo.dispose();selectedEdgeTube?.dispose()},
-    [mesh,lines,points,faceGeo,selectedEdgeTube]);
+  useEffect(()=>()=>{mesh.dispose();lines.dispose();points.dispose();stickers.dispose();faceGeo.dispose();selectedEdgeTube?.dispose()},
+    [mesh,lines,points,stickers,faceGeo,selectedEdgeTube]);
   useEffect(()=>{if(handle&&selected!==null&&data.vertices[selected]&&!dragging.current)handle.position.set(...data.vertices[selected])},
     [handle,selected,data.vertices]);
   useEffect(()=>()=>{if(orbit.current)orbit.current.enabled=true},[orbit]);
@@ -67,30 +70,33 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
       if(e.faceIndex==null||!onSelectFace)return;
       const fi=faceForTriangle[e.faceIndex];
       if(fi!==undefined){e.stopPropagation();onSelectFace(fi);}
-    }}><meshStandardMaterial color="#999999" flatShading side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1}/></mesh>
+    }}><meshStandardMaterial color={data.faceColors?.length ? "#161a22" : "#999999"} flatShading side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1}/></mesh>
+    {data.faceColors?.length ? <mesh geometry={stickers} raycast={()=>null}>
+      <meshStandardMaterial vertexColors flatShading side={THREE.DoubleSide} roughness={.45}/>
+    </mesh> : null}
     {selectedFace!=null&&<mesh geometry={faceGeo} raycast={()=>null}>
       <meshBasicMaterial color="#1eafff" transparent opacity={.22} depthWrite={false}
         side={THREE.DoubleSide} polygonOffset polygonOffsetFactor={-2}/>
     </mesh>}
-    <lineSegments geometry={lines} onPointerDown={e=>{
+    {showCage&&<lineSegments geometry={lines} onPointerDown={e=>{
       if(e.index===undefined||!onSelectEdge)return;
       const edgeIndex=Math.floor(e.index/2);
       const pair=[...edgeOwners.keys()][edgeIndex];
       if(!pair)return;
       const quad=edgeOwners.get(pair);
       if(quad){e.stopPropagation();onSelectEdge(quad.face,quad.slot);}
-    }}><lineBasicMaterial color="#ff791a" depthTest={!xray} depthWrite={false}/></lineSegments>
-    {selectedEdgeTube&&<mesh geometry={selectedEdgeTube} raycast={()=>null}>
+    }}><lineBasicMaterial color="#ff791a" depthTest={!xray} depthWrite={false}/></lineSegments>}
+    {showCage&&selectedEdgeTube&&<mesh geometry={selectedEdgeTube} raycast={()=>null}>
       <meshBasicMaterial color="#39e8ff" depthTest={false}/>
     </mesh>}
-    <points geometry={points} onPointerDown={e=>{
+    {showCage&&<points geometry={points} onPointerDown={e=>{
       e.stopPropagation();if(e.index===undefined||dragging.current||transform.current?.axis)return;
       onSelect(e.index);
-    }}><pointsMaterial color="#48a4ff" size={.045} sizeAttenuation depthTest={!xray} depthWrite={false}/></points>
-    {current&&<group ref={setHandle} position={current}>
+    }}><pointsMaterial color="#48a4ff" size={.045} sizeAttenuation depthTest={!xray} depthWrite={false}/></points>}
+    {showCage&&current&&<group ref={setHandle} position={current}>
       <mesh><sphereGeometry args={[.027,10,10]}/><meshBasicMaterial color="#f6b72f" depthTest={false}/></mesh>
     </group>}
-    {current&&handle&&<TransformControls ref={transform} object={handle} mode="translate" space="world"
+    {showCage&&current&&handle&&<TransformControls ref={transform} object={handle} mode="translate" space="world"
       onMouseDown={()=>{dragIndex.current=selectedRef.current;dragging.current=true;onStartMove?.();if(orbit.current)orbit.current.enabled=false}}
       onObjectChange={()=>{const i=dragIndex.current;if(i!==null&&handle&&dragging.current)onMove(i,[handle.position.x,handle.position.y,handle.position.z])}}
       onMouseUp={()=>{dragging.current=false;dragIndex.current=null;if(orbit.current)orbit.current.enabled=true}}/>}

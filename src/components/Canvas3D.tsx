@@ -1667,7 +1667,8 @@ const StaticMaterial = ({ node, overrideColor }: { node: SceneNode; overrideColo
     <meshPhysicalMaterial 
       ref={materialRef}
       key={`static-mat-${node.id}-${texture ? 'textured' : 'plain'}`}
-      color={texture ? "#ffffff" : color} 
+      color={node.controlMesh?.faceColors?.length ? "#ffffff" : texture ? "#ffffff" : color}
+      vertexColors={Boolean(node.controlMesh?.faceColors?.length)} 
       metalness={node.material?.metalness ?? 0}
       roughness={node.material?.roughness ?? 0.5}
       map={texture}

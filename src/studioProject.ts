@@ -79,14 +79,78 @@ function validateControlMesh(value: unknown): ControlMesh {
     references += face.length;
   }
   if (references > 30_000) throw Error('控制网格超过 30000 个面顶点引用。');
+  if (value.faceColors!==undefined &&
+      (!Array.isArray(value.faceColors) || value.faceColors.length!==faces.length ||
+       !value.faceColors.every(color=>typeof color==='string' && /^#[0-9a-f]{6}$/i.test(color))))
+    throw Error('控制网格面颜色需要逐面提供 #RRGGBB 色值。');
   return value as unknown as ControlMesh;
+}
+
+/**
+ * Rendering-only sticker geometry. The control mesh remains one welded cage:
+ * inset colored stickers are visual overlays, not extra control faces/vertices.
+ */
+export function buildPaintStickerGeometry(mesh: ControlMesh): THREE.BufferGeometry {
+  const positions:number[]=[], colors:number[]=[];
+  const paint=mesh.faceColors??[];
+  mesh.faces.forEach((face,fi)=>{
+    if (!paint[fi])return;
+    const center=new THREE.Vector3();
+    const normal=new THREE.Vector3();
+    face.forEach((id,i)=>{
+      const a=mesh.vertices[id],b=mesh.vertices[face[(i+1)%face.length]];
+      center.add(new THREE.Vector3(...a));
+      normal.x+=(a[1]-b[1])*(a[2]+b[2]);
+      normal.y+=(a[2]-b[2])*(a[0]+b[0]);
+      normal.z+=(a[0]-b[0])*(a[1]+b[1]);
+    });
+    if(normal.lengthSq()<1e-14)return;
+    center.multiplyScalar(1/face.length);
+    normal.normalize().multiplyScalar(.0025);
+    const inner=face.map(id=>{
+      const p=new THREE.Vector3(...mesh.vertices[id]);
+      return p.lerp(center,.105).add(normal).toArray() as [number,number,number];
+    });
+    let indices:number[];
+    try{indices=triangulateFaces(inner,[face.map((_,i)=>i)])}catch{return}
+    const color=new THREE.Color(paint[fi]);
+    for(const id of indices){
+      positions.push(...inner[id]);
+      colors.push(color.r,color.g,color.b);
+    }
+  });
+  const geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  if(positions.length)geometry.computeVertexNormals();
+  return geometry;
 }
 
 export function buildEditableGeometry(mesh: ControlMesh) {
   const indices = triangulateFaces(mesh.vertices, mesh.faces);
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(mesh.vertices.flat(), 3));
-  geometry.setIndex(indices);
+  if (mesh.faceColors?.length) {
+    // A dark body and inset stickers share one render BufferGeometry so the
+    // main scene can use a single vertex-colored material. These render
+    // triangles do not change the 56-vertex / 54-face Rubik control cage.
+    const positions:number[]=[],colors:number[]=[];
+    const base=new THREE.Color('#171b24');
+    for (const id of indices) {
+      positions.push(...mesh.vertices[id]);
+      colors.push(base.r,base.g,base.b);
+    }
+    const decals=buildPaintStickerGeometry(mesh);
+    const p=decals.getAttribute('position').array;
+    const c=decals.getAttribute('color').array;
+    for(const v of p)positions.push(v);
+    for(const v of c)colors.push(v);
+    decals.dispose();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  } else {
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(mesh.vertices.flat(), 3));
+    geometry.setIndex(indices);
+  }
   geometry.computeVertexNormals();
   geometry.computeBoundingBox();
   if (mesh.vertices.length > 0) geometry.computeBoundingSphere();
