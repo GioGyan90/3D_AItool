@@ -42,9 +42,11 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
     points.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     const faceGeo=new THREE.BufferGeometry();
     if(selectedFace!=null && data.faces[selectedFace]){
-      const selectedIndices=triangulateFaces(data.vertices,[data.faces[selectedFace]]);
-      faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-      faceGeo.setIndex(selectedIndices);
+      try{
+        const selectedIndices=triangulateFaces(data.vertices,[data.faces[selectedFace]]);
+        faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+        faceGeo.setIndex(selectedIndices);
+      }catch{/* Keep the editor responsive if a manual face is invalid. */}
     }
     const selectedEdgeTube=selectedEdge?new THREE.TubeGeometry(
       new THREE.LineCurve3(
@@ -73,7 +75,6 @@ function Shape({data,selected,selectedFace,selectedEdge,onSelect,onMove,onSelect
     <lineSegments geometry={lines} onPointerDown={e=>{
       if(e.index===undefined||!onSelectEdge)return;
       const edgeIndex=Math.floor(e.index/2);
-      const a=lines.getAttribute('position').array;
       const pair=[...edgeOwners.keys()][edgeIndex];
       if(!pair)return;
       const quad=edgeOwners.get(pair);
