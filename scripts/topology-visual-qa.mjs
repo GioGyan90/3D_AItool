@@ -175,13 +175,18 @@ try{
     await page.waitForTimeout(250);
     const asideBox=await dialog.locator('aside').boundingBox();
     const previewBox=await dialog.getByLabel('3D 旋转预览').boundingBox();
+    const path=`${folder}/13-workbench-${label}.png`;
+    await page.screenshot({path,animations:'disabled'});
+    notes.shots.push({name:label,path,size:(await stat(path)).size});
+    console.log('[RESPONSIVE QA]',JSON.stringify({label,width,height,asideBox,previewBox}));
+    if(label==='mobile'){
+      const jpeg=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
+      console.log('RESPONSIVE_MOBILE_JPEG:'+jpeg.toString('base64'));
+    }
     assert.ok(asideBox&&previewBox,`missing ${label} editor region`);
     assert.ok(asideBox.x>=-1&&asideBox.x+asideBox.width<=width+2,`${label}: inspector horizontal overflow`);
     assert.ok(previewBox.width>=Math.min(300,width-30),`${label}: 3D viewport too narrow`);
     assert.ok(previewBox.height>=150,`${label}: 3D viewport too short`);
-    const path=`${folder}/13-workbench-${label}.png`;
-    await page.screenshot({path,animations:'disabled'});
-    notes.shots.push({name:label,path,size:(await stat(path)).size});
     notes.checks.push(`${label} UI fits (${width}x${height})`);
   }
   assert.deepEqual(notes.errors,[],'Unhandled errors occurred in browser');
