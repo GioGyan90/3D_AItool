@@ -225,21 +225,76 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();setSelectedFace(quad.face);setSelectedEdgeSlot(quad.slot);setLoopInfo('');setError('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
    </>}
   </div>
-  <aside className="w-full max-w-[330px] space-y-3 border-l border-neutral-700 p-4 text-sm">{(dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<p className="text-amber-300">{sceneEdit ? '完成待连接的面后，点击「应用到场景」写入图层。' : '当前工作区有未保存修改或待连接的面；替换内容前请先完成或清空待连接，并保存 JSON。'}</p>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></>}
-  {geometry?<><section className="rounded border border-sky-700/60 bg-sky-950/20 p-3 space-y-2"><h3 className="font-semibold text-sky-200">布线建模 · Edge Loop</h3><p className="text-neutral-300 text-xs">从立方体/球体/圆柱基础形状开始。在正交视图选择「选择/移动」，点击橙色边线，沿相邻四边面插入连续环线。插线后可拖动新增顶点塑形。</p><p className="text-neutral-400 text-xs">环线必须通过四边面；三角面、非流形边和存在断线风险的路径会阻止操作。</p>{selectedLoopFace?.length===4?<><p className="text-xs text-sky-200">面 #{selectedFace} · 四边面</p><label className="block">选择边<select aria-label="布线起始边" className="mt-1 w-full bg-neutral-800 p-1" value={selectedEdgeSlot} onChange={e=>setSelectedEdgeSlot(Number(e.target.value))}>{selectedLoopFace.map((id,i)=><option key={i} value={i}>边 {i+1}：顶点 {id} → {selectedLoopFace[(i+1)%4]}</option>)}</select></label></>:<p className="text-amber-300 text-xs">请点击四边面的一条边线，或在下方输入四边面编号。</p>}<label className="block">插入位置：{Math.round(loopFraction*100)}%<input className="w-full" aria-label="布线位置" type="range" min=".05" max=".95" step=".05" value={loopFraction} onChange={e=>setLoopFraction(Number(e.target.value))}/></label><div className="grid grid-cols-2 gap-2">
- <button className={btn+' border-sky-400 !bg-sky-900'} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addEdgeLoop}>连续环线</button>
- <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割（不传播）</button>
- </div>
- <p className="text-xs text-neutral-400">局部切割只贯穿所选四边面，并自动拆分邻面，避免产生 T 形断点。</p>
- <div className="border-t border-neutral-700 pt-2 space-y-2">
- <h4 className="font-medium">控制面造型</h4>
- <label className="block text-xs">内插收缩：{Math.round(insetFraction*100)}%<input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/></label>
- <button className={btn} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addInset}>面内插 Inset</button>
- <label className="block text-xs">挤出距离（沿面法线）<input aria-label="挤出距离" type="number" step=".05" min="-100" max="100" className="mt-1 w-full bg-neutral-800 p-1" value={extrudeDistance} onChange={e=>setExtrudeDistance(Number(e.target.value))}/></label>
- <button className={btn} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addExtrude}>面挤出 Extrude</button>
- <p className="text-xs text-neutral-400">X 镜像：需要 X≥0 或 X≤0 的半模型，中心线顶点在 X=0；自动焊接并去除中心封盖。</p>
- <button className={btn} disabled={faceDraft.length>0||draftDirty} onClick={addMirror}>镜像半模型（X=0）</button>
- </div>{loopInfo&&<p role="status" className="text-xs text-sky-300">{loopInfo}</p>}</section><div>顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</div><label className="block">控制面编号<input aria-label="控制面编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={Math.max(0,geometry.faces.length-1)} value={selectedFace??''} onChange={e=>{if(e.target.value===''){setSelectedFace(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.faces.length){setSelectedFace(n);setSelectedEdgeSlot(0)}}}/></label>{selectedFace!==null&&geometry.faces[selectedFace]&&<div>面 #{selectedFace}：{geometry.faces[selectedFace].join(' → ')} <button className={btn} disabled={faceDraft.length>0} title={faceDraft.length?"请先完成或清空待连接的面":"删除此控制面"} onClick={deleteFace}>删除此面</button></div>}<label className="block">选择顶点编号<input aria-label="选择顶点编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={geometry.vertices.length-1} value={selected??''} onChange={e=>{if(e.target.value===''){setSelected(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.vertices.length)setSelected(n)}} /></label><p className="text-neutral-400">默认按控制面绕序近似隐藏背面，并非完整遮挡检测；隐藏或重叠的点可按编号选择。已修改 {edited.length} 点，原始来源记录保留但不代表修改后仍与原测点一致。</p>{selected!==null&&<><div>选中顶点 #{selected}{edited.includes(selected)?' · 已修改':''}</div><button className={btn} disabled={faceDraft.length>0||geometry.faces.some(f=>f.includes(selected))} title={faceDraft.length?'请先完成或清空待连接的面':geometry.faces.some(f=>f.includes(selected))?'该点仍被控制面引用，请先删除相关面':'删除未被引用的顶点'} onClick={deleteVertex}>删除未引用顶点</button>{geometry.faces.some(f=>f.includes(selected))&&<p className="text-neutral-400">该点仍被控制面引用，请先删除相关面。</p>}{(()=>{const tags=(sourceMetadata.meta as any)?.tags,tag=Array.isArray(tags)?tags[selected]:null;return tag?<dl className="break-words text-neutral-300"><dt>来源</dt><dd>{String(tag.source??'未记录')}{tag.row?` · ${tag.row}`:''}</dd>{Array.isArray(tag.frontPixel)&&<><dt>正面像素</dt><dd>{tag.frontPixel.join(', ')}</dd></>}{tag.depth&&<><dt>深度依据</dt><dd>{String(tag.depth)}</dd></>}</dl>:<p className="text-neutral-400">该点暂无参考来源记录。</p>})()}<div className="grid grid-cols-3 gap-2">{(['X','Y','Z'] as const).map((axis,i)=><CoordinateInput key={`${selected}:${axis}`} axis={axis} value={geometry.vertices[selected][i]} onDraft={setDraftDirty} onCommit={n=>{const v=[...geometry.vertices[selected]] as V;v[i]=n;remember();update(selected,v)}}/>)}</div></>}</>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
+  <aside className="w-full lg:w-[360px] lg:max-w-[360px] lg:shrink-0 space-y-3 overflow-y-auto border-l border-neutral-700 bg-neutral-950 p-4 text-sm">{(dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<p className="text-amber-300">{sceneEdit ? '完成待连接的面后，点击「应用到场景」写入图层。' : '当前工作区有未保存修改或待连接的面；替换内容前请先完成或清空待连接，并保存 JSON。'}</p>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></>}
+  {geometry?<><section className="rounded-xl border border-neutral-700 bg-neutral-900/60 p-3 space-y-3">
+  <div className="flex justify-between gap-2"><h3 className="font-semibold text-sky-200">低模拓扑工作台</h3><span className="text-xs text-neutral-400">少量顶点 · 精准控制</span></div>
+  <div className="grid grid-cols-4 gap-1 rounded bg-neutral-950 p-1">
+   {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label])=>
+     <button key={id} aria-pressed={toolPanel===id} className={'rounded py-2 text-xs '+(toolPanel===id?'bg-sky-800 text-white':'text-neutral-400 hover:bg-neutral-800')} onClick={()=>setToolPanel(id)}>{label}</button>)}
+  </div>
+  {toolPanel==='topology'&&<div className="space-y-3">
+    <div className="space-y-2 rounded border border-amber-700/40 bg-amber-950/20 p-3">
+      <div className="font-medium text-amber-200">示例：单立方体 → 3×3 魔方</div>
+      <p className="text-xs text-neutral-300">沿 X、Y、Z 各插入两条真实的连续环线，保持共享顶点，不创建 27 个独立立方体。</p>
+      <button className={btn+' w-full border-amber-500/50 !bg-amber-900/30'} onClick={makeRubik} disabled={!isBaseBox||draftDirty||faceDraft.length>0}>六次环切 · 生成魔方</button>
+      {!isBaseBox&&<p className="text-xs text-neutral-500">仅原始 8 顶点立方体可使用，避免覆盖已编辑几何体。</p>}
+    </div>
+    <p className="text-xs text-neutral-400">选择 3D 或正交视图中的边线，再调整切割位置。</p>
+    {selectedLoopFace?.length===4?
+      <label className="block text-xs">起始面 #{selectedFace} · 边
+        <select aria-label="布线起始边" className="mt-1 w-full rounded bg-neutral-800 p-2" value={selectedEdgeSlot} onChange={e=>setSelectedEdgeSlot(Number(e.target.value))}>
+          {selectedLoopFace.map((id,i)=><option key={i} value={i}>边 {i+1} · {id} → {selectedLoopFace[(i+1)%4]}</option>)}
+        </select>
+      </label>:<p className="text-xs text-amber-300">请选择一个四边面上的边线或输入控制面编号。</p>}
+    <label className="block text-xs">切割比例：{Math.round(loopFraction*100)}%
+      <input aria-label="布线位置" className="mt-1 w-full" type="range" min=".05" max=".95" step=".05" value={loopFraction} onChange={e=>setLoopFraction(Number(e.target.value))}/>
+    </label>
+    <div className="grid grid-cols-2 gap-2">
+      <button className={btn+' !bg-sky-900'} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addEdgeLoop}>连续环线</button>
+      <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割</button>
+    </div>
+    <p className="text-xs text-neutral-500">局部切割自动重构邻面，避免 T 型悬空端点。</p>
+  </div>}
+  {toolPanel==='model'&&<div className="space-y-3">
+    <p className="text-xs text-neutral-400">选择一个控制面后执行操作，所有步骤可撤销。</p>
+    <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
+      <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
+    </label>
+    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addInset}>面内插 · Inset</button>
+    <label className="block text-xs">法线挤出距离
+      <input aria-label="挤出距离" type="number" step=".05" min="-100" max="100" className="mt-1 w-full rounded bg-neutral-800 p-2" value={extrudeDistance} onChange={e=>setExtrudeDistance(Number(e.target.value))}/>
+    </label>
+    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addExtrude}>面挤出 · Extrude</button>
+    <details className="rounded border border-neutral-700 p-2 text-xs"><summary className="cursor-pointer">X=0 半模型镜像</summary>
+      <p className="my-2 text-neutral-400">要求网格在 X 坐标单侧，且中心线顶点在 X=0。</p>
+      <button className={btn+' w-full'} disabled={faceDraft.length>0||draftDirty} onClick={addMirror}>镜像并焊接中心线</button>
+    </details>
+  </div>}
+  {toolPanel==='paint'&&<div className="space-y-3">
+    <p className="text-xs text-neutral-300">面颜色保留于控制网格与 JSON / GLB；彩色贴纸不增加控制面。</p>
+    <div className="text-sm">{selectedFace===null?'请在 3D 视图中点选一个控制面':`当前选中控制面 #${selectedFace}`}</div>
+    <div className="grid grid-cols-3 gap-2">
+      {Object.entries(RUBIK_FACE_COLORS).map(([name,color])=>
+        <button key={name} aria-label={`涂色 ${name}`} title={name} className="h-10 rounded border border-white/20 disabled:opacity-40" style={{backgroundColor:color}}
+          disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(color)}>
+          {geometry.faceColors?.[selectedFace??-1]===color?'✓':''}
+        </button>)}
+    </div>
+    <label className="flex items-center gap-2 text-xs">自选颜色
+      <input aria-label="自定义面颜色" type="color" value={paintColor} onChange={e=>setPaintColor(e.target.value)}/>
+      <span>{paintColor}</span>
+    </label>
+    <button className={btn+' w-full'} disabled={selectedFace===null||draftDirty} onClick={()=>paintSelectedFace(paintColor)}>应用到选中面</button>
+    <button className={btn+' w-full'} disabled={!geometry.faceColors||draftDirty} onClick={removeFaceColors}>清空全部面颜色</button>
+  </div>}
+  {toolPanel==='inspect'&&<div className="space-y-2 text-xs">
+    <p>顶点 <strong>{geometry.vertices.length}</strong> · 控制面 <strong>{geometry.faces.length}</strong></p>
+    <p>已着色面 <strong>{geometry.faceColors?.length??0}</strong> · 已移动顶点 <strong>{edited.length}</strong></p>
+    <p className="text-neutral-400">X-Ray 开关控制背面边线显示。有效几何体必须保留共享边与正确面绕序。</p>
+    <p className="text-neutral-500">后续缺失：任意多边面刀切、边桥接、对称实时拖点、转动魔方层组与 UV。</p>
+  </div>}
+  {loopInfo&&<p role="status" className="rounded bg-sky-950/30 p-2 text-xs text-sky-300">{loopInfo}</p>}
+</section><div>顶点 {geometry.vertices.length} · 控制面 {geometry.faces.length}</div><label className="block">控制面编号<input aria-label="控制面编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={Math.max(0,geometry.faces.length-1)} value={selectedFace??''} onChange={e=>{if(e.target.value===''){setSelectedFace(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.faces.length){setSelectedFace(n);setSelectedEdgeSlot(0)}}}/></label>{selectedFace!==null&&geometry.faces[selectedFace]&&<div>面 #{selectedFace}：{geometry.faces[selectedFace].join(' → ')} <button className={btn} disabled={faceDraft.length>0} title={faceDraft.length?"请先完成或清空待连接的面":"删除此控制面"} onClick={deleteFace}>删除此面</button></div>}<label className="block">选择顶点编号<input aria-label="选择顶点编号" className="ml-2 w-20 bg-neutral-800 p-1" type="number" min="0" max={geometry.vertices.length-1} value={selected??''} onChange={e=>{if(e.target.value===''){setSelected(null);return}const n=Number(e.target.value);if(Number.isInteger(n)&&n>=0&&n<geometry.vertices.length)setSelected(n)}} /></label><p className="text-neutral-400">默认按控制面绕序近似隐藏背面，并非完整遮挡检测；隐藏或重叠的点可按编号选择。已修改 {edited.length} 点，原始来源记录保留但不代表修改后仍与原测点一致。</p>{selected!==null&&<><div>选中顶点 #{selected}{edited.includes(selected)?' · 已修改':''}</div><button className={btn} disabled={faceDraft.length>0||geometry.faces.some(f=>f.includes(selected))} title={faceDraft.length?'请先完成或清空待连接的面':geometry.faces.some(f=>f.includes(selected))?'该点仍被控制面引用，请先删除相关面':'删除未被引用的顶点'} onClick={deleteVertex}>删除未引用顶点</button>{geometry.faces.some(f=>f.includes(selected))&&<p className="text-neutral-400">该点仍被控制面引用，请先删除相关面。</p>}{(()=>{const tags=(sourceMetadata.meta as any)?.tags,tag=Array.isArray(tags)?tags[selected]:null;return tag?<dl className="break-words text-neutral-300"><dt>来源</dt><dd>{String(tag.source??'未记录')}{tag.row?` · ${tag.row}`:''}</dd>{Array.isArray(tag.frontPixel)&&<><dt>正面像素</dt><dd>{tag.frontPixel.join(', ')}</dd></>}{tag.depth&&<><dt>深度依据</dt><dd>{String(tag.depth)}</dd></>}</dl>:<p className="text-neutral-400">该点暂无参考来源记录。</p>})()}<div className="grid grid-cols-3 gap-2">{(['X','Y','Z'] as const).map((axis,i)=><CoordinateInput key={`${selected}:${axis}`} axis={axis} value={geometry.vertices[selected][i]} onDraft={setDraftDirty} onCommit={n=>{const v=[...geometry.vertices[selected]] as V;v[i]=n;remember();update(selected,v)}}/>)}</div></>}</>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
   {!sceneEdit && geometry && <>
     <button className={btn} onClick={() => setPreview(value => !value)} aria-expanded={preview}>
       {preview ? '收起 3D 预览' : '显示 3D 预览'}
