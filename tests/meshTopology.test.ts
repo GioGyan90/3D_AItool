@@ -195,3 +195,51 @@ test('invalid face color lists are rejected before reaching render or JSON',()=>
   colored.faceColors=Array(3).fill('#ff0000');
   assert.throws(()=>validateControlTopology(colored),/颜色记录/);
 });
+
+import {findCoplanarFaceIds,findMatchingColorFaceIds,moveWithSymmetry,paintFaces} from '../src/components/topologySelection';
+
+test('select all nine coplanar Rubik face quads without crossing adjacent planes',()=>{
+  const cube=createRubikControlMesh();
+  for(const color of Object.values(RUBIK_FACE_COLORS)){
+    const seed=cube.faceColors!.indexOf(color);
+    const planes=findCoplanarFaceIds(cube,seed);
+    assert.equal(planes.length,9);
+    assert.deepEqual(planes,findMatchingColorFaceIds(cube,seed));
+  }
+});
+test('batch paint only updates selected faces without changing indices or source',()=>{
+  const original=createRubikControlMesh();
+  const selected=findCoplanarFaceIds(original,0);
+  const before=JSON.stringify(original);
+  const edited=paintFaces(original,selected,'#123456');
+  assert.equal(edited.faceColors?.filter(c=>c==='#123456').length,9);
+  assert.equal(JSON.stringify(original),before,'must not mutate original cage');
+  assert.equal(JSON.stringify(edited.faces),JSON.stringify(original.faces));
+  assert.equal(edited.vertices.length,56);
+  checkClosed(edited);
+  assert.throws(()=>paintFaces(original,[999],'#123456'),/索引/);
+});
+test('X symmetry moves opposite vertices with preserved topology and no new vertices',()=>{
+  const mesh=createPrimitiveControlMesh('box');
+  const result=moveWithSymmetry(mesh,1,[.72,-.4,-.52],['x']);
+  assert.equal(result.unmatched,0);
+  assert.deepEqual(result.vertices[1],[.72,-.4,-.52]);
+  assert.deepEqual(result.vertices[0],[-.72,-.4,-.52]);
+  assert.deepEqual(result.vertices[2],mesh.vertices[2],'unselected counterpart unchanged');
+  assert.equal(result.changed.length,2);
+  assert.equal(result.vertices.length,8);
+  assert.equal(JSON.stringify(mesh.vertices[0]),JSON.stringify([-.5,-.5,-.5]));
+});
+test('multi-axis symmetry applies sign combinations and pins central seams',()=>{
+  const cube=createPrimitiveControlMesh('box');
+  const out=moveWithSymmetry(cube,1,[.66,-.22,-.44],['x','y']);
+  assert.equal(out.changed.length,4);
+  assert.deepEqual(out.vertices[0],[-.66,-.22,-.44]);
+  assert.deepEqual(out.vertices[2],[.66,.22,-.44]);
+  assert.deepEqual(out.vertices[3],[-.66,.22,-.44]);
+  const center={vertices:[[0,.5,.5],[0,-.5,.5]] as [number,number,number][],faces:[]};
+  const pinned=moveWithSymmetry(center,0,[.2,.75,.4],['x']);
+  assert.deepEqual(pinned.vertices[0],[0,.75,.4]);
+  assert.equal(pinned.changed.length,1);
+  assert.equal(pinned.unmatched,0);
+});

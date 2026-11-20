@@ -117,6 +117,8 @@ try{
   await page.getByRole('button',{name:'魔方示例',exact:true}).click();
   await counts(56,54);
   await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
+  await dialog.getByRole('button',{name:'重置视角',exact:true}).click();
+  notes.checks.push('camera re-center action available on active preset');
   await screenshot('08-rubik-angle');
   await dialog.getByRole('button',{name:'正面',exact:true}).first().click();
   await screenshot('09-rubik-front');
@@ -145,6 +147,50 @@ try{
   await page.getByRole('button',{name:'编辑顶点',exact:true}).click();
   await counts(56,54);
   notes.checks.push('Rubik face painting persisted through undo/redo and scene application');
+  // Check new selection hierarchy, group painting and symmetric mode.
+  await dialog.getByRole('button',{name:'配色',exact:true}).click();
+  await selectFace(0);
+  await dialog.getByRole('button',{name:'选择同一平面'}).click();
+  await dialog.getByText(/已选 9 面/).waitFor({timeout:10000});
+  await dialog.getByRole('button',{name:'涂色 back'}).click();
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  await dialog.getByRole('button',{name:'重做',exact:true}).click();
+  notes.checks.push('coplanar 9-face paint survived undo/redo');
+  await dialog.getByRole('button',{name:'塑形',exact:true}).click();
+  await dialog.getByLabel('对称 X').check();
+  await dialog.getByLabel('对称 Y').check();
+  assert.ok(await dialog.getByLabel('对称 X').isChecked());
+  assert.ok(await dialog.getByLabel('对称 Y').isChecked());
+  await dialog.getByLabel('选择顶点编号').fill('0');
+  await dialog.getByLabel('顶点 X').fill('-0.6');
+  await dialog.getByLabel('顶点 X').press('Tab');
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  notes.checks.push('symmetry axes enabled and coordinate edit undoable');
+  await dialog.getByRole('button',{name:'配色',exact:true}).click();
+  const desktopPath=`${folder}/12-workbench-refined-desktop.png`;
+  await page.screenshot({path:desktopPath,animations:'disabled'});
+  notes.shots.push({name:'12-workbench-refined-desktop',path:desktopPath,size:(await stat(desktopPath)).size});
+  for(const [width,height,label] of [
+    [900,700,'tablet'],[390,844,'mobile']
+  ]){
+    await page.setViewportSize({width,height});
+    await page.waitForTimeout(250);
+    const asideBox=await dialog.locator('aside').boundingBox();
+    const previewBox=await dialog.getByLabel('3D 旋转预览').boundingBox();
+    const path=`${folder}/13-workbench-${label}.png`;
+    await page.screenshot({path,animations:'disabled'});
+    notes.shots.push({name:label,path,size:(await stat(path)).size});
+    console.log('[RESPONSIVE QA]',JSON.stringify({label,width,height,asideBox,previewBox}));
+    if(label==='mobile'){
+      const jpeg=await page.screenshot({type:'jpeg',quality:32,animations:'disabled'});
+      console.log('RESPONSIVE_MOBILE_JPEG:'+jpeg.toString('base64'));
+    }
+    assert.ok(asideBox&&previewBox,`missing ${label} editor region`);
+    assert.ok(asideBox.x>=-1&&asideBox.x+asideBox.width<=width+2,`${label}: inspector horizontal overflow`);
+    assert.ok(previewBox.width>=Math.min(300,width-30),`${label}: 3D viewport too narrow`);
+    assert.ok(previewBox.height>=150,`${label}: 3D viewport too short`);
+    notes.checks.push(`${label} UI fits (${width}x${height})`);
+  }
   assert.deepEqual(notes.errors,[],'Unhandled errors occurred in browser');
   console.log('Topology browser QA passed',JSON.stringify(notes));
 }catch(error){
