@@ -376,7 +376,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       </div>
       <p className="text-xs text-neutral-500">围绕 X/Y/Z=0 镜像移动已有对称点；中线自动约束，不会生成多余顶点。没有对称点时仅移动当前点。</p>
     </div>
-    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>
+    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>}
     <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
       <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
     </label>
