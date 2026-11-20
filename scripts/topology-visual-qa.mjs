@@ -52,7 +52,7 @@ try{
     const path=`${folder}/${name}.png`;
     await region.screenshot({path,animations:'disabled'});
     const file=await stat(path);
-    if(['01-loop-front','03-loop-three-quarter','05-local-cut','07-extruded-inset','08-rubik-angle','09-rubik-front','10-rubik-low'].includes(name)){
+    if(['01-loop-front','03-loop-three-quarter','05-local-cut','07-extruded-inset','00-rubik-from-cube','08-rubik-angle','09-rubik-front','10-rubik-low'].includes(name)){
       const jpeg=await region.screenshot({type:'jpeg',quality:35,animations:'disabled'});
       console.log('TOPOLOGY_QA_JPEG_'+name+':'+jpeg.toString('base64'));
     }
@@ -66,7 +66,9 @@ try{
   await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).click();
   await counts(56,54);
   await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
-  await screenshot('08-rubik-angle');
+  await screenshot('00-rubik-from-cube');
+  await dialog.getByRole('button',{name:'显示布线',exact:true}).click();
+  await dialog.getByRole('button',{name:'成品预览',exact:true}).click();
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   await counts(8,6);
   await dialog.getByRole('button',{name:'布线',exact:true}).click();
