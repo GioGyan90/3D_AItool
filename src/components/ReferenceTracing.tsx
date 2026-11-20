@@ -5,6 +5,8 @@ import {TracePreview} from './TracePreview';
 import {triangulateFaces} from './traceGeometry';
 import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
+import {findCoplanarFaceIds,findMatchingColorFaceIds,moveWithSymmetry,paintFaces} from './topologySelection';
+import type {SymmetryAxis} from './topologySelection';
 import {createPrimitiveControlMesh,insertQuadEdgeLoop,splitQuadLocally,insetControlFace,extrudeControlFace,mirrorControlMeshX,validateControlTopology} from './meshTopology';
 import type {ControlMesh} from '../types';
 
@@ -43,6 +45,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
  const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>('topology');
  const [paintColor,setPaintColor]=useState<string>(RUBIK_FACE_COLORS.right);
+ const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
+ const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
+ const [advancedOpen,setAdvancedOpen]=useState(false);
  const [view,setView]=useState<View>('front'),[sourceMetadata,setSourceMetadata]=useState<Record<string,unknown>>({}),[image,setImage]=useState(''),[grid,setGrid]=useState(true),[opacity,setOpacity]=useState(.6),[calibration,setCalibration]=useState(initialCalibration),[selected,setSelected]=useState<number|null>(null),[edited,setEdited]=useState<number[]>([]),[dirty,setDirty]=useState(false),[referenceDirty,setReferenceDirty]=useState(false),[draftDirty,setDraftDirty]=useState(false),[selectedFace,setSelectedFace]=useState<number|null>(null),[selectedEdgeSlot,setSelectedEdgeSlot]=useState(0),[loopFraction,setLoopFraction]=useState(.5),[loopInfo,setLoopInfo]=useState(''),[loading,setLoading]=useState(false),[imageSquare,setImageSquare]=useState(true),[mode,setMode]=useState<'select'|'point'|'face'>('select'),[constraint,setConstraint]=useState<'both'|'horizontal'|'vertical'>('both'),[depth,setDepth]=useState(0),[depthText,setDepthText]=useState('0'),[faceDraft,setFaceDraft]=useState<number[]>([]),[preview,setPreview]=useState(false),[previewLarge,setPreviewLarge]=useState(false),[previewDirection,setPreviewDirection]=useState('angle'),[error,setError]=useState(''),[drag,setDrag]=useState(false),[showLabels,setShowLabels]=useState(true),[showAll,setShowAll]=useState(false),[backup,setBackup]=useState<{geometry:Geometry|null,image:string,imageSquare:boolean,grid:boolean,opacity:number,calibration:Record<View,Calibration>,metadata:Record<string,unknown>,edited:number[],showAll:boolean}|null>(null);const dialogRef=useRef<HTMLDivElement>(null),svg=useRef<SVGSVGElement>(null),busy=useRef(false),referenceBaseline=useRef({image:'',imageSquare:true,grid:true,opacity:.6,calibration:initialCalibration(),showAll:false});const start=()=>{if(busy.current)return false;busy.current=true;setLoading(true);return true};const stop=()=>{busy.current=false;setLoading(false)};
  useEffect(()=>{if(!referenceDirty&&!loading)referenceBaseline.current={image,imageSquare,grid,opacity,calibration,showAll}},[referenceDirty,loading,image,imageSquare,grid,opacity,calibration,showAll]);
  useEffect(()=>{if(!dirty&&!referenceDirty&&!draftDirty&&!faceDraft.length)return;const handler=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue=''};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler)},[dirty,referenceDirty,draftDirty,faceDraft.length]);
@@ -57,6 +62,23 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const isBaseBox=Boolean(geometry && geometry.vertices.length===8 && geometry.faces.length===6 &&
    JSON.stringify(geometry.vertices)===JSON.stringify(baseCube.vertices) &&
    JSON.stringify(geometry.faces)===JSON.stringify(baseCube.faces));
+ const chooseFace=(fi:number,additive=false)=>{
+   if(!geometry?.faces[fi])return;
+   const next=additive
+     ? selectedFaces.includes(fi)?selectedFaces.filter(i=>i!==fi):[...selectedFaces,fi]
+     : [fi];
+   setSelectedFaces(next);setSelectedFace(next.length?next[next.length-1]:null);
+   setSelectedEdgeSlot(0);setError('');
+ };
+ const chooseFaceGroup=(kind:'plane'|'color')=>{
+   if(!geometry||selectedFace===null)return;
+   const ids=kind==='plane'?findCoplanarFaceIds(geometry,selectedFace):
+     findMatchingColorFaceIds(geometry,selectedFace);
+   if(!ids.length){setError('没有找到满足条件的控制面');return;}
+   setSelectedFaces(ids);
+   setLoopInfo(`已选择 ${ids.length} 个${kind==='plane'?'共面':'同色'}控制面，可一次配色。`);
+ };
+ const clearFaces=()=>{setSelectedFace(null);setSelectedFaces([]);setError('')};
  const selectedLoopFace=selectedFace===null?null:geometry?.faces[selectedFace];
  const selectedLoopEdge=selectedLoopFace?.length===4?[selectedLoopFace[selectedEdgeSlot],selectedLoopFace[(selectedEdgeSlot+1)%4]]:null;
  const triangulationError=useMemo(()=>{if((!preview&&!sceneEdit)||!geometry?.faces.length)return '';try{triangulateFaces(geometry.vertices,geometry.faces);return ''}catch(e){return String(e)}},[geometry,preview,sceneEdit]);
@@ -65,7 +87,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const remember=()=>{setPast(p=>[...p.slice(-49),snapshot()]);setFuture([])};
  const restoreSnapshot=(state:MeshHistory)=>{
    setGeometry(state.geometry);setEdited(state.edited);setSourceMetadata(state.metadata);setDirty(state.dirty);
-   setSelected(null);setSelectedFace(null);setFaceDraft([]);setLoopInfo('');setError('');
+   setSelected(null);setSelectedFace(null);setSelectedFaces([]);setFaceDraft([]);setLoopInfo('');setError('');
  };
  const undoMesh=()=>{if(!past.length||busy.current||draftDirty||faceDraft.length)return;
    setFuture(f=>[...f,snapshot()]);restoreSnapshot(past[past.length-1]);setPast(p=>p.slice(0,-1));};
@@ -86,7 +108,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    validateControlTopology(next);
    triangulateFaces(next.vertices,next.faces);
    const oldCount=geometry.vertices.length;
-   remember();setGeometry(next);setDirty(true);setSelected(null);setSelectedFace(null);
+   remember();setGeometry(next);setDirty(true);setSelected(null);setSelectedFace(null);setSelectedFaces([]);
    setLoopInfo(label);setError('');
    setSourceMetadata(old=>{
      const m=old.meta;if(!m||typeof m!=='object')return old;
@@ -102,15 +124,21 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    if(!geometry||draftDirty||faceDraft.length||busy.current)return;
    try{commitMesh(operation(),label)}catch(e){setError('拓扑操作失败：'+String(e instanceof Error?e.message:e))}
  };
- const update=(id:number,v:V)=>{if(busy.current)return;setDirty(true);setEdited(old=>old.includes(id)?old:[...old,id]);setGeometry(g=>g?{...g,vertices:g.vertices.map((p,i)=>i===id?v:p)}:g)};
+ const update=(id:number,v:V)=>{
+   if(busy.current||!geometry)return;
+   const result=moveWithSymmetry(geometry,id,v,symmetryAxes);
+   setDirty(true);
+   setEdited(old=>[...new Set([...old,...result.changed])]);
+   setGeometry(g=>g?{...g,vertices:moveWithSymmetry(g,id,v,symmetryAxes).vertices}:g);
+ };
  const pointer=(e:React.PointerEvent<SVGSVGElement>)=>{if(!drag||selected===null||!geometry||!svg.current)return;const pt=svg.current.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(svg.current.getScreenCTM()!.inverse()),original=project(geometry.vertices[selected],view),x=constraint==='vertical'?original[0]:(p.x-cx)/scale,y=constraint==='horizontal'?original[1]:(cy-p.y)/scale;if(!dragRecorded.current){remember();dragRecorded.current=true;}update(selected,replaceProjection(geometry.vertices[selected],view,x,y));};
  const readData=(file:File)=>new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=()=>reject(r.error);r.readAsDataURL(file)});
  const imageInfo=(url:string)=>new Promise<boolean>((resolve,reject)=>{if(!/^data:image\/(png|jpeg|webp);base64,/i.test(url))return reject(Error('只支持 PNG、JPEG、WebP 参考图'));const im=new Image();im.onload=()=>{if(im.naturalWidth>8192||im.naturalHeight>8192||im.naturalWidth*im.naturalHeight>16000000)reject(Error('图片尺寸过大，最多 1600 万像素且边长不超过 8192'));else resolve(Math.abs(im.naturalWidth/im.naturalHeight-1)<.01)};im.onerror=()=>reject(Error('参考图无法读取'));im.src=url});
- const loadMesh=async(e:React.ChangeEvent<HTMLInputElement>)=>{const target=e.currentTarget,file=target.files?.[0];if(!file||dirty||draftDirty||faceDraft.length>0||!start()){target.value='';return}try{if(file.size>MAX_FILE)throw Error('JSON 超过 10 MB');const d=JSON.parse(await file.text()),next=readGeometry(d),ref=d.reference,hasRef=ref&&['image','grid','showAll','opacity','calibration'].some(k=>k in ref);if(referenceDirty&&hasRef)throw Error('当前参考图或标定尚未保存，不能被导入文件覆盖');let square=imageSquare;if(typeof ref?.image==='string'&&ref.image){if(ref.image.length>MAX_IMAGE*1.4)throw Error('JSON 中的参考图超过 5 MB');square=await imageInfo(ref.image)}const {vertices,verts,faces,control,faceColors,reference,...extra}=d;setGeometry(next);setPast([]);setFuture([]);setSourceMetadata(extra);if(ref){if(typeof ref.image==='string'){setImage(ref.image);setImageSquare(square)}if(typeof ref.grid==='boolean')setGrid(ref.grid&&square);if(typeof ref.showAll==='boolean')setShowAll(ref.showAll);if(Number.isFinite(ref.opacity))setOpacity(Math.max(0,Math.min(1,ref.opacity)));if(ref.calibration){const nextCal=initialCalibration();for(const v of views){const c=ref.calibration[v.id];if(c&&[c.cx,c.cy,c.scale].every(Number.isFinite)&&c.scale>=50&&c.scale<=700)nextCal[v.id]={cx:c.cx,cy:c.cy,scale:c.scale}}setCalibration(nextCal)}if(hasRef)setReferenceDirty(false)}setEdited(Array.isArray(ref?.editedVertexIds)?ref.editedVertexIds.filter((i:unknown)=>Number.isInteger(i)):[]);setDirty(false);setSelected(null);setSelectedFace(null);setFaceDraft([]);setError('')}catch(x){setError('载入失败：'+String(x))}finally{target.value='';stop()}};
+ const loadMesh=async(e:React.ChangeEvent<HTMLInputElement>)=>{const target=e.currentTarget,file=target.files?.[0];if(!file||dirty||draftDirty||faceDraft.length>0||!start()){target.value='';return}try{if(file.size>MAX_FILE)throw Error('JSON 超过 10 MB');const d=JSON.parse(await file.text()),next=readGeometry(d),ref=d.reference,hasRef=ref&&['image','grid','showAll','opacity','calibration'].some(k=>k in ref);if(referenceDirty&&hasRef)throw Error('当前参考图或标定尚未保存，不能被导入文件覆盖');let square=imageSquare;if(typeof ref?.image==='string'&&ref.image){if(ref.image.length>MAX_IMAGE*1.4)throw Error('JSON 中的参考图超过 5 MB');square=await imageInfo(ref.image)}const {vertices,verts,faces,control,faceColors,reference,...extra}=d;setGeometry(next);setPast([]);setFuture([]);setSourceMetadata(extra);if(ref){if(typeof ref.image==='string'){setImage(ref.image);setImageSquare(square)}if(typeof ref.grid==='boolean')setGrid(ref.grid&&square);if(typeof ref.showAll==='boolean')setShowAll(ref.showAll);if(Number.isFinite(ref.opacity))setOpacity(Math.max(0,Math.min(1,ref.opacity)));if(ref.calibration){const nextCal=initialCalibration();for(const v of views){const c=ref.calibration[v.id];if(c&&[c.cx,c.cy,c.scale].every(Number.isFinite)&&c.scale>=50&&c.scale<=700)nextCal[v.id]={cx:c.cx,cy:c.cy,scale:c.scale}}setCalibration(nextCal)}if(hasRef)setReferenceDirty(false)}setEdited(Array.isArray(ref?.editedVertexIds)?ref.editedVertexIds.filter((i:unknown)=>Number.isInteger(i)):[]);setDirty(false);setSelected(null);setSelectedFace(null);setSelectedFaces([]);setFaceDraft([]);setError('')}catch(x){setError('载入失败：'+String(x))}finally{target.value='';stop()}};
  const undoReference=()=>{if(busy.current)return;const b=referenceBaseline.current;setImage(b.image);setImageSquare(b.imageSquare);setGrid(b.grid);setOpacity(b.opacity);setCalibration(b.calibration);setShowAll(b.showAll);setReferenceDirty(false);setError('')};
- const restoreBackup=()=>{if(!backup||dirty||referenceDirty||draftDirty||faceDraft.length>0||busy.current)return;setGeometry(backup.geometry);setPast([]);setFuture([]);setImage(backup.image);setImageSquare(backup.imageSquare);setGrid(backup.grid);setOpacity(backup.opacity);setCalibration(backup.calibration);setSourceMetadata(backup.metadata);setEdited(backup.edited);setShowAll(backup.showAll);setSelected(null);setSelectedFace(null);setFaceDraft([]);setMode('select');setDirty(false);setReferenceDirty(false);setBackup(null)};
+ const restoreBackup=()=>{if(!backup||dirty||referenceDirty||draftDirty||faceDraft.length>0||busy.current)return;setGeometry(backup.geometry);setPast([]);setFuture([]);setImage(backup.image);setImageSquare(backup.imageSquare);setGrid(backup.grid);setOpacity(backup.opacity);setCalibration(backup.calibration);setSourceMetadata(backup.metadata);setEdited(backup.edited);setShowAll(backup.showAll);setSelected(null);setSelectedFace(null);setSelectedFaces([]);setFaceDraft([]);setMode('select');setDirty(false);setReferenceDirty(false);setBackup(null)};
  const loadImage=async(e:React.ChangeEvent<HTMLInputElement>)=>{const target=e.currentTarget,file=target.files?.[0];if(!file||referenceDirty||!start()){target.value='';return}try{if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('只支持 PNG、JPEG、WebP，不支持 SVG');if(file.size>MAX_IMAGE)throw Error('参考图超过 5 MB');const url=await readData(file),square=await imageInfo(url);setImage(url);setImageSquare(square);if(!square)setGrid(false);setReferenceDirty(true);setError('')}catch(e){setError('载入图片失败：'+String(e))}finally{target.value='';stop()}};
- const newMesh=()=>{if(dirty||draftDirty||faceDraft.length>0||backup||busy.current)return;if(geometry||image)setBackup({geometry,image,imageSquare,grid,opacity,calibration,metadata:sourceMetadata,edited,showAll});setGeometry({vertices:[],faces:[]});setPast([]);setFuture([]);setSourceMetadata({});setEdited([]);setDirty(true);setSelected(null);setSelectedFace(null);setFaceDraft([]);setMode('point')};
+ const newMesh=()=>{if(dirty||draftDirty||faceDraft.length>0||backup||busy.current)return;if(geometry||image)setBackup({geometry,image,imageSquare,grid,opacity,calibration,metadata:sourceMetadata,edited,showAll});setGeometry({vertices:[],faces:[]});setPast([]);setFuture([]);setSourceMetadata({});setEdited([]);setDirty(true);setSelected(null);setSelectedFace(null);setSelectedFaces([]);setFaceDraft([]);setMode('point')};
  const canvasPoint=(e:React.PointerEvent<SVGSVGElement>)=>{if(mode!=='point'||!geometry||!svg.current||busy.current||geometry.vertices.length>=MAX_VERTICES)return;const pt=svg.current.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const depthValue=Number(depthText);if(depthText.trim()===''||!Number.isFinite(depthValue)){setError('隐藏轴坐标无效，请输入有限数字后再放点');return}const p=pt.matrixTransform(svg.current.getScreenCTM()!.inverse()),x=(p.x-cx)/scale,y=(cy-p.y)/scale,v=replaceProjection(view==='side'?[depthValue,0,0]:view==='top'||view==='bottom'?[0,depthValue,0]:[0,0,depthValue],view,x,y);setError('');remember();setGeometry(g=>g?{...g,vertices:[...g.vertices,v]}:g);setSourceMetadata(old=>{const m=old.meta;if(!m||typeof m!=='object')return old;const obj=m as Record<string,unknown>,tags=obj.tags;if(!Array.isArray(tags)||tags.length!==geometry.vertices.length)return old;return {...old,meta:{...obj,tags:[...tags,{source:'手工放置',view,depth:`用户指定隐藏轴 ${depthValue}`}]}}});setSelected(geometry.vertices.length);setEdited(old=>[...old,geometry.vertices.length]);setDirty(true)};
  const finishFace=()=>{if(!geometry||faceDraft.length<3||faceDraft.length>64)return;if(geometry.faces.length>=MAX_FACES||geometry.faces.reduce((n,f)=>n+f.length,0)+faceDraft.length>MAX_REFERENCES){setError('超过限制：最多 10000 控制面及 30000 个面顶点引用');return}const f=faceDraft;if(f.some(i=>!Number.isInteger(i)||i<0||i>=geometry.vertices.length)){setError('待连接顶点不属于当前网格');setFaceDraft([]);return}if(new Set(f).size!==f.length){setError('面不能重复引用顶点');return}let n=new THREE.Vector3();for(let i=0;i<f.length;i++){const a=geometry.vertices[f[i]],b=geometry.vertices[f[(i+1)%f.length]];n.x+=(a[1]-b[1])*(a[2]+b[2]);n.y+=(a[2]-b[2])*(a[0]+b[0]);n.z+=(a[0]-b[0])*(a[1]+b[1])}if(n.lengthSq()<1e-14){setError('面面积为零，请调整顶点');return}remember();setGeometry(g=>g?{...g,faces:[...g.faces,[...f]],...(g.faceColors?{faceColors:[...g.faceColors,'#aab3c3']}: {})}:g);setDirty(true);setFaceDraft([]);setError('')};
  const addEdgeLoop=()=>{if(!geometry||selectedFace===null)return;
@@ -135,10 +163,12 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  };
  const paintSelectedFace=(hex:string)=>{
    if(!geometry||selectedFace===null||draftDirty||faceDraft.length||busy.current)return;
-   const next={...geometry,faceColors:geometry.faces.map((_,fi)=>
-     fi===selectedFace?hex:(geometry.faceColors?.[fi]??'#aab3c3'))};
-   try{validateControlTopology(next);remember();setGeometry(next);setDirty(true);setPaintColor(hex);setLoopInfo('已给控制面 #'+selectedFace+' 着色，颜色随项目/GLB 保存。');setError('')}
-   catch(e){setError('上色失败：'+String(e))}
+   const chosen=selectedFaces.length?selectedFaces:[selectedFace];
+   try{
+     const next=paintFaces(geometry,chosen,hex);
+     validateControlTopology(next);remember();setGeometry(next);setDirty(true);
+     setPaintColor(hex);setLoopInfo(`已为 ${chosen.length} 个控制面着色（支持撤销）。`);setError('');
+   }catch(e){setError('上色失败：'+String(e))}
  };
  const removeFaceColors=()=>{
    if(!geometry?.faceColors||draftDirty||faceDraft.length)return;
@@ -146,7 +176,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    setDirty(true);setLoopInfo('已移除全部面颜色。');
  };
  const deleteVertex=()=>{if(!geometry||selected===null||faceDraft.length>0||geometry.faces.some(f=>f.includes(selected)))return;const oldCount=geometry.vertices.length;remember();setGeometry(g=>g?{...g,vertices:g.vertices.filter((_,i)=>i!==selected),faces:g.faces.map(f=>f.map(i=>i>selected?i-1:i))}:g);setSourceMetadata(old=>{const m=old.meta;if(!m||typeof m!=='object')return old;const obj=m as Record<string,unknown>,tags=obj.tags;if(!Array.isArray(tags)||tags.length>oldCount)return old;return {...old,meta:{...obj,tags:tags.filter((_,i)=>i!==selected)}}});setEdited(old=>old.filter(i=>i!==selected).map(i=>i>selected?i-1:i));setSelected(null);setDirty(true)};
- const deleteFace=()=>{if(!geometry||faceDraft.length>0||selectedFace===null||selectedFace<0||selectedFace>=geometry.faces.length)return;remember();setGeometry(g=>g?{...g,faces:g.faces.filter((_,i)=>i!==selectedFace),...(g.faceColors?{faceColors:g.faceColors.filter((_,i)=>i!==selectedFace)}:{})}:g);setSelectedFace(null);setDirty(true)};
+ const deleteFace=()=>{if(!geometry||faceDraft.length>0||selectedFace===null||selectedFace<0||selectedFace>=geometry.faces.length)return;remember();setGeometry(g=>g?{...g,faces:g.faces.filter((_,i)=>i!==selectedFace),...(g.faceColors?{faceColors:g.faceColors.filter((_,i)=>i!==selectedFace)}:{})}:g);setSelectedFace(null);setSelectedFaces([]);setDirty(true)};
  const save=()=>{if(!geometry)return;download(new Blob([JSON.stringify({...sourceMetadata,...geometry,reference:{image,grid,opacity,calibration,showAll,editedVertexIds:edited}},null,2)],{type:'application/json'}),'vertex-cage.json');setDirty(false);setReferenceDirty(false)};
  const exportGlb=()=>{
    if(!geometry||!geometry.faces.length)return;
@@ -202,10 +232,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
         {showCage&&<label className="ml-2 flex items-center gap-2 text-xs text-neutral-300"><input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>背面布线 X-Ray</label>}
      </div>
      <div aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} xray={xray} showCage={showCage}
+       {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={setSelected} onMove={update}
-  onSelectFace={fi=>{setSelectedFace(fi);setSelectedEdgeSlot(0);setError('')}}
-  onSelectEdge={(fi,slot)=>{setSelectedFace(fi);setSelectedEdgeSlot(slot);setError('')}}
+  onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
+  onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
   onStartMove={remember}/>}
      </div>
      <p className="text-neutral-400">布线视图：蓝色顶点/橙色边线可编辑；成品预览隐藏这些辅助元素，仍可点选控制面进行配色。</p>
