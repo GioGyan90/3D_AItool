@@ -371,19 +371,18 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>
   <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
   {toolPanel==='topology'&&<div className="space-y-3">
-    <div className="space-y-2 rounded border border-amber-700/40 bg-amber-950/20 p-3">
-      <div className="font-medium text-amber-200">示例：单立方体 → 3×3 魔方</div>
-      <p className="text-xs text-neutral-300">沿 X、Y、Z 各插入两条真实的连续环线，保持共享顶点，不创建 27 个独立立方体。</p>
-      <button className={btn+' w-full border-amber-500/50 !bg-amber-900/30'} onClick={makeRubik} disabled={!isBaseBox||draftDirty||faceDraft.length>0}>六次环切 · 生成魔方</button>
-      {!isBaseBox&&<p className="text-xs text-neutral-500">仅原始 8 顶点立方体可使用，避免覆盖已编辑几何体。</p>}
-    </div>
-    <p className="text-xs text-neutral-400">选择 3D 或正交视图中的边线，再调整切割位置。</p>
+    {isBaseBox&&<div className="space-y-2 rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
+      <div className="topo-tool-label">入门案例 · 从立方体开始</div>
+      <p className="topo-helptext">六次真实环切，生成共享顶点的 3×3 魔方网格。</p>
+      <button className={btn+' w-full'} onClick={makeRubik} disabled={draftDirty||faceDraft.length>0}>六次环切 · 生成魔方</button>
+    </div>}
+    <p className="topo-helptext">点击橙色边线或输入面编号，再调整切割比例。</p>
     {selectedLoopFace?.length===4?
       <label className="block text-xs">起始面 #{selectedFace} · 边
         <select aria-label="布线起始边" className="mt-1 w-full rounded bg-neutral-800 p-2" value={selectedEdgeSlot} onChange={e=>setSelectedEdgeSlot(Number(e.target.value))}>
           {selectedLoopFace.map((id,i)=><option key={i} value={i}>边 {i+1} · {id} → {selectedLoopFace[(i+1)%4]}</option>)}
         </select>
-      </label>:<p className="text-xs text-amber-300">请选择一个四边面上的边线或输入控制面编号。</p>}
+      </label>:<p className="topo-empty-state">尚未选中四边面。在画布上选择一条橙色边线。</p>}
     <label className="block text-xs">切割比例：{Math.round(loopFraction*100)}%
       <input aria-label="布线位置" className="mt-1 w-full" type="range" min=".05" max=".95" step=".05" value={loopFraction} onChange={e=>setLoopFraction(Number(e.target.value))}/>
     </label>
@@ -391,10 +390,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn+' !bg-sky-900'} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addEdgeLoop}>连续环线</button>
       <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割</button>
     </div>
-    <p className="text-xs text-neutral-500">局部切割自动重构邻面，避免 T 型悬空端点。</p>
+    <p className="topo-helptext">局部切割仅影响选中的面，并自动修复相邻共享边。</p>
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
-    <p className="text-xs text-neutral-400">选择顶点可拖动塑形；选择控制面可内插或挤出。操作可逐步撤销。</p>
+    <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
     <div className="space-y-2 rounded-lg border border-neutral-700 bg-neutral-950/50 p-3">
       <div className="text-xs font-medium text-neutral-200">对称顶点编辑 · 实时</div>
       <div className="grid grid-cols-3 gap-2">
@@ -421,7 +420,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     </details>
   </div>}
   {toolPanel==='paint'&&<div className="space-y-3">
-    <p className="text-xs text-neutral-400">点选控制面；Shift + 点击可追加/取消选择。可按共面或颜色一次选中一组。</p>
+    <p className="topo-helptext">Shift + 点击可多选面，也可按共面或颜色批量选取。</p>
     <div className="flex items-center justify-between text-sm">
       <span>{selectedFaces.length? `已选 ${selectedFaces.length} 面 · 主面 #${selectedFace}`:'尚未选择控制面'}</span>
       <button className="text-xs text-sky-300 disabled:opacity-40" disabled={!selectedFaces.length} onClick={clearFaces}>清空选择</button>
