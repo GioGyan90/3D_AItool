@@ -2,13 +2,16 @@ import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Canvas3D } from './components/Canvas3D';
+import { ReferenceTracing } from './components/ReferenceTracing';
 import { Toolbar } from './components/Toolbar';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { LayersPanel } from './components/LayersPanel';
 import { AICommander } from './components/AICommander';
 import { UVEditor } from './components/UVEditor';
 import { BoneRigEditor } from './components/BoneRigEditor';
-import { SceneNode, NodeType, PropertyTrack, AnimationData, Keyframe } from './types';
+import { SceneNode, NodeType, PropertyTrack, AnimationData, Keyframe, ControlMesh } from './types';
+import { buildEditableGeometry, createHalfFaceProject, parseStudioProject } from './studioProject';
+import type { StudioProject } from './studioProject';
 import { Timeline } from './components/Timeline';
 import { CodeEditor } from './components/CodeEditor';
 import { 
@@ -31,7 +34,8 @@ import {
   Loader2,
   Eye,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Clipboard
 } from 'lucide-react';
 import * as THREE from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
@@ -43,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+const INITIAL_ANIMATION: AnimationData = { tracks: [], duration: 60, loopStart: 0, loopEnd: 3 };
 const INITIAL_NODES: SceneNode[] = [
   {
     id: 'ambient-light',
@@ -81,6 +86,14 @@ export default function App() {
   const [nodes, setNodes] = useState<SceneNode[]>(INITIAL_NODES);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showGrid, setShowGrid] = useState(true);
+  const [isReferenceTracingOpen, setIsReferenceTracingOpen] = useState(false);
+  const [editingControlMeshId, setEditingControlMeshId] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState('未命名项目');
+  const [projectError, setProjectError] = useState('');
+  const [frameRequest, setFrameRequest] = useState(0);
+  const projectFileInput = useRef<HTMLInputElement>(null);
+  const projectReadPending = useRef(false);
+  const savedScene = useRef(JSON.stringify({ nodes: INITIAL_NODES, animation: INITIAL_ANIMATION }));
   const [isProcessing, setIsProcessing] = useState(false);
   const [gifProgress, setGifProgress] = useState<number | null>(null);
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
@@ -92,6 +105,8 @@ export default function App() {
   const [activeTool, setActiveTool] = useState('select');
   const [isLayersCollapsed, setIsLayersCollapsed] = useState(false);
   const [isPropertiesCollapsed, setIsPropertiesCollapsed] = useState(false);
+  const [isSvgPasteOpen, setIsSvgPasteOpen] = useState(false);
+  const [svgPasteContent, setSvgPasteContent] = useState('');
   
   // Interaction state for animation triggers
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -100,12 +115,7 @@ export default function App() {
   const [clickTimes, setClickTimes] = useState<Record<string, number>>({});
   
   // Animation state
-  const [animation, setAnimation] = useState<AnimationData>({
-    tracks: [],
-    duration: 60,
-    loopStart: 0,
-    loopEnd: 3
-  });
+  const [animation, setAnimation] = useState<AnimationData>(INITIAL_ANIMATION);
   const timerRef = useRef<THREE.Timer>(new THREE.Timer());
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -452,6 +462,31 @@ export default function App() {
     }
   }, []);
 
+  const handleSetAxisView = useCallback((view: 'top' | 'side' | 'front') => {
+    const controls = orbitControlsRef.current;
+    if (!controls?.object) return;
+
+    const camera = controls.object as THREE.PerspectiveCamera;
+    const target = controls.target.clone() as THREE.Vector3;
+    const distance = camera.position.distanceTo(target);
+
+    controls.target.copy(target);
+    camera.up.set(0, 1, 0);
+
+    if (view === 'top') {
+      camera.position.copy(target).add(new THREE.Vector3(0, distance, 0.001));
+      camera.up.set(0, 0, -1);
+    } else if (view === 'side') {
+      camera.position.copy(target).add(new THREE.Vector3(distance, 0, 0));
+    } else {
+      camera.position.copy(target).add(new THREE.Vector3(0, 0, distance));
+    }
+
+    camera.lookAt(target);
+    camera.updateProjectionMatrix();
+    controls.update();
+  }, []);
+
   const nodesRef = useRef(nodes);
   const animationRef = useRef(animation);
   const currentTimeRef = useRef(currentTime);
@@ -461,6 +496,106 @@ export default function App() {
   useEffect(() => { animationRef.current = animation; }, [animation]);
   useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
   useEffect(() => { selectedIdsRef.current = selectedIds; }, [selectedIds]);
+
+  // Frame the scene after its new models have mounted.
+  useEffect(() => {
+    if (!frameRequest) return;
+    const frameId = requestAnimationFrame(() => {
+      const controls = orbitControlsRef.current;
+      const scene = sceneRef.current;
+      if (!controls?.object) return;
+      const bounds = new THREE.Box3();
+      scene?.updateWorldMatrix(true, true);
+      for (const node of nodesRef.current) {
+        if (node.parentId || !node.visible) continue;
+        if (node.controlMesh) {
+          const transform = new THREE.Matrix4().compose(
+            new THREE.Vector3(...node.position),
+            new THREE.Quaternion().setFromEuler(new THREE.Euler(...node.rotation)),
+            new THREE.Vector3(...node.scale)
+          );
+          for (const vertex of node.controlMesh.vertices) {
+            bounds.expandByPoint(new THREE.Vector3(...vertex).applyMatrix4(transform));
+          }
+        } else {
+          const layer = scene?.getObjectByName(node.id);
+          if (layer && ['pointLight', 'ambientLight'].indexOf(node.type) === -1) bounds.expandByObject(layer, true);
+        }
+      }
+      if (bounds.isEmpty()) return;
+      const sphere = bounds.getBoundingSphere(new THREE.Sphere());
+      const camera = controls.object as THREE.PerspectiveCamera;
+      const halfFov = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * Math.min(1, camera.aspect));
+      const distance = Math.max(0.5, sphere.radius / Math.sin(halfFov) * 1.15);
+      const direction = new THREE.Vector3(0.55, 0.15, 1).normalize();
+      controls.target.copy(sphere.center);
+      camera.up.set(0, 1, 0);
+      camera.position.copy(sphere.center).addScaledVector(direction, distance);
+      controls.update();
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [frameRequest]);
+
+  const openProject = (project: StudioProject) => {
+    const currentScene = JSON.stringify({ nodes: nodesRef.current, animation: animationRef.current });
+    if (currentScene !== savedScene.current &&
+        !window.confirm('当前场景有未保存的修改。打开另一个项目会替换当前场景。继续打开？')) return;
+    setProjectName(project.name);
+    setProjectError('');
+    setNodes(project.nodes);
+    setSelectedIds(project.selectedIds);
+    setAnimation(project.animation);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    setActiveTool('select');
+    setIsReferenceTracingOpen(false);
+    setEditingControlMeshId(null);
+    setHoveredNodeId(null);
+    setClickedNodeIds(new Set());
+    setHoverStartTimes({});
+    setClickTimes({});
+    historyRef.current = [{ nodes: project.nodes, selectedIds: project.selectedIds }];
+    historyIndexRef.current = 0;
+    setHistoryVersion(version => version + 1);
+    savedScene.current = JSON.stringify({ nodes: project.nodes, animation: project.animation });
+    setFrameRequest(request => request + 1);
+  };
+
+  const openProjectFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || projectReadPending.current) return;
+    projectReadPending.current = true;
+    try {
+      if (file.size > 50 * 1024 * 1024) throw Error('项目文件不能超过 50 MB。');
+      openProject(parseStudioProject(JSON.parse(await file.text())));
+    } catch (error) {
+      setProjectError(error instanceof Error ? error.message : '无法打开项目文件。');
+    } finally {
+      projectReadPending.current = false;
+    }
+  };
+
+  const saveProject = () => {
+    try {
+      const project = parseStudioProject({
+        format: 'shape3d-studio', version: 1, name: projectName, nodes, animation, selectedIds
+      });
+      // The polygon mesh is the editable source. Rebuild its display buffer when loading.
+      const data = { ...project, nodes: project.nodes.map(node => node.controlMesh ? { ...node, geometryData: undefined } : node) };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${projectName.replace(/[<>:"/\\|?*]/g, '-')}.shape3d.json`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      savedScene.current = JSON.stringify({ nodes, animation });
+      setProjectError('');
+    } catch (error) {
+      setProjectError(error instanceof Error ? error.message : '无法保存项目。');
+    }
+  };
 
   const pushHistory = useCallback((newNodes: SceneNode[], newSelectedIds: string[]) => {
     const sliced = historyRef.current.slice(0, historyIndexRef.current + 1);
@@ -1281,20 +1416,57 @@ ${params.edgeShift ? `                        applyEdgeShift(child.geometry, [${
       return;
     }
 
+    if (isSvg) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        try {
+          // Convert SVG text to secure base64 data URL
+          const b64 = btoa(unescape(encodeURIComponent(text)));
+          const url = `data:image/svg+xml;base64,${b64}`;
+          const newId = crypto.randomUUID();
+
+          const newNode: SceneNode = {
+            id: newId,
+            name: file.name,
+            type: 'svg',
+            parentId: null,
+            url: url,
+            position: [0, 0.5, 0],
+            rotation: [0, 0, 0],
+            scale: [1, 1, 1],
+            color: '#ffffff',
+            parameters: { thickness: 0.1, bevelRadius: 0 },
+            visible: true
+          };
+          const updatedNodes = [...nodes, newNode];
+          setNodes(updatedNodes);
+          setSelectedIds([newId]);
+          pushHistory(updatedNodes, [newId]);
+        } catch (err) {
+          console.error("Failed to parse loaded SVG file", err);
+          alert("导入 SVG 失败，请确保格式正确。");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+      return;
+    }
+
     const url = URL.createObjectURL(file);
     const newId = crypto.randomUUID();
 
     const newNode: SceneNode = {
       id: newId,
       name: file.name,
-      type: isSvg ? 'svg' : 'model',
+      type: 'model',
       parentId: null,
       url: url,
       position: [0, 0.5, 0],
       rotation: [0, 0, 0],
       scale: [1, 1, 1],
       color: '#ffffff',
-      parameters: isSvg ? { thickness: 0 } : {},
+      parameters: {},
       visible: true
     };
     const updatedNodes = [...nodes, newNode];
@@ -1305,6 +1477,48 @@ ${params.edgeShift ? `                        applyEdgeShift(child.geometry, [${
     // Reset input
     event.target.value = '';
   }, [nodes, pushHistory]);
+
+  const handleSvgPasteImport = useCallback(() => {
+    if (!svgPasteContent.trim()) return;
+
+    try {
+      const cleanContent = svgPasteContent.trim();
+      if (!cleanContent.includes('<svg')) {
+        alert("请输入有效的 SVG 代码（需要包含 <svg> 标签）。");
+        return;
+      }
+
+      const b64 = btoa(unescape(encodeURIComponent(cleanContent)));
+      const url = `data:image/svg+xml;base64,${b64}`;
+      const newId = crypto.randomUUID();
+
+      const newNode: SceneNode = {
+        id: newId,
+        name: `Pasted SVG ${nodes.filter(n => n.type === 'svg').length + 1}`,
+        type: 'svg',
+        parentId: null,
+        url: url,
+        position: [0, 0.5, 0],
+        rotation: [0, 0, 0],
+        scale: [1, 1, 1],
+        color: '#ffffff',
+        parameters: { thickness: 0.1, bevelRadius: 0 },
+        visible: true
+      };
+
+      const updatedNodes = [...nodes, newNode];
+      setNodes(updatedNodes);
+      setSelectedIds([newId]);
+      pushHistory(updatedNodes, [newId]);
+
+      // Reset paste state
+      setSvgPasteContent('');
+      setIsSvgPasteOpen(false);
+    } catch (err) {
+      console.error("Failed to import pasted SVG", err);
+      alert("解析 SVG 代码失败，请确保代码格式正确。");
+    }
+  }, [nodes, svgPasteContent, pushHistory]);
 
   const handleAddNode = useCallback((type: NodeType, properties?: Partial<SceneNode>) => {
     const newId = properties?.id || crypto.randomUUID();
@@ -1626,6 +1840,7 @@ return mesh;` : undefined,
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isReferenceTracingOpen || editingControlMeshId) return;
       if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
         e.preventDefault();
         handleDuplicate();
@@ -1651,11 +1866,30 @@ return mesh;` : undefined,
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleDuplicate, handleDeleteSelected, handleUndo, handleRedo]);
+  }, [handleDuplicate, handleDeleteSelected, handleUndo, handleRedo, isReferenceTracingOpen, editingControlMeshId]);
 
   const selectedNode = useMemo(() => 
     selectedIds.length === 1 ? nodes.find(n => n.id === selectedIds[0]) || null : null
   , [selectedIds, nodes]);
+
+  const controlMeshNode = nodes.find(node => node.id === editingControlMeshId && node.controlMesh);
+  const editSelectedVertices = () => {
+    if (selectedNode?.controlMesh && !selectedNode.locked) {
+      setEditingControlMeshId(selectedNode.id);
+    } else {
+      setIsReferenceTracingOpen(true);
+    }
+  };
+
+  const applySceneMesh = (mesh: ControlMesh) => {
+    const layer = nodes.find(node => node.id === editingControlMeshId);
+    if (!layer?.controlMesh || layer.locked) throw Error('该图层已不存在或已锁定。');
+    const geometryData = buildEditableGeometry(mesh);
+    const nextNodes = nodes.map(node => node.id === layer.id ? { ...node, controlMesh: mesh, geometryData } : node);
+    setNodes(nextNodes);
+    pushHistory(nextNodes, selectedIds);
+    setEditingControlMeshId(null);
+  };
 
   const handleTextureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1844,11 +2078,34 @@ return mesh;` : undefined,
           </div>
 
           <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold flex items-center gap-1" title={projectName}>
+                项目 <ChevronDown className="w-3 h-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-[#181818] border-[#2e2e2e] text-[#e0e0e0]">
+                <DropdownMenuItem onClick={() => openProject(createHalfFaceProject())}>打开半脸项目</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => projectFileInput.current?.click()}>打开项目文件</DropdownMenuItem>
+                <DropdownMenuItem onClick={saveProject}>保存项目</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <input ref={projectFileInput} type="file" accept=".json,application/json" hidden aria-label="打开项目文件" onChange={openProjectFile} />
+            <button onClick={editSelectedVertices} disabled={!!selectedNode?.controlMesh && selectedNode.locked} className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider disabled:opacity-40" title={selectedNode?.controlMesh ? '编辑当前图层的顶点' : '多视图顶点参考对照'}>
+              {selectedNode?.controlMesh ? '编辑顶点' : '顶点对照'}
+            </button>
             <label className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1.5">
               <Upload className="w-3 h-3" />
               IMPORT
-              <input type="file" accept=".glb,.gltf,.js" className="hidden" onChange={handleImport} />
+              <input type="file" accept=".glb,.gltf,.js,.svg" className="hidden" onChange={handleImport} />
             </label>
+
+            <button
+              onClick={() => setIsSvgPasteOpen(true)}
+              className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider transition-colors flex items-center gap-1.5 outline-none cursor-pointer"
+              title="复制代码导入 SVG"
+            >
+              <Clipboard className="w-3 h-3" />
+              PASTE SVG
+            </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger className="bg-[#4a90e2] hover:bg-[#357abd] text-white px-3 py-1 rounded text-[11px] font-bold tracking-wider transition-colors flex items-center gap-1 outline-none">
@@ -1957,6 +2214,26 @@ return mesh;` : undefined,
                 }
               }}
             />
+
+            {!isPreviewMode && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#1c1c1c]/85 p-1 shadow-xl backdrop-blur-md">
+                {[
+                  { id: 'top', label: 'TOP', title: 'Top View (Y Axis)' },
+                  { id: 'side', label: 'SIDE', title: 'Side View (X Axis)' },
+                  { id: 'front', label: 'FRONT', title: 'Front View (Z Axis)' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    title={item.title}
+                    onClick={() => handleSetAxisView(item.id as 'top' | 'side' | 'front')}
+                    className="h-7 min-w-14 rounded-md px-2 text-[10px] font-black tracking-wider text-[#b8b8b8] transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
             
             {/* Viewport Info */}
             <div className="absolute bottom-5 left-5 bg-black/50 border border-[#2e2e2e] px-3 py-2 rounded-md text-[11px] font-mono text-[#888888] pointer-events-none flex flex-col gap-1 z-10">
@@ -2002,6 +2279,8 @@ return mesh;` : undefined,
                   selectedShape={selectedNode} 
                   nodes={nodes}
                   onUpdateShape={handleUpdateNode} 
+                  activeTool={activeTool}
+                  onToolChange={setActiveTool}
                   onAddNodes={handleAiAddNodes}
                   onReplaceNode={handleReplaceNodeWithPrimitives}
                   onDeleteNode={handleDeleteNode}
@@ -2108,6 +2387,62 @@ return mesh;` : undefined,
           isOpen={isBoneRigOpen}
           onClose={() => setIsBoneRigOpen(false)}
         />
+
+        {isSvgPasteOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-[500px] bg-[#181818] border border-[#2e2e2e] rounded-xl p-6 shadow-2xl space-y-6 flex flex-col max-h-[85vh]">
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-black text-[#e0e0e0] uppercase tracking-[2px] flex items-center gap-2">
+                  <Clipboard className="w-4 h-4 text-[#4a90e2]" /> PASTE SVG CODE (粘贴 SVG 代码)
+                </h3>
+                <p className="text-[10px] uppercase font-bold tracking-wider text-[#666666]">
+                  Paste raw SVG code directly to create a 3D persistent shape in the workspace.
+                </p>
+              </div>
+
+              <div className="flex-1 flex flex-col min-h-0 space-y-2">
+                <textarea
+                  className="flex-1 w-full h-[250px] bg-[#121212] border border-[#262626] rounded-lg p-3 font-mono text-[11px] text-[#aaa] focus:border-[#4a90e2] outline-none resize-none transition-all"
+                  placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect x="10" y="10" width="80" height="80" fill="#4a90e2" />
+</svg>'
+                  value={svgPasteContent}
+                  onChange={(e) => setSvgPasteContent(e.target.value)}
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 shrink-0">
+                <button
+                  onClick={() => {
+                    setIsSvgPasteOpen(false);
+                    setSvgPasteContent('');
+                  }}
+                  className="px-4 py-2 bg-transparent hover:bg-white/5 border border-white/[0.04] text-[#888] hover:text-white rounded text-[10px] uppercase font-bold tracking-widest transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSvgPasteImport}
+                  disabled={!svgPasteContent.trim()}
+                  className="px-4 py-2 bg-[#4a90e2] hover:bg-[#357abd] disabled:bg-[#4a90e2]/25 disabled:text-[#aaa]/50 text-white rounded text-[10px] uppercase font-bold tracking-widest transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  Import SVG
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {projectError && (
+          <div role="alert" className="fixed left-1/2 top-14 z-50 flex max-w-[90vw] -translate-x-1/2 items-center gap-3 rounded-lg border border-amber-700 bg-[#181818] px-3 py-2 text-xs text-amber-200">
+            {projectError}
+            <button type="button" aria-label="关闭项目提示" onClick={() => setProjectError('')} className="px-1 text-white">×</button>
+          </div>
+        )}
+        <div className={isReferenceTracingOpen ? "" : "hidden"}><ReferenceTracing active={isReferenceTracingOpen} onClose={() => setIsReferenceTracingOpen(false)} /></div>
+        {controlMeshNode?.controlMesh && (
+          <ReferenceTracing key={controlMeshNode.id} active onClose={() => setEditingControlMeshId(null)}
+            sceneEdit={{ name: controlMeshNode.name, mesh: controlMeshNode.controlMesh, onApply: applySceneMesh }} />
+        )}
       </div>
     </TooltipProvider>
   );

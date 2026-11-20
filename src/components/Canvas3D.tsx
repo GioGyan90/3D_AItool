@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
 import { SceneNode } from '../types';
+import helvetikerBoldFontUrl from 'three/examples/fonts/helvetiker_bold.typeface.json?url';
 
 // Add BVH support to THREE
 (THREE.BufferGeometry.prototype as any).computeBoundsTree = computeBoundsTree;
@@ -15,7 +16,7 @@ interface Canvas3DProps {
   nodes: SceneNode[];
   selectedIds: string[];
   onSelect: (ids: string[]) => void;
-  onUpdateNode: (id: string, updates: Partial<SceneNode>) => void;
+  onUpdateNode: (id: string, updates: Partial<SceneNode>, skipHistory?: boolean) => void;
   sceneRef?: React.MutableRefObject<THREE.Group | null>;
   orbitControlsRef?: React.MutableRefObject<any>;
   showGrid?: boolean;
@@ -276,6 +277,108 @@ const applyEdgeShift = (geo: THREE.BufferGeometry, amount: [number, number, numb
   return geo;
 };
 
+const DEFAULT_ANCHOR_POINTS: [number, number, number][] = [
+  [-0.5, -0.5, -0.5],
+  [0.5, -0.5, -0.5],
+  [0.5, 0.5, -0.5],
+  [-0.5, 0.5, -0.5],
+  [-0.5, -0.5, 0.5],
+  [0.5, -0.5, 0.5],
+  [0.5, 0.5, 0.5],
+  [-0.5, 0.5, 0.5],
+];
+
+const createAnchorBoxGeometry = (anchorPoints: [number, number, number][]) => {
+  const points = anchorPoints.length === 8 ? anchorPoints : DEFAULT_ANCHOR_POINTS;
+  const vertices = new Float32Array(points.flatMap((point) => point));
+  const indices = [
+    0, 2, 1, 0, 3, 2,
+    4, 5, 6, 4, 6, 7,
+    0, 4, 7, 0, 7, 3,
+    1, 2, 6, 1, 6, 5,
+    3, 7, 6, 3, 6, 2,
+    0, 1, 5, 0, 5, 4,
+  ];
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+};
+
+
+interface JointMatrices {
+  matrices: { [id: string]: THREE.Matrix4 };
+  rests: { [id: string]: THREE.Matrix4 };
+  skins: { [id: string]: THREE.Matrix4 };
+}
+
+export const computeJointMatrices = (boneRig: any): JointMatrices => {
+  const matrices: { [id: string]: THREE.Matrix4 } = {};
+  const rests: { [id: string]: THREE.Matrix4 } = {};
+  const skins: { [id: string]: THREE.Matrix4 } = {};
+
+  if (!boneRig || !Array.isArray(boneRig.joints) || boneRig.joints.length === 0) {
+    return { matrices, rests, skins };
+  }
+
+  const jointsMap = new Map(boneRig.joints.map((j: any) => [j.id, j]));
+
+  const getLocalMatrix = (joint: any, applyPose: boolean) => {
+    const mat = new THREE.Matrix4();
+    const pos = new THREE.Vector3(...joint.position);
+    const rot = new THREE.Euler();
+
+    if (applyPose && Array.isArray(joint.rotation)) {
+      const rx = (joint.rotation[0] || 0) * Math.PI / 180;
+      const ry = (joint.rotation[1] || 0) * Math.PI / 180;
+      const rz = (joint.rotation[2] || 0) * Math.PI / 180;
+      rot.set(rx, ry, rz);
+    }
+
+    mat.makeRotationFromEuler(rot);
+    mat.setPosition(pos);
+    return mat;
+  };
+
+  const traverse = (jointId: string, parentMatrix: THREE.Matrix4, parentRest: THREE.Matrix4) => {
+    const joint = jointsMap.get(jointId);
+    if (!joint) return;
+
+    // Pose local matrix
+    const localPose = getLocalMatrix(joint, true);
+    const globalPose = parentMatrix.clone().multiply(localPose);
+    matrices[jointId] = globalPose;
+
+    // Rest local matrix
+    const localRest = getLocalMatrix(joint, false);
+    const globalRest = parentRest.clone().multiply(localRest);
+    rests[jointId] = globalRest;
+
+    // Compute skin matrix: Pose * Rest_inv
+    const restInv = globalRest.clone().invert();
+    skins[jointId] = globalPose.clone().multiply(restInv);
+
+    // Recursively handle descendants
+    boneRig.joints.forEach((child: any) => {
+      if (child.parentJointId === jointId) {
+        traverse(child.id, globalPose, globalRest);
+      }
+    });
+  };
+
+  // Find roots (joints with parentJointId null or not present in mapping)
+  boneRig.joints.forEach((j: any) => {
+    if (!j.parentJointId || !jointsMap.has(j.parentJointId)) {
+      traverse(j.id, new THREE.Matrix4(), new THREE.Matrix4());
+    }
+  });
+
+  return { matrices, rests, skins };
+};
+
 
 const Model = ({ node }: { node: SceneNode }) => {
   const url = node.url || '';
@@ -331,6 +434,136 @@ const Model = ({ node }: { node: SceneNode }) => {
           } else {
             child.material = processMaterial(child.material);
           }
+
+          // Apply vertex deformations (e.g. boneRig, bend, etc.) to the model's meshes
+          const params = node.parameters || {};
+          const hasDeformations = !!(
+            params.boneRig ||
+            params.bend ||
+            params.twist ||
+            params.taper ||
+            params.stretch ||
+            params.inflate ||
+            params.asymmetricScale ||
+            params.edgeShift
+          );
+
+          if (hasDeformations && child.geometry) {
+            // Clone original geometry to avoid cumulative modifications
+            child.geometry = child.geometry.clone();
+            const geo = child.geometry;
+
+            // Apply standard shape deformers if any are active
+            if (params.bend) applyBend(geo, params.bend);
+            if (params.twist) applyTwist(geo, params.twist);
+            if (params.taper) applyTaper(geo, params.taper);
+            if (params.stretch) applyStretch(geo, params.stretch);
+            if (params.inflate) applyInflate(geo, params.inflate);
+            if (params.asymmetricScale) applyAsymmetricScale(geo, params.asymmetricScale);
+            if (params.edgeShift) applyEdgeShift(geo, params.edgeShift);
+
+            // Apply Armature BoneRig Skinning
+            if (params.boneRig) {
+              try {
+                const rig = params.boneRig;
+                const { rests, skins } = computeJointMatrices(rig);
+                const posAttr = geo.getAttribute('position');
+
+                if (posAttr && rig.joints && rig.joints.length > 0) {
+                  const originalPosition = posAttr.clone();
+                  const count = posAttr.count;
+
+                  // Compute local-to-root transform matrix for this sub-mesh
+                  const localToRoot = new THREE.Matrix4();
+                  let curr: THREE.Object3D | null = child;
+                  while (curr && curr !== clone) {
+                    localToRoot.premultiply(curr.matrix);
+                    curr = curr.parent;
+                  }
+                  const rootToLocal = localToRoot.clone().invert();
+
+                  // Compute bone segments: active joints are starting points, children are endpoints
+                  const bones: { jointId: string; start: THREE.Vector3; end: THREE.Vector3 }[] = [];
+                  rig.joints.forEach((joint: any) => {
+                    const startPos = new THREE.Vector3();
+                    if (rests[joint.id]) {
+                      startPos.setFromMatrixPosition(rests[joint.id]);
+                    }
+
+                    // Find children to connect bones
+                    const childrenJoints = rig.joints.filter((j: any) => j.parentJointId === joint.id);
+                    if (childrenJoints.length > 0) {
+                      childrenJoints.forEach((childJ: any) => {
+                        const endPos = new THREE.Vector3();
+                        if (rests[childJ.id]) {
+                          endPos.setFromMatrixPosition(rests[childJ.id]);
+                        }
+                        bones.push({ jointId: joint.id, start: startPos.clone(), end: endPos });
+                      });
+                    } else {
+                      // Leaf joint: extend along local coordinate system axis or Y/Z axis by length
+                      const endPos = startPos.clone();
+                      const restMat = rests[joint.id];
+                      if (restMat) {
+                        const dir = new THREE.Vector3(0, 1, 0).applyMatrix4(restMat).sub(startPos).normalize();
+                        const len = joint.length || 0.3;
+                        endPos.addScaledVector(dir, len);
+                      } else {
+                        endPos.y += (joint.length || 0.3);
+                      }
+                      bones.push({ jointId: joint.id, start: startPos, end: endPos });
+                    }
+                  });
+
+                  const v = new THREE.Vector3();
+                  const vTransformedWorld = new THREE.Vector3();
+
+                  for (let i = 0; i < count; i++) {
+                    v.fromBufferAttribute(originalPosition, i);
+
+                    // Transform vertex to model-root space for accurate bone-distance measuring
+                    const vWorld = v.clone().applyMatrix4(localToRoot);
+
+                    let weights: { jointId: string; weight: number }[] = [];
+                    bones.forEach((bone) => {
+                      const segment = new THREE.Line3(bone.start, bone.end);
+                      const closestPoint = new THREE.Vector3();
+                      segment.closestPointToPoint(vWorld, true, closestPoint);
+                      const distSq = vWorld.distanceToSquared(closestPoint);
+
+                      // Using a higher power decay (inverse 5th power) to concentrate weights to closest bones
+                      const w = 1.0 / (Math.pow(distSq, 2.5) + 0.0001);
+                      weights.push({ jointId: bone.jointId, weight: w });
+                    });
+
+                    weights.sort((a, b) => b.weight - a.weight);
+                    const topWeights = weights.slice(0, 2);
+                    let sumTop = 0;
+                    topWeights.forEach(tw => sumTop += tw.weight);
+
+                    vTransformedWorld.set(0, 0, 0);
+                    topWeights.forEach((tw) => {
+                      const normalizedW = tw.weight / (sumTop || 1);
+                      const skinMat = skins[tw.jointId];
+                      if (skinMat) {
+                        const tempV = vWorld.clone().applyMatrix4(skinMat);
+                        vTransformedWorld.addScaledVector(tempV, normalizedW);
+                      }
+                    });
+
+                    // Transform back to local sub-mesh space
+                    const vDeformedLocal = vTransformedWorld.applyMatrix4(rootToLocal);
+                    posAttr.setXYZ(i, vDeformedLocal.x, vDeformedLocal.y, vDeformedLocal.z);
+                  }
+
+                  posAttr.needsUpdate = true;
+                  geo.computeVertexNormals();
+                }
+              } catch (err) {
+                console.warn('Failed to apply boneRig skinning to GLB model:', err);
+              }
+            }
+          }
         }
       });
       return clone;
@@ -338,9 +571,125 @@ const Model = ({ node }: { node: SceneNode }) => {
       console.error('Error processing model:', error);
       return new THREE.Group(); // Return empty group on failure
     }
-  }, [scene, color, node.material, isTransparent]);
+  }, [scene, color, node.material, isTransparent, node.parameters]);
   
   return <primitive object={clonedScene} />;
+};
+
+const extrudeBufferGeometry = (geometry2D: THREE.BufferGeometry, depth: number): THREE.BufferGeometry => {
+  const posAttr = geometry2D.getAttribute('position');
+  const indexAttr = geometry2D.index;
+  if (!posAttr) return geometry2D;
+
+  const count = posAttr.count;
+  const vertices3D = new Float32Array(count * 2 * 3);
+
+  // Fill the 3D vertices array
+  // Bottom layer at z = -depth/2, Top layer at z = depth/2
+  for (let i = 0; i < count; i++) {
+    const x = posAttr.getX(i);
+    const y = posAttr.getY(i);
+
+    // Bottom
+    vertices3D[i * 3] = x;
+    vertices3D[i * 3 + 1] = y;
+    vertices3D[i * 3 + 2] = -depth / 2;
+
+    // Top
+    vertices3D[(count + i) * 3] = x;
+    vertices3D[(count + i) * 3 + 1] = y;
+    vertices3D[(count + i) * 3 + 2] = depth / 2;
+  }
+
+  // Handle Indices
+  const indices2D = indexAttr ? Array.from(indexAttr.array) : [];
+  const indices3D: number[] = [];
+
+  // Front face (bottom layer, z = -depth/2) - faces backward (reverse winding)
+  if (indexAttr) {
+    for (let i = 0; i < indices2D.length; i += 3) {
+      const a = indices2D[i];
+      const b = indices2D[i + 1];
+      const c = indices2D[i + 2];
+      indices3D.push(a, c, b);
+    }
+
+    // Back face (top layer, z = depth/2) - faces forward, keep winding (+ count offset)
+    for (let i = 0; i < indices2D.length; i += 3) {
+      const a = indices2D[i];
+      const b = indices2D[i + 1];
+      const c = indices2D[i + 2];
+      indices3D.push(a + count, b + count, c + count);
+    }
+  }
+
+  // Side face quads connecting bottom and top layers
+  // Find boundary edges of the 2D geometry (edges occurring exactly once)
+  if (indexAttr) {
+    const edgeCounts = new Map<string, { u: number; v: number; count: number }>();
+
+    for (let i = 0; i < indices2D.length; i += 3) {
+      const u1 = indices2D[i];
+      const u2 = indices2D[i + 1];
+      const u3 = indices2D[i + 2];
+
+      const addEdge = (a: number, b: number) => {
+        const key = a < b ? `${a}_${b}` : `${b}_${a}`;
+        const existing = edgeCounts.get(key);
+        if (existing) {
+          existing.count++;
+        } else {
+          // Keep track of original CCW directed edge orientation
+          edgeCounts.set(key, { u: a, v: b, count: 1 });
+        }
+      };
+
+      addEdge(u1, u2);
+      addEdge(u2, u3);
+      addEdge(u3, u1);
+    }
+
+    // Edges with count === 1 are boundary edges
+    edgeCounts.forEach((edge) => {
+      if (edge.count === 1) {
+        const u = edge.u;
+        const v = edge.v;
+
+        // Create side wall quad
+        // CCW orientation from outside: bottom (u, v) up to top (v + count, u + count)
+        indices3D.push(u, v, v + count);
+        indices3D.push(u, v + count, u + count);
+      }
+    });
+  }
+
+  const extrudedGeo = new THREE.BufferGeometry();
+  extrudedGeo.setAttribute('position', new THREE.BufferAttribute(vertices3D, 3));
+  if (indices3D.length > 0) {
+    extrudedGeo.setIndex(indices3D);
+  }
+
+  // Project 2D UVs to the 3D layers if present
+  const uvAttr = geometry2D.getAttribute('uv');
+  if (uvAttr) {
+    const uvs3D = new Float32Array(count * 2 * 2);
+    for (let i = 0; i < count; i++) {
+      const u = uvAttr.getX(i);
+      const v = uvAttr.getY(i);
+
+      // Bottom layer CVs
+      uvs3D[i * 2] = u;
+      uvs3D[i * 2 + 1] = v;
+
+      // Top layer UVs
+      uvs3D[(count + i) * 2] = u;
+      uvs3D[(count + i) * 2 + 1] = v;
+    }
+    extrudedGeo.setAttribute('uv', new THREE.BufferAttribute(uvs3D, 2));
+  }
+
+  extrudedGeo.computeVertexNormals();
+  return extrudedGeo;
 };
 
 const SVGNode = ({ node }: { node: SceneNode }) => {
@@ -349,95 +698,301 @@ const SVGNode = ({ node }: { node: SceneNode }) => {
   const thickness = node.parameters?.thickness || 0.1;
   const svgData = useLoader(SVGLoader, url);
   
-  const { shapes, boundingBox } = useMemo(() => {
-    const allShapes: { shape: THREE.Shape; color: THREE.Color; index: number }[] = [];
+  interface SvgItem {
+    type: 'fill' | 'stroke';
+    shape?: THREE.Shape;
+    geometry2D?: THREE.BufferGeometry;
+    color: THREE.Color;
+    index: number;
+  }
+
+  const { svgItems, boundingBox } = useMemo(() => {
+    const items: SvgItem[] = [];
     const box = new THREE.Box3();
 
     svgData.paths.forEach((path, i) => {
-      // SVGLoader.createShapes handles complex paths with holes correctly
-      const pathShapes = SVGLoader.createShapes(path);
-      pathShapes.forEach((shape) => {
-        allShapes.push({
-          shape,
-          color: path.color,
-          index: i
+      const style = path.userData?.style || {};
+      const hasFill = style.fill !== undefined && style.fill !== 'none';
+      const hasStroke = style.stroke !== undefined && style.stroke !== 'none';
+
+      // 1. Process Fill Shapes
+      if (hasFill || !hasStroke) {
+        const pathShapes = SVGLoader.createShapes(path);
+        pathShapes.forEach((shape) => {
+          items.push({
+            type: 'fill',
+            shape,
+            color: path.color || new THREE.Color(0xffffff),
+            index: i
+          });
+
+          // Update bounding box
+          const points = shape.getPoints();
+          if (Array.isArray(points)) {
+            points.forEach(p => {
+              if (p && typeof p.x === 'number' && typeof p.y === 'number') {
+                box.expandByPoint(new THREE.Vector3(p.x, p.y, 0));
+              }
+            });
+          }
+
+          if (Array.isArray(shape.holes)) {
+            shape.holes.forEach(hole => {
+              const holePoints = hole.getPoints();
+              if (Array.isArray(holePoints)) {
+                holePoints.forEach(p => {
+                  if (p && typeof p.x === 'number' && typeof p.y === 'number') {
+                    box.expandByPoint(new THREE.Vector3(p.x, p.y, 0));
+                  }
+                });
+              }
+            });
+          }
         });
-        
-        // Update bounding box to center the SVG later
-        const points = shape.getPoints();
-        if (Array.isArray(points)) {
-          points.forEach(p => {
-            if (p && typeof p.x === 'number' && typeof p.y === 'number') {
-              box.expandByPoint(new THREE.Vector3(p.x, p.y, 0));
-            }
-          });
+      }
+
+      // 2. Process Stroke Geometries
+      if (hasStroke) {
+        let strokeColor = new THREE.Color(0x000000);
+        try {
+          if (style.stroke) {
+            strokeColor.set(style.stroke);
+          }
+        } catch (e) {
+          console.warn('Failed to parse stroke color:', style.stroke);
         }
-        
-        if (Array.isArray(shape.holes)) {
-          shape.holes.forEach(hole => {
-            const holePoints = hole.getPoints();
-            if (Array.isArray(holePoints)) {
-              holePoints.forEach(p => {
-                if (p && typeof p.x === 'number' && typeof p.y === 'number') {
-                  box.expandByPoint(new THREE.Vector3(p.x, p.y, 0));
-                }
-              });
+
+        path.subPaths.forEach((subPath) => {
+          const points = subPath.getPoints();
+          const strokeGeometry = SVGLoader.pointsToStroke(points, style);
+          if (strokeGeometry) {
+            items.push({
+              type: 'stroke',
+              geometry2D: strokeGeometry,
+              color: strokeColor,
+              index: i
+            });
+
+            // Update bounding box to include stroke vertices
+            const posAttr = strokeGeometry.getAttribute('position');
+            if (posAttr) {
+              for (let idx = 0; idx < posAttr.count; idx++) {
+                box.expandByPoint(new THREE.Vector3(posAttr.getX(idx), posAttr.getY(idx), 0));
+              }
             }
-          });
-        }
-      });
+          }
+        });
+      }
     });
 
-    return { shapes: allShapes, boundingBox: box };
+    return { svgItems: items, boundingBox: box };
   }, [svgData]);
 
-  const depth = thickness || 0.1;
   const isDefaultColor = color.toLowerCase() === '#ffffff';
 
+  const size = new THREE.Vector3();
+  boundingBox.getSize(size);
   const center = new THREE.Vector3();
   boundingBox.getCenter(center);
+
+  // Normalize scale dynamically: fit the SVG precisely within a standard 1.0 unit bounding box
+  const maxDim = Math.max(size.x, size.y, 1);
+  const fitScale = 1.0 / maxDim;
+
+  // Compute and deform geometries dynamically
+  const geometries = useMemo(() => {
+    const params = node.parameters || {};
+    const bevel = params.bevelRadius || 0;
+    const hasDeformations = !!(
+      params.boneRig ||
+      params.bend ||
+      params.twist ||
+      params.taper ||
+      params.stretch ||
+      params.inflate ||
+      params.asymmetricScale ||
+      params.edgeShift
+    );
+
+    return svgItems.map((item) => {
+      let geo: THREE.BufferGeometry;
+
+      if (item.type === 'fill') {
+        if (thickness > 0) {
+          // Extrude standard filled shapes
+          geo = new THREE.ExtrudeGeometry(item.shape!, {
+            depth: thickness / fitScale,
+            bevelEnabled: bevel > 0,
+            bevelThickness: bevel / fitScale,
+            bevelSize: bevel / fitScale,
+            bevelSegments: 3,
+            curveSegments: 32
+          });
+        } else {
+          geo = new THREE.ShapeGeometry(item.shape!, 32);
+        }
+      } else {
+        // Extrude stroke lines
+        if (thickness > 0) {
+          geo = extrudeBufferGeometry(item.geometry2D!, thickness / fitScale);
+        } else {
+          geo = item.geometry2D!.clone();
+        }
+      }
+
+      if (hasDeformations) {
+        // Construct the transformation to standard node coordinates
+        const localToRoot = new THREE.Matrix4();
+        localToRoot.compose(
+          new THREE.Vector3(-center.x * fitScale, center.y * fitScale, 0),
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI, 0, 0)),
+          new THREE.Vector3(fitScale, fitScale, fitScale)
+        );
+        const rootToLocal = localToRoot.clone().invert();
+
+        const posAttr = geo.getAttribute('position');
+        if (posAttr) {
+          // Transform vertices to standard metrics space first
+          geo.applyMatrix4(localToRoot);
+
+          // Apply standard shape deformers
+          if (params.bend) applyBend(geo, params.bend);
+          if (params.twist) applyTwist(geo, params.twist);
+          if (params.taper) applyTaper(geo, params.taper);
+          if (params.stretch) applyStretch(geo, params.stretch);
+          if (params.inflate) applyInflate(geo, params.inflate);
+          if (params.asymmetricScale) applyAsymmetricScale(geo, params.asymmetricScale);
+          if (params.edgeShift) applyEdgeShift(geo, params.edgeShift);
+
+          // Apply boneRig armature skinning
+          if (params.boneRig) {
+            try {
+              const rig = params.boneRig;
+              const { rests, skins } = computeJointMatrices(rig);
+              const posAttrTransformed = geo.getAttribute('position');
+
+              if (posAttrTransformed && rig.joints && rig.joints.length > 0) {
+                const countTransformed = posAttrTransformed.count;
+                const tempPosAttr = posAttrTransformed.clone();
+
+                const bones: { jointId: string; start: THREE.Vector3; end: THREE.Vector3 }[] = [];
+                rig.joints.forEach((joint: any) => {
+                  const startPos = new THREE.Vector3();
+                  if (rests[joint.id]) {
+                    startPos.setFromMatrixPosition(rests[joint.id]);
+                  }
+
+                  const childrenJoints = rig.joints.filter((j: any) => j.parentJointId === joint.id);
+                  if (childrenJoints.length > 0) {
+                    childrenJoints.forEach((childJ: any) => {
+                      const endPos = new THREE.Vector3();
+                      if (rests[childJ.id]) {
+                        endPos.setFromMatrixPosition(rests[childJ.id]);
+                      }
+                      bones.push({ jointId: joint.id, start: startPos.clone(), end: endPos });
+                    });
+                  } else {
+                    const endPos = startPos.clone();
+                    const restMat = rests[joint.id];
+                    if (restMat) {
+                      const dir = new THREE.Vector3(0, 1, 0).applyMatrix4(restMat).sub(startPos).normalize();
+                      const len = joint.length || 0.3;
+                      endPos.addScaledVector(dir, len);
+                    } else {
+                      endPos.y += (joint.length || 0.3);
+                    }
+                    bones.push({ jointId: joint.id, start: startPos, end: endPos });
+                  }
+                });
+
+                const v = new THREE.Vector3();
+                const vTransformedWorld = new THREE.Vector3();
+
+                for (let i = 0; i < countTransformed; i++) {
+                  v.fromBufferAttribute(tempPosAttr, i);
+
+                  let weights: { jointId: string; weight: number }[] = [];
+                  bones.forEach((bone) => {
+                    const segment = new THREE.Line3(bone.start, bone.end);
+                    const closestPoint = new THREE.Vector3();
+                    segment.closestPointToPoint(v, true, closestPoint);
+                    const distSq = v.distanceToSquared(closestPoint);
+
+                    const w = 1.0 / (Math.pow(distSq, 2.5) + 0.0001);
+                    weights.push({ jointId: bone.jointId, weight: w });
+                  });
+
+                  weights.sort((a, b) => b.weight - a.weight);
+                  const topWeights = weights.slice(0, 2);
+                  let sumTop = 0;
+                  topWeights.forEach(tw => sumTop += tw.weight);
+
+                  vTransformedWorld.set(0, 0, 0);
+                  topWeights.forEach((tw) => {
+                    const normalizedW = tw.weight / (sumTop || 1);
+                    const skinMat = skins[tw.jointId];
+                    if (skinMat) {
+                      const tempV = v.clone().applyMatrix4(skinMat);
+                      vTransformedWorld.addScaledVector(tempV, normalizedW);
+                    }
+                  });
+
+                  posAttrTransformed.setXYZ(i, vTransformedWorld.x, vTransformedWorld.y, vTransformedWorld.z);
+                }
+
+                posAttrTransformed.needsUpdate = true;
+                geo.computeVertexNormals();
+              }
+            } catch (err) {
+              console.warn('Failed to apply boneRig skinning to SVG model:', err);
+            }
+          }
+
+          // Transform back to the raw, flipped, offset scaled SVG local coordinate system
+          geo.applyMatrix4(rootToLocal);
+          geo.computeVertexNormals();
+        }
+      }
+
+      return geo;
+    });
+  }, [svgItems, thickness, JSON.stringify(node.parameters), center, fitScale]);
+
+  // Clean up geometries on unmount/recreate to prevent memory leaks
+  React.useEffect(() => {
+    return () => {
+      geometries.forEach((geo) => geo.dispose());
+    };
+  }, [geometries]);
 
   return (
     <group 
       rotation={[Math.PI, 0, 0]} 
-      scale={0.01} 
-      position={[-center.x * 0.01, center.y * 0.01, 0]} // Centering the SVG
+      scale={fitScale}
+      position={[-center.x * fitScale, center.y * fitScale, 0]} // Centering the SVG perfectly
     >
-      {shapes.map((item, index) => (
-        <mesh key={index} castShadow receiveShadow>
-          {thickness > 0 ? (
-            <extrudeGeometry
-              args={[
-                item.shape,
-                { 
-                  depth: thickness * 100, 
-                  bevelEnabled: false,
-                  curveSegments: 32
-                }
-              ]}
+      {geometries.map((geo, index) => {
+        const item = svgItems[index];
+        return (
+          <mesh key={index} geometry={geo} castShadow receiveShadow>
+            <Material
+              node={node}
+              overrideColor={isDefaultColor ? `#${item.color.getHexString()}` : color}
             />
-          ) : (
-            <shapeGeometry args={[item.shape, 32]} />
-          )}
-          <Material 
-            node={node} 
-            overrideColor={isDefaultColor ? `#${item.color.getHexString()}` : color} 
-          />
-        </mesh>
-      ))}
+          </mesh>
+        );
+      })}
     </group>
   );
 };
 
 const Text3DNode = ({ node }: { node: SceneNode }) => {
   const { text = "Text", thickness = 0.2, size = 0.5 } = node.parameters || {};
-  // Standard helvetiker font from three.js examples
-  const fontUrl = "https://raw.githubusercontent.com/mrdoob/three.js/master/examples/fonts/helvetiker_bold.typeface.json";
 
   return (
     <Center top>
       <Text3D
-        font={fontUrl}
+        font={helvetikerBoldFontUrl}
         size={size}
         height={thickness}
         curveSegments={12}
@@ -675,6 +1230,99 @@ const MotionPathNode = ({
           orbitControlsRef={orbitControlsRef}
         />
       ))}
+    </group>
+  );
+};
+
+interface AnchorPointHandleProps {
+  pointIndex: number;
+  point: [number, number, number];
+  isActive: boolean;
+  onClickHandle: () => void;
+  onPointDrag: (index: number, localPos: [number, number, number]) => void;
+  onPointDragEnd: (index: number, localPos: [number, number, number]) => void;
+  orbitControlsRef?: React.MutableRefObject<any>;
+}
+
+const AnchorPointHandle: React.FC<AnchorPointHandleProps> = ({
+  pointIndex,
+  point,
+  isActive,
+  onClickHandle,
+  onPointDrag,
+  onPointDragEnd,
+  orbitControlsRef
+}) => {
+  const { scene } = useThree();
+  const [mesh, setMesh] = React.useState<THREE.Mesh | null>(null);
+  const isDraggingRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (mesh && !isDraggingRef.current) {
+      mesh.position.set(point[0], point[1], point[2]);
+    }
+  }, [point, mesh]);
+
+  const getLocalPos = (): [number, number, number] | null => {
+    if (!mesh) return null;
+    return [
+      Number(mesh.position.x.toFixed(4)),
+      Number(mesh.position.y.toFixed(4)),
+      Number(mesh.position.z.toFixed(4))
+    ];
+  };
+
+  const handleUpdate = () => {
+    const local = getLocalPos();
+    if (local) {
+      onPointDrag(pointIndex, local);
+    }
+  };
+
+  const handleUpdateEnd = () => {
+    isDraggingRef.current = false;
+    const local = getLocalPos();
+    if (local) {
+      onPointDragEnd(pointIndex, local);
+    }
+  };
+
+  return (
+    <group>
+      {isActive && mesh && createPortal(
+        <TransformControls
+          object={mesh}
+          mode="translate"
+          onMouseDown={() => {
+            isDraggingRef.current = true;
+            if (orbitControlsRef?.current) orbitControlsRef.current.enabled = false;
+          }}
+          onObjectChange={handleUpdate}
+          onMouseUp={() => {
+            if (orbitControlsRef?.current) orbitControlsRef.current.enabled = true;
+            handleUpdateEnd();
+          }}
+        />,
+        scene
+      )}
+      <mesh
+        ref={setMesh}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClickHandle();
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          if (document.body) document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={(e) => {
+          e.stopPropagation();
+          if (document.body) document.body.style.cursor = 'auto';
+        }}
+      >
+        <boxGeometry args={[isActive ? 0.14 : 0.1, isActive ? 0.14 : 0.1, isActive ? 0.14 : 0.1]} />
+        <meshBasicMaterial color={isActive ? "#f59e0b" : "#22d3ee"} depthTest={false} transparent opacity={0.95} />
+      </mesh>
     </group>
   );
 };
@@ -1064,6 +1712,14 @@ const JSObjectNode = ({ node }: { node: SceneNode }) => {
       const paramValues = Object.values(filteredParameters);
       
       let scriptToRun = node.script || '';
+      scriptToRun = scriptToRun
+        .replace(/^\s*import\s+[^;]+;?\s*$/gm, '')
+        .replace(/export\s+default\s+function\s+([a-zA-Z_$][\w$]*)\s*\(/g, 'root.default = function $1(')
+        .replace(/export\s+default\s+function\s*\(/g, 'root.default = function (')
+        .replace(/export\s+function\s+([a-zA-Z_$][\w$]*)\s*\(/g, 'root.$1 = function $1(')
+        .replace(/export\s+(const|let|var)\s+([a-zA-Z_$][\w$]*)\s*=/g, 'root.$2 =')
+        .replace(/export\s+default\s+([a-zA-Z_$][\w$]*)\s*;?/g, 'root.default = $1;')
+        .replace(/export\s*\{[^}]*\}\s*;?/g, '');
       const rootMock: any = { THREE };
       
       // Inject parameters as arguments to the function
@@ -1097,7 +1753,9 @@ const JSObjectNode = ({ node }: { node: SceneNode }) => {
         // 2. Try to find an exported function on root (UMD pattern)
         const exportedFuncs = Object.entries(root).filter(([k, v]) => typeof v === 'function' && k !== 'THREE');
         if (exportedFuncs.length > 0) {
-           const creator = exportedFuncs.find(([k]) => k.toLowerCase().startsWith('create')) || exportedFuncs[0];
+           const creator = exportedFuncs.find(([k]) => k.toLowerCase().startsWith('create')) ||
+             exportedFuncs.find(([k]) => k === 'default') ||
+             exportedFuncs[0];
            return creator[1](THREE, root);
         }
 
@@ -1179,75 +1837,7 @@ const JSObjectNode = ({ node }: { node: SceneNode }) => {
   return <primitive object={object} />;
 };
 
-interface JointMatrices {
-  matrices: { [id: string]: THREE.Matrix4 };
-  rests: { [id: string]: THREE.Matrix4 };
-  skins: { [id: string]: THREE.Matrix4 };
-}
 
-export const computeJointMatrices = (boneRig: any): JointMatrices => {
-  const matrices: { [id: string]: THREE.Matrix4 } = {};
-  const rests: { [id: string]: THREE.Matrix4 } = {};
-  const skins: { [id: string]: THREE.Matrix4 } = {};
-
-  if (!boneRig || !Array.isArray(boneRig.joints) || boneRig.joints.length === 0) {
-    return { matrices, rests, skins };
-  }
-
-  const jointsMap = new Map(boneRig.joints.map((j: any) => [j.id, j]));
-
-  const getLocalMatrix = (joint: any, applyPose: boolean) => {
-    const mat = new THREE.Matrix4();
-    const pos = new THREE.Vector3(...joint.position);
-    const rot = new THREE.Euler();
-    
-    if (applyPose && Array.isArray(joint.rotation)) {
-      const rx = (joint.rotation[0] || 0) * Math.PI / 180;
-      const ry = (joint.rotation[1] || 0) * Math.PI / 180;
-      const rz = (joint.rotation[2] || 0) * Math.PI / 180;
-      rot.set(rx, ry, rz);
-    }
-    
-    mat.makeRotationFromEuler(rot);
-    mat.setPosition(pos);
-    return mat;
-  };
-
-  const traverse = (jointId: string, parentMatrix: THREE.Matrix4, parentRest: THREE.Matrix4) => {
-    const joint = jointsMap.get(jointId);
-    if (!joint) return;
-
-    // Pose local matrix
-    const localPose = getLocalMatrix(joint, true);
-    const globalPose = parentMatrix.clone().multiply(localPose);
-    matrices[jointId] = globalPose;
-
-    // Rest local matrix
-    const localRest = getLocalMatrix(joint, false);
-    const globalRest = parentRest.clone().multiply(localRest);
-    rests[jointId] = globalRest;
-
-    // Compute skin matrix: Pose * Rest_inv
-    const restInv = globalRest.clone().invert();
-    skins[jointId] = globalPose.clone().multiply(restInv);
-
-    // Recursively handle descendants
-    boneRig.joints.forEach((child: any) => {
-      if (child.parentJointId === jointId) {
-        traverse(child.id, globalPose, globalRest);
-      }
-    });
-  };
-
-  // Find roots (joints with parentJointId null or not present in mapping)
-  boneRig.joints.forEach((j: any) => {
-    if (!j.parentJointId || !jointsMap.has(j.parentJointId)) {
-      traverse(j.id, new THREE.Matrix4(), new THREE.Matrix4());
-    }
-  });
-
-  return { matrices, rests, skins };
-};
 
 const Node = ({ 
   node, 
@@ -1266,7 +1856,7 @@ const Node = ({
   allNodes: SceneNode[];
   selectedIds: string[]; 
   onSelect: (ids: string[]) => void;
-  onUpdateNode: (id: string, updates: Partial<SceneNode>) => void;
+  onUpdateNode: (id: string, updates: Partial<SceneNode>, skipHistory?: boolean) => void;
   orbitControlsRef?: React.MutableRefObject<any>;
   onHoverNode?: (id: string | null) => void;
   onClickNode?: (id: string) => void;
@@ -1325,6 +1915,22 @@ const Node = ({
   const isPrimarySelection = selectedIds[selectedIds.length - 1] === node.id;
   const children = useMemo(() => allNodes.filter(n => n.parentId === node.id), [allNodes, node.id]);
   const initialPositions = useRef<{[key: string]: THREE.Vector3}>({});
+  const anchorPoints = node.parameters?.anchorPoints?.length === 8 ? node.parameters.anchorPoints : DEFAULT_ANCHOR_POINTS;
+  const selectedAnchorPointIndex = node.selectedAnchorPointIndex !== undefined ? node.selectedAnchorPointIndex : 0;
+
+  const handleAnchorPointDrag = (index: number, localPos: [number, number, number], skipHistory = true) => {
+    const updatedPoints = anchorPoints.map((point, pointIndex) => (
+      pointIndex === index ? localPos : point
+    )) as [number, number, number][];
+
+    onUpdateNode(node.id, {
+      selectedAnchorPointIndex: index,
+      parameters: {
+        ...node.parameters,
+        anchorPoints: updatedPoints
+      }
+    }, skipHistory);
+  };
 
   const geometry = useMemo(() => {
     const { type } = node;
@@ -1389,7 +1995,9 @@ const Node = ({
         baseGeometry = new THREE.BufferGeometry();
       }
     } else if (type === 'box') {
-      if (bevelRadius > 0) {
+      if (parameters.anchorPoints?.length === 8) {
+        baseGeometry = createAnchorBoxGeometry(parameters.anchorPoints);
+      } else if (bevelRadius > 0) {
         const r = Math.min(bevelRadius, 0.49);
         const innerW = 1 - r * 2;
         const shape = createRoundedRect(innerW, innerW, r);
@@ -1523,40 +2131,60 @@ const Node = ({
           const originalPosition = posAttr.clone();
           const count = posAttr.count;
           
-          const jointsMap = new Map(rig.joints.map((j: any) => [j.id, j]));
+          // For primitive shapes, vertices are already relative to node origin, so localToRoot is identity
+          const localToRoot = new THREE.Matrix4();
+          const rootToLocal = new THREE.Matrix4(); // identity
+
+          // Compute bone segments: active joints are starting points, children are endpoints
           const bones: { jointId: string; start: THREE.Vector3; end: THREE.Vector3 }[] = [];
-          
           rig.joints.forEach((joint: any) => {
-            const endPos = new THREE.Vector3();
-            if (rests[joint.id]) {
-              endPos.setFromMatrixPosition(rests[joint.id]);
-            }
-            
             const startPos = new THREE.Vector3();
-            if (joint.parentJointId && rests[joint.parentJointId]) {
-              startPos.setFromMatrixPosition(rests[joint.parentJointId]);
-            } else {
-              startPos.set(0, 0, 0);
+            if (rests[joint.id]) {
+              startPos.setFromMatrixPosition(rests[joint.id]);
             }
-            bones.push({ jointId: joint.id, start: startPos, end: endPos });
+
+            // Find children to connect bones
+            const childrenJoints = rig.joints.filter((j: any) => j.parentJointId === joint.id);
+            if (childrenJoints.length > 0) {
+              childrenJoints.forEach((childJ: any) => {
+                const endPos = new THREE.Vector3();
+                if (rests[childJ.id]) {
+                  endPos.setFromMatrixPosition(rests[childJ.id]);
+                }
+                bones.push({ jointId: joint.id, start: startPos.clone(), end: endPos });
+              });
+            } else {
+              // Leaf joint: extend along local coordinate system axis or Y/Z axis by length
+              const endPos = startPos.clone();
+              const restMat = rests[joint.id];
+              if (restMat) {
+                const dir = new THREE.Vector3(0, 1, 0).applyMatrix4(restMat).sub(startPos).normalize();
+                const len = joint.length || 0.3;
+                endPos.addScaledVector(dir, len);
+              } else {
+                endPos.y += (joint.length || 0.3);
+              }
+              bones.push({ jointId: joint.id, start: startPos, end: endPos });
+            }
           });
 
           const v = new THREE.Vector3();
-          const vTransformed = new THREE.Vector3();
-          const tempV = new THREE.Vector3();
+          const vTransformedWorld = new THREE.Vector3();
           
           for (let i = 0; i < count; i++) {
             v.fromBufferAttribute(originalPosition, i);
             
-            let weights: { jointId: string; weight: number }[] = [];
+            const vWorld = v.clone().applyMatrix4(localToRoot);
             
+            let weights: { jointId: string; weight: number }[] = [];
             bones.forEach((bone) => {
               const segment = new THREE.Line3(bone.start, bone.end);
               const closestPoint = new THREE.Vector3();
-              segment.closestPointToPoint(v, true, closestPoint);
-              const distSq = v.distanceToSquared(closestPoint);
+              segment.closestPointToPoint(vWorld, true, closestPoint);
+              const distSq = vWorld.distanceToSquared(closestPoint);
               
-              const w = 1.0 / (distSq + 0.1);
+              // Exponential dropoff to fully lock vertices to nearest bones
+              const w = 1.0 / (Math.pow(distSq, 2.5) + 0.0001);
               weights.push({ jointId: bone.jointId, weight: w });
             });
             
@@ -1565,18 +2193,18 @@ const Node = ({
             let sumTop = 0;
             topWeights.forEach(tw => sumTop += tw.weight);
             
-            vTransformed.set(0, 0, 0);
+            vTransformedWorld.set(0, 0, 0);
             topWeights.forEach((tw) => {
               const normalizedW = tw.weight / (sumTop || 1);
               const skinMat = skins[tw.jointId];
               if (skinMat) {
-                tempV.copy(v);
-                tempV.applyMatrix4(skinMat);
-                vTransformed.addScaledVector(tempV, normalizedW);
+                const tempV = vWorld.clone().applyMatrix4(skinMat);
+                vTransformedWorld.addScaledVector(tempV, normalizedW);
               }
             });
             
-            posAttr.setXYZ(i, vTransformed.x, vTransformed.y, vTransformed.z);
+            const vDeformedLocal = vTransformedWorld.applyMatrix4(rootToLocal);
+            posAttr.setXYZ(i, vDeformedLocal.x, vDeformedLocal.y, vDeformedLocal.z);
           }
           
           posAttr.needsUpdate = true;
@@ -1593,7 +2221,7 @@ const Node = ({
     }
 
     return baseGeometry;
-  }, [node.type, JSON.stringify(node.parameters)]);
+  }, [node.type, node.geometryData, JSON.stringify(node.parameters)]);
 
   // Cleanup geometry on unmount or change
   React.useEffect(() => {
@@ -1823,6 +2451,23 @@ const Node = ({
             parentBoneRig={node.parameters.boneRig}
           />
         ))}
+
+        {isSelected && activeTool === 'anchor_edit' && !node.locked && node.type !== 'ambientLight' && node.type !== 'pointLight' && (
+          <group name="anchor-edit-handles">
+            {anchorPoints.map((point, index) => (
+              <AnchorPointHandle
+                key={index}
+                pointIndex={index}
+                point={point}
+                isActive={index === selectedAnchorPointIndex}
+                onClickHandle={() => onUpdateNode(node.id, { selectedAnchorPointIndex: index })}
+                onPointDrag={(pointIndex, localPos) => handleAnchorPointDrag(pointIndex, localPos, true)}
+                onPointDragEnd={(pointIndex, localPos) => handleAnchorPointDrag(pointIndex, localPos, false)}
+                orbitControlsRef={orbitControlsRef}
+              />
+            ))}
+          </group>
+        )}
       </group>
       
       {isPrimarySelection && mesh && !node.locked && activeTool === 'select' && (
@@ -1898,7 +2543,17 @@ const Node = ({
   );
 };
 
-export const Canvas3D: React.FC<Canvas3DProps> = ({ 
+class EnvironmentFallback extends React.Component<React.PropsWithChildren, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+export const Canvas3D: React.FC<Canvas3DProps> = ({
   nodes, 
   selectedIds, 
   onSelect, 
@@ -1944,12 +2599,14 @@ export const Canvas3D: React.FC<Canvas3DProps> = ({
           visible={showGrid}
         />
         
+        {envValue !== 'none' && (
+          <EnvironmentFallback key={envValue}>
+            <Suspense fallback={null}>
+              {isPreset ? <Environment preset={envValue as any} /> : <Environment files={envValue} />}
+            </Suspense>
+          </EnvironmentFallback>
+        )}
         <Suspense fallback={null}>
-          {isPreset ? (
-            <Environment preset={envValue as any} />
-          ) : (
-            <Environment files={envValue} />
-          )}
           <group ref={sceneRef}>
             {rootNodes.map((node) => (
               <Node 

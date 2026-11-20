@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { SceneNode } from '../types';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
@@ -26,6 +26,17 @@ import {
 import { decomposeNode } from '../services/aiService';
 
 // --- Low-level UI Helper Components ---
+
+const DEFAULT_ANCHOR_POINTS: [number, number, number][] = [
+  [-0.5, -0.5, -0.5],
+  [0.5, -0.5, -0.5],
+  [0.5, 0.5, -0.5],
+  [-0.5, 0.5, -0.5],
+  [-0.5, -0.5, 0.5],
+  [0.5, -0.5, 0.5],
+  [0.5, 0.5, 0.5],
+  [-0.5, 0.5, 0.5],
+];
 
 const Section = ({ title, icon, children, expanded, onToggle, disabled, color = "text-[#777]" }: any) => (
   <div className={cn("border-b border-white/[0.04] last:border-0", disabled && "opacity-40 pointer-events-none")}>
@@ -243,6 +254,8 @@ interface PropertiesPanelProps {
   onAddNodes?: (nodes: Partial<SceneNode>[]) => void;
   onReplaceNode?: (oldId: string, newNodes: Partial<SceneNode>[]) => void;
   onDeleteNode?: (id: string) => void;
+  activeTool?: string;
+  onToolChange?: (tool: string) => void;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ 
@@ -252,20 +265,22 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   onOpenCodeEditor,
   onAddNodes,
   onReplaceNode,
-  onDeleteNode
+  onDeleteNode,
+  activeTool,
+  onToolChange
 }) => {
   const [panelHeight, setPanelHeight] = useState(480);
   const [panelWidth, setPanelWidth] = useState(320);
-  const [panelPos, setPanelPos] = useState({ x: window.innerWidth - 340, y: 64 });
+  const [panelPos, setPanelPos] = useState({ y: 64 });
   const [isSolidifying, setIsSolidifying] = useState(false);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'transform' | 'geometry' | 'appearance' | 'logic'>('transform');
   
   const isResizing = useRef(false);
   const isDragging = useRef(false);
-  const startOffset = useRef({ x: 0, y: 0 });
+  const startOffset = useRef({ y: 0 });
   const startSize = useRef({ w: 0, h: 0 });
-  const startPos = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ y: 0 });
   const startMousePos = useRef({ x: 0, y: 0 });
 
   const ambientLightNode = nodes.find(n => n.type === 'ambientLight');
@@ -276,17 +291,30 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const isLight = effectiveShape?.type === 'pointLight' || effectiveShape?.type === 'ambientLight';
   const isAmbient = effectiveShape?.type === 'ambientLight';
 
+  // Ambient light has no transform controls; show its editable settings instead of an empty panel.
+  useEffect(() => {
+    if (isAmbient) setActiveTab('appearance');
+  }, [isAmbient]);
+
   const ensureNumber = (val: any, fallback: number): number => {
     const n = Number(val);
     return Number.isFinite(n) ? n : fallback;
   };
+
+  // Keep the right edge docked; dragging changes only the vertical position.
+  useEffect(() => {
+    const clampPosition = () => setPanelPos(prev => ({ y: Math.max(0, Math.min(prev.y, window.innerHeight - (isPanelCollapsed ? 320 : 160))) }));
+    window.addEventListener('resize', clampPosition);
+    clampPosition();
+    return () => window.removeEventListener('resize', clampPosition);
+  }, [isPanelCollapsed]);
 
   // Dragging logic
   const startDragging = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, input, .no-drag')) return;
     e.preventDefault();
     isDragging.current = true;
-    startOffset.current = { x: e.clientX - panelPos.x, y: e.clientY - panelPos.y };
+    startOffset.current = { y: e.clientY - panelPos.y };
     document.addEventListener('mousemove', handleGlobalMouseMove);
     document.addEventListener('mouseup', stopGlobalMove);
   };
@@ -298,27 +326,23 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     isResizing.current = true;
     startMousePos.current = { x: e.clientX, y: e.clientY };
     startSize.current = { w: panelWidth, h: panelHeight };
-    startPos.current = { x: panelPos.x, y: panelPos.y };
+    startPos.current = { y: panelPos.y };
     document.addEventListener('mousemove', handleGlobalMouseMove);
     document.addEventListener('mouseup', stopGlobalMove);
   };
 
   const handleGlobalMouseMove = (e: MouseEvent) => {
     if (isDragging.current) {
-      setPanelPos({
-        x: e.clientX - startOffset.current.x,
-        y: e.clientY - startOffset.current.y
-      });
+      setPanelPos({ y: Math.max(0, Math.min(e.clientY - startOffset.current.y, window.innerHeight - (isPanelCollapsed ? 320 : 160))) });
     }
     if (isResizing.current) {
-      const originalRight = startPos.current.x + startSize.current.w;
+      const originalRight = window.innerWidth;
       const originalTop = startPos.current.y;
-      const newWidth = Math.max(isPanelCollapsed ? 48 : 260, originalRight - e.clientX);
+      const newWidth = Math.min(window.innerWidth, Math.max(isPanelCollapsed ? 48 : Math.min(260, window.innerWidth), originalRight - e.clientX));
       const newHeight = Math.max(300, e.clientY - originalTop);
       
       setPanelWidth(newWidth);
       setPanelHeight(newHeight);
-      setPanelPos(prev => ({ ...prev, x: originalRight - newWidth }));
     }
   };
 
@@ -401,11 +425,56 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     finally { setIsSolidifying(false); }
   };
 
+  const isAnchorEditMode = activeTool === 'anchor_edit' && !!selectedShape;
+  const canEditAnchors = !!selectedShape && !isLight && selectedShape.type !== 'motion_path' && selectedShape.type !== 'group';
+  const anchorPoints = effectiveShape?.parameters?.anchorPoints?.length === 8
+    ? effectiveShape.parameters.anchorPoints
+    : DEFAULT_ANCHOR_POINTS;
+  const selectedAnchorIndex = effectiveShape?.selectedAnchorPointIndex !== undefined
+    ? effectiveShape.selectedAnchorPointIndex
+    : 0;
+
+  const startAnchorEdit = () => {
+    if (!effectiveShape || !canEditAnchors) return;
+    onUpdateShape(effectiveShape.id, {
+      selectedAnchorPointIndex: selectedAnchorIndex,
+      parameters: {
+        ...effectiveShape.parameters,
+        anchorPoints
+      }
+    });
+    onToolChange?.('anchor_edit');
+    setActiveTab('geometry');
+  };
+
+  const stopAnchorEdit = () => {
+    onToolChange?.('select');
+  };
+
+  const updateAnchorPoint = (pointIndex: number, coordIndex: number, value: number) => {
+    if (!effectiveShape) return;
+    const updatedPoints = anchorPoints.map((point, index) => {
+      if (index !== pointIndex) return point;
+      const nextPoint = [...point] as [number, number, number];
+      nextPoint[coordIndex] = value;
+      return nextPoint;
+    }) as [number, number, number][];
+
+    onUpdateShape(effectiveShape.id, {
+      selectedAnchorPointIndex: pointIndex,
+      parameters: {
+        ...effectiveShape.parameters,
+        anchorPoints: updatedPoints
+      }
+    });
+  };
+
   if (!effectiveShape) {
     return (
       <div 
+        role="region" aria-label="属性面板"
         className="fixed z-40 bg-[#1c1c1c]/95 backdrop-blur-xl border border-white/[0.08] flex items-center justify-center p-8 rounded-xl shadow-2xl overflow-hidden"
-        style={{ left: panelPos.x, top: panelPos.y, width: 48, height: 400 }}
+        style={{ right: 0, top: panelPos.y, width: 48, maxHeight: 'calc(100vh - 64px)', height: 400 }}
       >
         <p className="text-[#444] text-[10px] font-bold uppercase tracking-widest text-center [writing-mode:vertical-lr] rotate-180">Select layer</p>
       </div>
@@ -421,13 +490,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   return (
     <div 
+      role="region" aria-label="属性面板"
       className="fixed z-40 bg-[#1c1c1c]/95 backdrop-blur-xl border border-white/[0.08] flex rounded-xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden"
       style={{ 
-        left: panelPos.x,
+        right: 0,
         top: panelPos.y,
-        width: isPanelCollapsed ? 48 : panelWidth,
-        height: isPanelCollapsed ? 320 : 'auto',
-        maxHeight: isPanelCollapsed ? undefined : Math.min(panelHeight, window.innerHeight - 48),
+        width: isPanelCollapsed ? 48 : Math.min(panelWidth, window.innerWidth),
+        height: isPanelCollapsed ? Math.min(320, window.innerHeight) : 'auto',
+        maxHeight: isPanelCollapsed ? undefined : Math.max(0, Math.min(panelHeight, window.innerHeight - panelPos.y)),
         minHeight: isPanelCollapsed ? undefined : 160
       }}
       onPointerDown={(e) => e.stopPropagation()}
@@ -439,6 +509,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       <div className="w-12 bg-black/20 border-r border-white/[0.04] flex flex-col items-center py-4 gap-4 shrink-0">
         <button 
           onClick={() => setIsPanelCollapsed(!isPanelCollapsed)}
+          aria-label={isPanelCollapsed ? "展开属性面板" : "收起属性面板"}
+          aria-expanded={!isPanelCollapsed}
           className="p-2 mb-2 text-[#555] hover:text-white transition-colors no-drag"
         >
           {isPanelCollapsed ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -498,6 +570,9 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
           <ScrollArea className="flex-1 min-h-0">
             <div className="p-4">
+              {activeTab === 'transform' && isAmbient && (
+                <p className="p-4 text-xs leading-relaxed text-[#aaa]">选择一个图层来编辑位置、旋转和缩放；环境光设置位于外观选项卡。</p>
+              )}
               {activeTab === 'transform' && !isAmbient && (
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                   <PropertyRow label="Position">
@@ -554,7 +629,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                           </PropertyRow>
                         )}
                         
-                        {(['box', 'extruded', 'circle', 'rect', 'triangle', 'polygon', 'plane', 'cylinder'].includes(effectiveShape.type)) && (
+                        {(['box', 'extruded', 'circle', 'rect', 'triangle', 'polygon', 'plane', 'cylinder', 'svg', 'text'].includes(effectiveShape.type)) && (
                           <>
                             <PropertyRow label="Extrusion / Thickness">
                               <CompactSlider value={ensureNumber(effectiveShape.parameters?.thickness, effectiveShape.type === 'box' || effectiveShape.type === 'cylinder' ? 1.0 : 0.1)} min={0} max={2} step={0.01} onChange={(v: number) => handleSliderChange(v, 'parameters', 'thickness')} onCommit={(v: number) => handleSliderCommit(v, 'parameters', 'thickness')} />
@@ -744,6 +819,67 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                                 );
                               })}
                             </div>
+                          </div>
+                        )}
+
+                        {canEditAnchors && (
+                          <div className="pt-4 border-t border-white/[0.04] space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-black text-cyan-400 uppercase tracking-[2px]">Anchor Edit</span>
+                                <p className="text-[9px] text-[#555] mt-1 leading-relaxed">Local-space anchor coordinates</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={isAnchorEditMode ? stopAnchorEdit : startAnchorEdit}
+                                className={cn(
+                                  "h-8 px-3 text-[9px] uppercase font-black tracking-wider border-white/[0.06]",
+                                  isAnchorEditMode
+                                    ? "bg-amber-500/10 text-amber-300 hover:bg-amber-500/15"
+                                    : "bg-cyan-500/[0.04] text-cyan-300 hover:bg-cyan-500/[0.08]"
+                                )}
+                              >
+                                {isAnchorEditMode ? "End Edit" : "Edit Anchors"}
+                              </Button>
+                            </div>
+
+                            {isAnchorEditMode && (
+                              <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 select-none border border-white/[0.04] bg-white/[0.01] p-2 rounded">
+                                {anchorPoints.map((pt: [number, number, number], idx: number) => {
+                                  const isAnchorSelected = selectedAnchorIndex === idx;
+                                  return (
+                                    <div
+                                      key={idx}
+                                      onClick={() => onUpdateShape(effectiveShape.id, { selectedAnchorPointIndex: idx })}
+                                      className={cn(
+                                        "flex items-center gap-2 p-1.5 rounded border transition-all cursor-pointer",
+                                        isAnchorSelected
+                                          ? "bg-cyan-500/10 border-cyan-400/80 shadow-[0_0_8px_rgba(34,211,238,0.2)]"
+                                          : "bg-[#121212] border-[#22212a] hover:border-white/10"
+                                      )}
+                                    >
+                                      <span className={cn(
+                                        "text-[10px] font-bold w-5 transition-colors",
+                                        isAnchorSelected ? "text-cyan-300" : "text-[#555]"
+                                      )}>
+                                        A{idx + 1}
+                                      </span>
+                                      <div className="grid grid-cols-3 gap-1 flex-1">
+                                        {pt.map((coordVal: number, coordIdx: number) => (
+                                          <CoordInput
+                                            key={coordIdx}
+                                            label={['X', 'Y', 'Z'][coordIdx]}
+                                            value={coordVal}
+                                            onChange={(newVal: number) => updateAnchorPoint(idx, coordIdx, newVal)}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         )}
 
@@ -1099,12 +1235,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       )}
 
       {/* Resize Handle at Bottom-Left */}
-      <div 
+      {!isPanelCollapsed && <div
         className="absolute bottom-0 left-0 w-4 h-4 cursor-nesw-resize z-50 flex items-center justify-center group"
         onMouseDown={startResizing}
       >
         <div className="w-1.5 h-1.5 border-b-2 border-l-2 border-white/20 group-hover:border-[#4a90e2] rounded-bl-sm transition-colors" />
-      </div>
+      </div>}
     </div>
   );
 };

@@ -1,7 +1,16 @@
 import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import { SceneNode } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let ai: GoogleGenAI | undefined;
+
+function getAi() {
+  if (!ai) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("Set GEMINI_API_KEY in .env.local to use AI features.");
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+}
 
 const sceneNodeSchema = {
   type: Type.OBJECT,
@@ -56,7 +65,7 @@ const sceneNodeSchema = {
 
 export const generateSceneNodes = async (prompt: string): Promise<Partial<SceneNode>[]> => {
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ 
         role: 'user', 
@@ -158,7 +167,7 @@ export const decomposeNode = async (node: SceneNode, maxNodes: number = 20): Pro
 
   const aiPromise = (async () => {
     try {
-      const response = await ai.models.generateContent({
+      const response = await getAi().models.generateContent({
         model: modelToUse,
         contents: [{ 
           role: 'user', 
@@ -220,7 +229,7 @@ export const splitSelectionToLayer = async (name: string, selection: string): Pr
   const modelToUse = "gemini-3.1-pro-preview"; 
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: modelToUse,
       contents: [{ 
         role: 'user', 
@@ -278,7 +287,7 @@ export const parseModelLibrary = async (scriptContent: string): Promise<Partial<
   const modelToUse = "gemini-3.1-pro-preview"; 
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAi().models.generateContent({
       model: modelToUse,
       contents: [{ 
         role: 'user', 

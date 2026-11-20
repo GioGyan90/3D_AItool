@@ -1,5 +1,10 @@
 export type NodeType = 'box' | 'sphere' | 'cylinder' | 'torus' | 'plane' | 'extruded' | 'group' | 'circle' | 'rect' | 'triangle' | 'polygon' | 'model' | 'csg' | 'svg' | 'pointLight' | 'ambientLight' | 'text' | 'js_object' | 'motion_path';
 
+export interface ControlMesh {
+  vertices: [number, number, number][];
+  faces: number[][];
+}
+
 export interface SceneNode {
   id: string;
   name: string;
@@ -11,6 +16,7 @@ export interface SceneNode {
   color: string;
   url?: string; // For imported models
   script?: string; // For JS Object code
+  controlMesh?: ControlMesh;
   geometryData?: any; // For storing serialized CSG geometry or custom mesh data
   motionPathId?: string;
   motionPathLoops?: number;
@@ -49,6 +55,7 @@ export interface SceneNode {
     inflate?: number;                // Inflation/Spherize factor
     asymmetricScale?: [number, number, number]; // Asymmetric scaling along X, Y, Z
     edgeShift?: [number, number, number];       // Shift a single edge along X, Y, Z
+    anchorPoints?: [number, number, number][];  // Editable local-space anchor positions
     pathPoints?: [number, number, number][];    // List of 3D coordinates for motion path
     pathType?: 'smooth' | 'polyline';          // Path styling (smooth curves vs straight lines)
     customUVs?: number[];                      // Custom loaded or calculated UV float array
@@ -92,6 +99,7 @@ export interface SceneNode {
     clearcoatRoughness?: number;
   };
   uniformScale?: boolean;
+  selectedAnchorPointIndex?: number;
   visible: boolean;
   locked?: boolean;
 }

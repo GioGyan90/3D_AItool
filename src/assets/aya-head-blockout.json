@@ -1,0 +1,1948 @@
+{
+  "vertices": [
+    [
+      0,
+      0.8776595744680851,
+      0.38745328616273844
+    ],
+    [
+      0.3670212765957447,
+      0.8085106382978723,
+      0.3731592671948448
+    ],
+    [
+      0.6117021276595744,
+      0.6063829787234043,
+      0.3054466341123128
+    ],
+    [
+      0.7446808510638298,
+      0.3776595744680851,
+      -0.022434891291710012
+    ],
+    [
+      0.6117021276595744,
+      0.6063829787234043,
+      -0.3753571096384141
+    ],
+    [
+      0.3670212765957447,
+      0.8085106382978723,
+      -0.4998554985300713
+    ],
+    [
+      0,
+      0.8776595744680851,
+      -0.5378577241848952
+    ],
+    [
+      -0.3670212765957447,
+      0.8085106382978723,
+      -0.4998554985300713
+    ],
+    [
+      -0.6117021276595744,
+      0.6063829787234043,
+      -0.3753571096384141
+    ],
+    [
+      -0.7446808510638298,
+      0.3776595744680851,
+      -0.022434891291710012
+    ],
+    [
+      -0.6117021276595744,
+      0.6063829787234043,
+      0.3054466341123128
+    ],
+    [
+      -0.3670212765957447,
+      0.8085106382978723,
+      0.3731592671948448
+    ],
+    [
+      0,
+      0.5957446808510638,
+      0.7130275549354727
+    ],
+    [
+      0.30851063829787234,
+      0.5531914893617021,
+      0.583410068596675
+    ],
+    [
+      0.5638297872340425,
+      0.425531914893617,
+      0.35500441809091926
+    ],
+    [
+      0.7446808510638298,
+      0.26063829787234044,
+      -0.013067763438359845
+    ],
+    [
+      0.5638297872340425,
+      0.425531914893617,
+      -0.40466143471689353
+    ],
+    [
+      0.30851063829787234,
+      0.5531914893617021,
+      -0.6458330426694573
+    ],
+    [
+      0,
+      0.5957446808510638,
+      -0.7808103708871063
+    ],
+    [
+      -0.30851063829787234,
+      0.5531914893617021,
+      -0.6458330426694573
+    ],
+    [
+      -0.5638297872340425,
+      0.425531914893617,
+      -0.40466143471689353
+    ],
+    [
+      -0.7446808510638298,
+      0.26063829787234044,
+      -0.013067763438359845
+    ],
+    [
+      -0.5638297872340425,
+      0.425531914893617,
+      0.35500441809091926
+    ],
+    [
+      -0.30851063829787234,
+      0.5531914893617021,
+      0.583410068596675
+    ],
+    [
+      0,
+      0.21808510638297873,
+      0.8700771228151766
+    ],
+    [
+      0.23404255319148937,
+      0.19680851063829788,
+      0.6983160872766734
+    ],
+    [
+      0.5053191489361702,
+      0.13829787234042554,
+      0.40299837228229235
+    ],
+    [
+      0.7393617021276596,
+      0.06914893617021277,
+      0.0006724024338250448
+    ],
+    [
+      0.5053191489361702,
+      0.13829787234042554,
+      -0.41087342557067
+    ],
+    [
+      0.23404255319148937,
+      0.19680851063829788,
+      -0.7139925590047668
+    ],
+    [
+      0,
+      0.21808510638297873,
+      -0.8891204511103359
+    ],
+    [
+      -0.23404255319148937,
+      0.19680851063829788,
+      -0.7139925590047668
+    ],
+    [
+      -0.5053191489361702,
+      0.13829787234042554,
+      -0.41087342557067
+    ],
+    [
+      -0.7393617021276596,
+      0.06914893617021277,
+      0.0006724024338250448
+    ],
+    [
+      -0.5053191489361702,
+      0.13829787234042554,
+      0.40299837228229235
+    ],
+    [
+      -0.23404255319148937,
+      0.19680851063829788,
+      0.6983160872766734
+    ],
+    [
+      0,
+      -0.22872340425531915,
+      0.888904114139552
+    ],
+    [
+      0.22340425531914893,
+      -0.22872340425531915,
+      0.7198573255601509
+    ],
+    [
+      0.4627659574468085,
+      -0.22872340425531915,
+      0.43247778497516887
+    ],
+    [
+      0.6542553191489362,
+      -0.20212765957446807,
+      0.03745365525972442
+    ],
+    [
+      0.4627659574468085,
+      -0.22872340425531915,
+      -0.345137442490076
+    ],
+    [
+      0.22340425531914893,
+      -0.22872340425531915,
+      -0.6325169830750581
+    ],
+    [
+      0,
+      -0.22872340425531915,
+      -0.801563771654459
+    ],
+    [
+      -0.22340425531914893,
+      -0.22872340425531915,
+      -0.6325169830750581
+    ],
+    [
+      -0.4627659574468085,
+      -0.22872340425531915,
+      -0.345137442490076
+    ],
+    [
+      -0.6542553191489362,
+      -0.20212765957446807,
+      0.03745365525972442
+    ],
+    [
+      -0.4627659574468085,
+      -0.22872340425531915,
+      0.43247778497516887
+    ],
+    [
+      -0.22340425531914893,
+      -0.22872340425531915,
+      0.7198573255601509
+    ],
+    [
+      0,
+      -0.5797872340425532,
+      0.843605394721544
+    ],
+    [
+      0.18617021276595744,
+      -0.5691489361702128,
+      0.7063575456342287
+    ],
+    [
+      0.3882978723404255,
+      -0.5212765957446809,
+      0.4628367341006861
+    ],
+    [
+      0.5585106382978723,
+      -0.4627659574468085,
+      0.1081858214161139
+    ],
+    [
+      0.3882978723404255,
+      -0.5212765957446809,
+      -0.20581720148819918
+    ],
+    [
+      0.18617021276595744,
+      -0.5691489361702128,
+      -0.40864652366003934
+    ],
+    [
+      0,
+      -0.5797872340425532,
+      -0.5368518195558655
+    ],
+    [
+      -0.18617021276595744,
+      -0.5691489361702128,
+      -0.40864652366003934
+    ],
+    [
+      -0.3882978723404255,
+      -0.5212765957446809,
+      -0.20581720148819918
+    ],
+    [
+      -0.5585106382978723,
+      -0.4627659574468085,
+      0.1081858214161139
+    ],
+    [
+      -0.3882978723404255,
+      -0.5212765957446809,
+      0.4628367341006861
+    ],
+    [
+      -0.18617021276595744,
+      -0.5691489361702128,
+      0.7063575456342287
+    ],
+    [
+      0,
+      -0.925531914893617,
+      0.7600453435647018
+    ],
+    [
+      0.13297872340425532,
+      -0.898936170212766,
+      0.7266114405301709
+    ],
+    [
+      0.2872340425531915,
+      -0.8191489361702128,
+      0.6157839204743638
+    ],
+    [
+      0.3404255319148936,
+      -0.7925531914893617,
+      0.4265347052668294
+    ],
+    [
+      0.2872340425531915,
+      -0.8191489361702128,
+      0.3170727241018487
+    ],
+    [
+      0.13297872340425532,
+      -0.898936170212766,
+      0.3953104290198815
+    ],
+    [
+      0,
+      -0.925531914893617,
+      0.4203871642832228
+    ],
+    [
+      -0.13297872340425532,
+      -0.898936170212766,
+      0.3953104290198815
+    ],
+    [
+      -0.2872340425531915,
+      -0.8191489361702128,
+      0.3170727241018487
+    ],
+    [
+      -0.3404255319148936,
+      -0.7925531914893617,
+      0.4265347052668294
+    ],
+    [
+      -0.2872340425531915,
+      -0.8191489361702128,
+      0.6157839204743638
+    ],
+    [
+      -0.13297872340425532,
+      -0.898936170212766,
+      0.7266114405301709
+    ],
+    [
+      0,
+      1,
+      -0.16393442622950818
+    ],
+    [
+      0.3723404255319149,
+      0.9148936170212766,
+      -0.07847924659923254
+    ],
+    [
+      0.6117021276595744,
+      0.6808510638297872,
+      -0.04240204627368926
+    ],
+    [
+      -0.3723404255319149,
+      0.9148936170212766,
+      -0.07847924659923254
+    ],
+    [
+      -0.6117021276595744,
+      0.6808510638297872,
+      -0.04240204627368926
+    ],
+    [
+      0,
+      -1,
+      0.6666666666666666
+    ],
+    [
+      0.11170212765957446,
+      -0.973404255319149,
+      0.640070921985816
+    ],
+    [
+      0.2872340425531915,
+      -0.8404255319148937,
+      0.4965992326473667
+    ],
+    [
+      -0.11170212765957446,
+      -0.973404255319149,
+      0.640070921985816
+    ],
+    [
+      -0.2872340425531915,
+      -0.8404255319148937,
+      0.4965992326473667
+    ],
+    [
+      0.7074468085106383,
+      0.26063829787234044,
+      0.06271180334707999
+    ],
+    [
+      -0.7074468085106383,
+      0.26063829787234044,
+      0.06271180334707999
+    ]
+  ],
+  "faces": [
+    [
+      0,
+      12,
+      13,
+      1
+    ],
+    [
+      1,
+      13,
+      14,
+      2
+    ],
+    [
+      2,
+      14,
+      82,
+      15,
+      3
+    ],
+    [
+      3,
+      15,
+      16,
+      4
+    ],
+    [
+      4,
+      16,
+      17,
+      5
+    ],
+    [
+      5,
+      17,
+      18,
+      6
+    ],
+    [
+      6,
+      18,
+      19,
+      7
+    ],
+    [
+      7,
+      19,
+      20,
+      8
+    ],
+    [
+      8,
+      20,
+      21,
+      9
+    ],
+    [
+      9,
+      21,
+      83,
+      22,
+      10
+    ],
+    [
+      10,
+      22,
+      23,
+      11
+    ],
+    [
+      11,
+      23,
+      12,
+      0
+    ],
+    [
+      12,
+      24,
+      25,
+      13
+    ],
+    [
+      13,
+      25,
+      26,
+      14
+    ],
+    [
+      14,
+      26,
+      27,
+      15,
+      82
+    ],
+    [
+      15,
+      27,
+      28,
+      16
+    ],
+    [
+      16,
+      28,
+      29,
+      17
+    ],
+    [
+      17,
+      29,
+      30,
+      18
+    ],
+    [
+      18,
+      30,
+      31,
+      19
+    ],
+    [
+      19,
+      31,
+      32,
+      20
+    ],
+    [
+      20,
+      32,
+      33,
+      21
+    ],
+    [
+      21,
+      33,
+      34,
+      22,
+      83
+    ],
+    [
+      22,
+      34,
+      35,
+      23
+    ],
+    [
+      23,
+      35,
+      24,
+      12
+    ],
+    [
+      24,
+      36,
+      37,
+      25
+    ],
+    [
+      25,
+      37,
+      38,
+      26
+    ],
+    [
+      26,
+      38,
+      39,
+      27
+    ],
+    [
+      27,
+      39,
+      40,
+      28
+    ],
+    [
+      28,
+      40,
+      41,
+      29
+    ],
+    [
+      29,
+      41,
+      42,
+      30
+    ],
+    [
+      30,
+      42,
+      43,
+      31
+    ],
+    [
+      31,
+      43,
+      44,
+      32
+    ],
+    [
+      32,
+      44,
+      45,
+      33
+    ],
+    [
+      33,
+      45,
+      46,
+      34
+    ],
+    [
+      34,
+      46,
+      47,
+      35
+    ],
+    [
+      35,
+      47,
+      36,
+      24
+    ],
+    [
+      36,
+      48,
+      49,
+      37
+    ],
+    [
+      37,
+      49,
+      50,
+      38
+    ],
+    [
+      38,
+      50,
+      51,
+      39
+    ],
+    [
+      39,
+      51,
+      52,
+      40
+    ],
+    [
+      40,
+      52,
+      53,
+      41
+    ],
+    [
+      41,
+      53,
+      54,
+      42
+    ],
+    [
+      42,
+      54,
+      55,
+      43
+    ],
+    [
+      43,
+      55,
+      56,
+      44
+    ],
+    [
+      44,
+      56,
+      57,
+      45
+    ],
+    [
+      45,
+      57,
+      58,
+      46
+    ],
+    [
+      46,
+      58,
+      59,
+      47
+    ],
+    [
+      47,
+      59,
+      48,
+      36
+    ],
+    [
+      48,
+      60,
+      61,
+      49
+    ],
+    [
+      49,
+      61,
+      62,
+      50
+    ],
+    [
+      50,
+      62,
+      63,
+      51
+    ],
+    [
+      51,
+      63,
+      64,
+      52
+    ],
+    [
+      52,
+      64,
+      65,
+      53
+    ],
+    [
+      53,
+      65,
+      66,
+      54
+    ],
+    [
+      54,
+      66,
+      67,
+      55
+    ],
+    [
+      55,
+      67,
+      68,
+      56
+    ],
+    [
+      56,
+      68,
+      69,
+      57
+    ],
+    [
+      57,
+      69,
+      70,
+      58
+    ],
+    [
+      58,
+      70,
+      71,
+      59
+    ],
+    [
+      59,
+      71,
+      60,
+      48
+    ],
+    [
+      0,
+      1,
+      73,
+      72
+    ],
+    [
+      1,
+      2,
+      74,
+      73
+    ],
+    [
+      2,
+      3,
+      74
+    ],
+    [
+      72,
+      73,
+      5,
+      6
+    ],
+    [
+      73,
+      74,
+      4,
+      5
+    ],
+    [
+      74,
+      3,
+      4
+    ],
+    [
+      72,
+      75,
+      11,
+      0
+    ],
+    [
+      75,
+      76,
+      10,
+      11
+    ],
+    [
+      76,
+      9,
+      10
+    ],
+    [
+      6,
+      7,
+      75,
+      72
+    ],
+    [
+      7,
+      8,
+      76,
+      75
+    ],
+    [
+      8,
+      9,
+      76
+    ],
+    [
+      77,
+      78,
+      61,
+      60
+    ],
+    [
+      78,
+      79,
+      62,
+      61
+    ],
+    [
+      79,
+      63,
+      62
+    ],
+    [
+      66,
+      65,
+      78,
+      77
+    ],
+    [
+      65,
+      64,
+      79,
+      78
+    ],
+    [
+      64,
+      63,
+      79
+    ],
+    [
+      60,
+      71,
+      80,
+      77
+    ],
+    [
+      71,
+      70,
+      81,
+      80
+    ],
+    [
+      70,
+      69,
+      81
+    ],
+    [
+      77,
+      80,
+      67,
+      66
+    ],
+    [
+      80,
+      81,
+      68,
+      67
+    ],
+    [
+      81,
+      69,
+      68
+    ]
+  ],
+  "meta": {
+    "name": "早期头模 · 参考顶点重建",
+    "coordinate": "x right, y up, z front; head height 2",
+    "reference": "../aya-reference-sheet/early-head-nine-views.png",
+    "method": "Manually marked front junctions and outline, normalized front/side by head height. Front x/y traced; side depth interior estimated by interpolation. Generated reference is inconsistent, no identical true 3D mesh inferred.",
+    "counts": {
+      "vertices": 84,
+      "controlFaces": 84,
+      "quads": 72,
+      "triangles": 164
+    },
+    "sourceRows": [
+      [
+        [
+          0,
+          46
+        ],
+        [
+          69,
+          59
+        ],
+        [
+          115,
+          97
+        ],
+        [
+          140,
+          140
+        ]
+      ],
+      [
+        [
+          0,
+          99
+        ],
+        [
+          58,
+          107
+        ],
+        [
+          106,
+          131
+        ],
+        [
+          140,
+          162
+        ]
+      ],
+      [
+        [
+          0,
+          170
+        ],
+        [
+          44,
+          174
+        ],
+        [
+          95,
+          185
+        ],
+        [
+          139,
+          198
+        ]
+      ],
+      [
+        [
+          0,
+          254
+        ],
+        [
+          42,
+          254
+        ],
+        [
+          87,
+          254
+        ],
+        [
+          123,
+          249
+        ]
+      ],
+      [
+        [
+          0,
+          320
+        ],
+        [
+          35,
+          318
+        ],
+        [
+          73,
+          309
+        ],
+        [
+          105,
+          298
+        ]
+      ],
+      [
+        [
+          0,
+          385
+        ],
+        [
+          25,
+          380
+        ],
+        [
+          54,
+          365
+        ],
+        [
+          64,
+          360
+        ]
+      ]
+    ],
+    "sideSilhouette": [
+      [
+        24,
+        662,
+        662
+      ],
+      [
+        30,
+        602,
+        692
+      ],
+      [
+        45,
+        563,
+        729
+      ],
+      [
+        80,
+        515,
+        765
+      ],
+      [
+        100,
+        500,
+        776
+      ],
+      [
+        140,
+        480,
+        792
+      ],
+      [
+        170,
+        472,
+        795
+      ],
+      [
+        200,
+        469,
+        794
+      ],
+      [
+        245,
+        469,
+        781
+      ],
+      [
+        280,
+        472,
+        760
+      ],
+      [
+        300,
+        475,
+        744
+      ],
+      [
+        320,
+        479,
+        723
+      ],
+      [
+        340,
+        483,
+        661
+      ],
+      [
+        360,
+        488,
+        596
+      ],
+      [
+        380,
+        494,
+        546
+      ],
+      [
+        390,
+        510,
+        510
+      ]
+    ],
+    "tags": [
+      {
+        "source": "front intersection",
+        "row": "R1",
+        "frontPixel": [
+          209,
+          46
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R1",
+        "frontPixel": [
+          278,
+          59
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R1",
+        "frontPixel": [
+          324,
+          97
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "outer silhouette estimate",
+        "row": "R1",
+        "frontPixel": [
+          349,
+          140
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R1",
+        "frontPixel": [
+          324,
+          97
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R1",
+        "frontPixel": [
+          278,
+          59
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R1",
+        "frontPixel": [
+          209,
+          46
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R1",
+        "frontPixel": [
+          140,
+          59
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R1",
+        "frontPixel": [
+          94,
+          97
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "outer silhouette estimate",
+        "row": "R1",
+        "frontPixel": [
+          69,
+          140
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R1",
+        "frontPixel": [
+          94,
+          97
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R1",
+        "frontPixel": [
+          140,
+          59
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R2",
+        "frontPixel": [
+          209,
+          99
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R2",
+        "frontPixel": [
+          267,
+          107
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R2",
+        "frontPixel": [
+          315,
+          131
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "outer silhouette estimate",
+        "row": "R2",
+        "frontPixel": [
+          349,
+          162
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R2",
+        "frontPixel": [
+          315,
+          131
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R2",
+        "frontPixel": [
+          267,
+          107
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R2",
+        "frontPixel": [
+          209,
+          99
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R2",
+        "frontPixel": [
+          151,
+          107
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R2",
+        "frontPixel": [
+          103,
+          131
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "outer silhouette estimate",
+        "row": "R2",
+        "frontPixel": [
+          69,
+          162
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R2",
+        "frontPixel": [
+          103,
+          131
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R2",
+        "frontPixel": [
+          151,
+          107
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R3",
+        "frontPixel": [
+          209,
+          170
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R3",
+        "frontPixel": [
+          253,
+          174
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R3",
+        "frontPixel": [
+          304,
+          185
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R3",
+        "frontPixel": [
+          348,
+          198
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R3",
+        "frontPixel": [
+          304,
+          185
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R3",
+        "frontPixel": [
+          253,
+          174
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R3",
+        "frontPixel": [
+          209,
+          170
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R3",
+        "frontPixel": [
+          165,
+          174
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R3",
+        "frontPixel": [
+          114,
+          185
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R3",
+        "frontPixel": [
+          70,
+          198
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R3",
+        "frontPixel": [
+          114,
+          185
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R3",
+        "frontPixel": [
+          165,
+          174
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R4",
+        "frontPixel": [
+          209,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R4",
+        "frontPixel": [
+          251,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R4",
+        "frontPixel": [
+          296,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R4",
+        "frontPixel": [
+          332,
+          249
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R4",
+        "frontPixel": [
+          296,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R4",
+        "frontPixel": [
+          251,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R4",
+        "frontPixel": [
+          209,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R4",
+        "frontPixel": [
+          167,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R4",
+        "frontPixel": [
+          122,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R4",
+        "frontPixel": [
+          86,
+          249
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R4",
+        "frontPixel": [
+          122,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R4",
+        "frontPixel": [
+          167,
+          254
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R5",
+        "frontPixel": [
+          209,
+          320
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R5",
+        "frontPixel": [
+          244,
+          318
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R5",
+        "frontPixel": [
+          282,
+          309
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R5",
+        "frontPixel": [
+          314,
+          298
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R5",
+        "frontPixel": [
+          282,
+          309
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R5",
+        "frontPixel": [
+          244,
+          318
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R5",
+        "frontPixel": [
+          209,
+          320
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R5",
+        "frontPixel": [
+          174,
+          318
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R5",
+        "frontPixel": [
+          136,
+          309
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R5",
+        "frontPixel": [
+          104,
+          298
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R5",
+        "frontPixel": [
+          136,
+          309
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R5",
+        "frontPixel": [
+          174,
+          318
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R6",
+        "frontPixel": [
+          209,
+          385
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R6",
+        "frontPixel": [
+          234,
+          380
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R6",
+        "frontPixel": [
+          263,
+          365
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R6",
+        "frontPixel": [
+          273,
+          360
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R6",
+        "frontPixel": [
+          263,
+          365
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R6",
+        "frontPixel": [
+          234,
+          380
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R6",
+        "frontPixel": [
+          209,
+          385
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R6",
+        "frontPixel": [
+          184,
+          380
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "rear vertex inferred from projected symmetry",
+        "row": "R6",
+        "frontPixel": [
+          155,
+          365
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R6",
+        "frontPixel": [
+          145,
+          360
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R6",
+        "frontPixel": [
+          155,
+          365
+        ],
+        "confidence": "low",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front intersection",
+        "row": "R6",
+        "frontPixel": [
+          184,
+          380
+        ],
+        "confidence": "medium",
+        "depth": "side envelope interpolation; inferred"
+      },
+      {
+        "source": "front and side silhouette",
+        "frontPixel": [
+          209,
+          23
+        ],
+        "depth": "side contour"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          279,
+          39
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          324,
+          83
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          139,
+          39
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          94,
+          83
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front and side silhouette",
+        "frontPixel": [
+          209,
+          399
+        ],
+        "depth": "side contour"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          230,
+          394
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          263,
+          369
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          188,
+          394
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front outline bend",
+        "frontPixel": [
+          155,
+          369
+        ],
+        "depth": "estimated"
+      },
+      {
+        "source": "front R2 visible junction",
+        "frontPixel": [
+          342,
+          162
+        ],
+        "depth": "estimated on shared side edge"
+      },
+      {
+        "source": "front R2 visible junction",
+        "frontPixel": [
+          76,
+          162
+        ],
+        "depth": "estimated on shared side edge"
+      }
+    ]
+  }
+}
