@@ -180,10 +180,53 @@
   .topo-stage { border-radius: 9px; }
 }
 @media(max-width: 520px) {
-  .topo-header { gap: 6px; }
-  .topo-header-title { flex: 1 1 185px; min-width: 0; }
-  .topo-header-actions { gap: 4px; }
-  .topo-shell .topo-header-actions .topo-button { font-size: 12px; min-height: 31px; padding: 5px 8px; }
+  /* Preserve horizontal action labels. The previous flex wrap could shrink
+   * Apply / Undo to a single Chinese character per line. */
+  .topo-header {
+    display: grid;
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 7px 8px;
+    padding: 9px 10px;
+  }
+  .topo-header-title {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding-right: 45px;
+  }
+  .topo-header-title h2 { max-width: 100%; }
+  .topo-mode-switch {
+    grid-column: 1 / -1;
+    justify-self: start;
+    max-width: 100%;
+  }
+  .topo-header-actions {
+    grid-column: 1;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  .topo-shell .topo-header-actions .topo-button {
+    font-size: 12px;
+    min-height: 32px;
+    padding: 6px 9px;
+    white-space: nowrap;
+  }
+  .topo-header > .topo-primary {
+    grid-column: 2;
+    white-space: nowrap;
+    min-height: 34px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .topo-header > [data-trace-close] {
+    position: absolute;
+    top: 9px;
+    right: 10px;
+    min-height: 33px;
+    min-width: 34px;
+  }
   .topo-camera-label { display: none; }
   .topo-camera-actions { margin-left: 0; }
   .topo-shell .topo-camera-bar .topo-button { padding: 6px 8px; }
