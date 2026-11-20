@@ -40,10 +40,8 @@ jobs:
         run: npm run test:topology
       - name: Build public studio
         run: npm run build:pages
-      - name: Install headless browser for multi-angle visual QA
-        run: |
-          npm install --no-save --no-package-lock playwright
-          npx playwright install --with-deps chromium
+      - name: Set up Playwright against runner's preinstalled Google Chrome
+        run: npm install --no-save --no-package-lock playwright
       - name: Capture and inspect topology in actual WebGL canvas
         run: node scripts/topology-visual-qa.mjs
       - name: Upload multi-angle topology screenshots
