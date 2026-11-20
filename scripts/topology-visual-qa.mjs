@@ -204,7 +204,7 @@ try{
       for(const name of ['撤销','重做','应用到场景']){
         const action=dialog.getByRole('button',{name,exact:true});
         const bounds=await action.boundingBox();
-        assert.ok(bounds&&bounds.width>=48&&bounds.height<=45,
+        assert.ok(bounds&&bounds.width>bounds.height*1.15&&bounds.height<=45,
           `mobile header action ${name} rendered as a vertical label: ${JSON.stringify(bounds)}`);
         assert.ok(bounds.x>=0&&bounds.x+bounds.width<=width+2,
           `mobile header action ${name} outside viewport`);
