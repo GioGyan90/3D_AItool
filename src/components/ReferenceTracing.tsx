@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview} from './TracePreview';
@@ -26,7 +27,7 @@ const views: {id:View,label:string,cell:number}[]=[{id:'front',label:'正面',ce
 const project=(v:V,view:View):[number,number]=>view==='front'?[v[0],v[1]]:view==='side'?[-v[2],v[1]]:view==='back'?[-v[0],v[1]]:view==='top'?[v[0],-v[2]]:[v[0],v[2]];
 const replaceProjection=(v:V,view:View,x:number,y:number):V=>view==='front'?[x,y,v[2]]:view==='side'?[v[0],y,-x]:view==='back'?[-x,y,v[2]]:view==='top'?[x,v[1],-y]:[x,v[1],y];
 const download=(blob:Blob,name:string)=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-const btn='rounded border border-neutral-600 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-100 hover:bg-neutral-700 disabled:opacity-40';
+const btn='topo-button rounded border px-3 py-1.5 text-sm disabled:opacity-40';
 const MAX_VERTICES=5000,MAX_FACES=10000,MAX_REFERENCES=30000,MAX_FILE=10*1024*1024,MAX_IMAGE=5*1024*1024;
 const readGeometry=(d:any):Geometry=>{let raw=d.vertices??d.verts,faces=Array.isArray(d.control)?d.control:d.faces;if(!Array.isArray(raw)||!Array.isArray(faces))throw Error('需要 vertices/verts 和 faces/control 数组');if(raw.length&&typeof raw[0]==='number'){if(raw.length%3)throw Error('顶点坐标数量不是 3 的倍数');raw=Array.from({length:raw.length/3},(_,i)=>raw.slice(3*i,3*i+3))}if(raw.length>MAX_VERTICES||faces.length>MAX_FACES||faces.reduce((n:number,f:any)=>n+(Array.isArray(f)?f.length:0),0)>MAX_REFERENCES)throw Error('超过限制：最多 5000 顶点、10000 控制面及 30000 个面顶点引用');if(raw.some((v:any)=>!Array.isArray(v)||v.length!==3||v.some((x:any)=>typeof x!=='number'||!Number.isFinite(x))))throw Error('顶点应是有限的 [x,y,z] 坐标');if(faces.some((f:any)=>!Array.isArray(f)||f.length<3||f.length>64||f.some((i:any)=>!Number.isInteger(i)||i<0||i>=raw.length)))throw Error('控制面索引无效');if(d.faceColors!==undefined&&(!Array.isArray(d.faceColors)||d.faceColors.length!==faces.length||d.faceColors.some((c:unknown)=>typeof c!=='string'||!/^#[0-9a-f]{6}$/i.test(c))))throw Error('逐面颜色必须与控制面数量一致且为 #RRGGBB');return {vertices:raw.map((v:number[])=>[...v] as V),faces:faces.map((f:number[])=>[...f]),...(d.faceColors?{faceColors:[...d.faceColors]}:{})}};
 
@@ -44,7 +45,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [cameraRevision,setCameraRevision]=useState(0);
  const [showCage,setShowCage]=useState(!Boolean(sceneEdit?.mesh.faceColors?.length));
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
- const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>('topology');
+ const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>(()=>sceneEdit?.mesh.faceColors?.length?'paint':'topology');
  const [paintColor,setPaintColor]=useState<string>(RUBIK_FACE_COLORS.right);
  const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
@@ -69,7 +70,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
      ? selectedFaces.includes(fi)?selectedFaces.filter(i=>i!==fi):[...selectedFaces,fi]
      : [fi];
    setSelectedFaces(next);setSelectedFace(next.length?next[next.length-1]:null);
-   setSelectedEdgeSlot(0);setError('');
+   setSelectedEdgeSlot(0);setError('');setLoopInfo('');
  };
  const chooseFaceGroup=(kind:'plane'|'color')=>{
    if(!geometry||selectedFace===null)return;
@@ -79,9 +80,18 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    setSelectedFaces(ids);
    setLoopInfo(`已选择 ${ids.length} 个${kind==='plane'?'共面':'同色'}控制面，可一次配色。`);
  };
- const clearFaces=()=>{setSelectedFace(null);setSelectedFaces([]);setError('')};
+ const clearFaces=()=>{setSelectedFace(null);setSelectedFaces([]);setLoopInfo('');setError('')};
  const selectedLoopFace=selectedFace===null?null:geometry?.faces[selectedFace];
  const selectedLoopEdge=selectedLoopFace?.length===4?[selectedLoopFace[selectedEdgeSlot],selectedLoopFace[(selectedEdgeSlot+1)%4]]:null;
+ const selectedSummary=selectedFaces.length>1?`已选 ${selectedFaces.length} 个控制面`:
+   selectedFace!==null?`面 #${selectedFace}`:
+   selected!==null?`顶点 #${selected}`:'未选择元素';
+ const tabDetails={
+   topology:'添加与分割边线 · 先选择四边面的一条边',
+   model:'移动顶点，或对选中控制面执行内插与挤出',
+   paint:'选择一个或多个控制面，统一设置颜色',
+   inspect:'核对顶点数量、面连接与网格完整性',
+ } as const;
  const meshQuality=useMemo(()=>{
    if(!geometry)return null;
    try{const {edges,boundaryEdges}=validateControlTopology(geometry);return {edges,boundaryEdges,error:''}}
@@ -101,6 +111,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    setPast(p=>[...p,snapshot()]);restoreSnapshot(future[future.length-1]);setFuture(f=>f.slice(0,-1));};
  const historyKey=(e:React.KeyboardEvent<HTMLDivElement>)=>{
    protectDraftKey(e);
+   if(e.key==='Escape' && !(e.target as Element).closest('input,textarea,[contenteditable="true"]') && !faceDraft.length){
+     if(selected!==null||selectedFace!==null){setSelected(null);clearFaces();e.preventDefault()}
+     return;
+   }
    if(!(e.ctrlKey||e.metaKey)||e.altKey||
      (e.target as Element).closest('input,textarea,[contenteditable="true"]'))return;
    const key=e.key.toLowerCase();
