@@ -41,6 +41,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const dragRecorded=useRef(false);
  const [insetFraction,setInsetFraction]=useState(.25);
  const [xray,setXray]=useState(false);
+ const [cameraRevision,setCameraRevision]=useState(0);
  const [showCage,setShowCage]=useState(!Boolean(sceneEdit?.mesh.faceColors?.length));
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
  const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>('topology');
@@ -229,15 +230,16 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
          </button>
        )}
        {[['front', '正面'], ['back', '背面'], ['angle', '3/4'], ['low', '低角度']].map(([direction, label]) => (
-         <button key={direction} className={btn+(previewDirection===direction?' !border-sky-500 !bg-sky-900':'')} onClick={() => setPreviewDirection(direction)} aria-pressed={previewDirection === direction}>
+         <button key={direction} className={btn+(previewDirection===direction?' !border-sky-500 !bg-sky-900':'')} onClick={() => {setPreviewDirection(direction);setCameraRevision(n=>n+1)}} aria-pressed={previewDirection === direction}>
            {label}
          </button>
        ))}
-       <button className={btn+' ml-auto'} aria-pressed={!showCage} onClick={()=>setShowCage(value=>!value)}>{showCage?'成品预览':'显示布线'}</button>
+       <button className={btn+' ml-auto'} onClick={()=>setCameraRevision(n=>n+1)} title="将镜头返回当前预设机位">重置视角</button>
+        <button className={btn} aria-pressed={!showCage} onClick={()=>setShowCage(value=>!value)}>{showCage?'成品预览':'显示布线'}</button>
         {showCage&&<label className="ml-2 flex items-center gap-2 text-xs text-neutral-300"><input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>背面布线 X-Ray</label>}
      </div>
      <div aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage}
+       {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
