@@ -139,6 +139,12 @@ try{
   const visual=await dialog.getByLabel('3D 旋转预览').boundingBox();
   assert.ok(side&&side.width>=290&&side.width<=410,'inspector width should stay compact');
   assert.ok(visual&&visual.width>=800&&visual.height>=250,'3D preview needs usable space');
+  assert.ok(await dialog.getByText('02 · 建模操作').isVisible());
+  assert.ok(await dialog.getByText('01 · 当前选择').isVisible());
+  assert.ok(await dialog.getByRole('group',{name:'建模工具分类'}).isVisible());
+  const asideBackground=await dialog.locator('aside').evaluate(el=>getComputedStyle(el).backgroundColor);
+  assert.notEqual(asideBackground,'rgba(0, 0, 0, 0)','inspector must have a distinct background');
+  notes.checks.push('clear inspector hierarchy and separated tool navigation');
   const uiPath=`${folder}/11-workbench-paint.png`;
   await page.screenshot({path:uiPath,animations:'disabled'});
   notes.shots.push({name:'11-workbench-paint',path:uiPath,size:(await stat(uiPath)).size});
@@ -174,6 +180,11 @@ try{
   await dialog.getByLabel('顶点 X').press('Tab');
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   notes.checks.push('symmetry axes enabled and coordinate edit undoable');
+  await dialog.getByRole('button',{name:'检查',exact:true}).click();
+  await dialog.getByText('基础拓扑检查通过').waitFor();
+  const inspectPath=`${folder}/14-inspect-panel.png`;
+  await page.screenshot({path:inspectPath,animations:'disabled'});
+  notes.shots.push({name:'14-inspect-panel',path:inspectPath,size:(await stat(inspectPath)).size});
   await dialog.getByRole('button',{name:'配色',exact:true}).click();
   const desktopPath=`${folder}/12-workbench-refined-desktop.png`;
   await page.screenshot({path:desktopPath,animations:'disabled'});
