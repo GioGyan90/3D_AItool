@@ -117,6 +117,8 @@ try{
   await page.getByRole('button',{name:'魔方示例',exact:true}).click();
   await counts(56,54);
   await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
+  await dialog.getByRole('button',{name:'重置视角',exact:true}).click();
+  notes.checks.push('camera re-center action available on active preset');
   await screenshot('08-rubik-angle');
   await dialog.getByRole('button',{name:'正面',exact:true}).first().click();
   await screenshot('09-rubik-front');
