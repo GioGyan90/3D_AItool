@@ -1,0 +1,40 @@
+name: Shape3D topology validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - '.github/workflows/topology-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  topology:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate TypeScript
+        run: npm run lint
+      - name: Test edge-loop topology
+        run: npm run test:topology
+      - name: Build public studio
+        run: npm run build:pages
+      - name: Attach generated site for manual publishing
+        uses: actions/upload-artifact@v4
+        with:
+          name: shape3d-studio-dist
+          path: docs/studio/
+          retention-days: 7
