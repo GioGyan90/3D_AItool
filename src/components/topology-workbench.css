@@ -311,8 +311,8 @@
   .topo-shell .topo-inspector {
     width: 100% !important;
     max-width: 100% !important;
-    height: min(44dvh, 420px);
-    max-height: min(44dvh, 420px) !important;
+    height: min(53dvh, 500px);
+    max-height: min(53dvh, 500px) !important;
     padding: 9px 10px !important;
   }
   .topo-shell .topo-stage { min-height: 180px; }
