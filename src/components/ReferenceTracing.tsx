@@ -53,6 +53,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
  const [advancedOpen,setAdvancedOpen]=useState(false);
+ const [selectionExpanded,setSelectionExpanded]=useState(false);
+ const [inspectorExpanded,setInspectorExpanded]=useState(false);
  const [view,setView]=useState<View>('front'),[sourceMetadata,setSourceMetadata]=useState<Record<string,unknown>>({}),[image,setImage]=useState(''),[grid,setGrid]=useState(true),[opacity,setOpacity]=useState(.6),[calibration,setCalibration]=useState(initialCalibration),[selected,setSelected]=useState<number|null>(null),[edited,setEdited]=useState<number[]>([]),[dirty,setDirty]=useState(false),[referenceDirty,setReferenceDirty]=useState(false),[draftDirty,setDraftDirty]=useState(false),[selectedFace,setSelectedFace]=useState<number|null>(null),[selectedEdgeSlot,setSelectedEdgeSlot]=useState(0),[loopFraction,setLoopFraction]=useState(.5),[loopInfo,setLoopInfo]=useState(''),[loading,setLoading]=useState(false),[imageSquare,setImageSquare]=useState(true),[mode,setMode]=useState<'select'|'point'|'face'>('select'),[constraint,setConstraint]=useState<'both'|'horizontal'|'vertical'>('both'),[depth,setDepth]=useState(0),[depthText,setDepthText]=useState('0'),[faceDraft,setFaceDraft]=useState<number[]>([]),[preview,setPreview]=useState(false),[previewLarge,setPreviewLarge]=useState(false),[previewDirection,setPreviewDirection]=useState('angle'),[error,setError]=useState(''),[drag,setDrag]=useState(false),[showLabels,setShowLabels]=useState(true),[showAll,setShowAll]=useState(false),[backup,setBackup]=useState<{geometry:Geometry|null,image:string,imageSquare:boolean,grid:boolean,opacity:number,calibration:Record<View,Calibration>,metadata:Record<string,unknown>,edited:number[],showAll:boolean}|null>(null);const dialogRef=useRef<HTMLDivElement>(null),svg=useRef<SVGSVGElement>(null),busy=useRef(false),referenceBaseline=useRef({image:'',imageSquare:true,grid:true,opacity:.6,calibration:initialCalibration(),showAll:false});const start=()=>{if(busy.current)return false;busy.current=true;setLoading(true);return true};const stop=()=>{busy.current=false;setLoading(false)};
  useEffect(()=>{if(!referenceDirty&&!loading)referenceBaseline.current={image,imageSquare,grid,opacity,calibration,showAll}},[referenceDirty,loading,image,imageSquare,grid,opacity,calibration,showAll]);
  useEffect(()=>{if(!dirty&&!referenceDirty&&!draftDirty&&!faceDraft.length)return;const handler=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue=''};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler)},[dirty,referenceDirty,draftDirty,faceDraft.length]);
@@ -308,7 +310,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();chooseFace(quad.face);setSelectedEdgeSlot(quad.slot);setToolPanel('topology');setLoopInfo('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
    </>}
   </div>
-  <aside className="topo-inspector min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(error||loopInfo||dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<div className="topo-inspector-feedback space-y-2">
+  <aside className={'topo-inspector min-h-0 min-w-0 w-full shrink-0 border-t border-neutral-800 text-sm lg:border-l lg:border-t-0'+(inspectorExpanded?' is-expanded':'')}>{(error||loopInfo||dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<div className="topo-inspector-feedback space-y-2">
     {error&&<p role="alert" className="topo-message is-error">{error}</p>}
     {!error&&loopInfo&&<p role="status" className="topo-message">{loopInfo}</p>}
     {faceDraft.length>0&&<p className="topo-message is-warning">正在连接控制面：已选 {faceDraft.length} 个顶点，请完成或清空。</p>}
@@ -318,11 +320,16 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
   <summary className="cursor-pointer font-medium text-neutral-200">参考图与正交视图参数</summary>
   <div className="mt-3 space-y-2"><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></div></details>}
-  {geometry?<><section className="topo-inspector-card text-sm space-y-3">
+  {geometry?<><section className="topo-inspector-card topo-selection-card text-sm space-y-2">
   <div className="topo-inspector-heading">
-    <strong>01 · 当前选择</strong>
-    <span className="topo-eyebrow">{selectedSummary}</span>
+    <div className="min-w-0">
+      <strong>当前选择</strong>
+      <div className="topo-eyebrow truncate">{selectedSummary}</div>
+    </div>
+    <button type="button" className={btn+' !px-2 !py-1 !text-xs'} aria-expanded={selectionExpanded}
+      onClick={()=>setSelectionExpanded(v=>!v)}>{selectionExpanded?'收起精确选择':'展开精确选择'}</button>
   </div>
+  {selectionExpanded&&<div className="topo-selection-details space-y-2">
   <p className="topo-helptext">可在画布点选元素，或输入编号精确定位。</p>
   <div className="grid grid-cols-2 gap-2">
     <label className="text-xs text-neutral-400">控制面编号
@@ -363,8 +370,13 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       return tag?<p>顶点来源：{String(tag.source??'未记录')}{tag.depth?` · ${String(tag.depth)}`:''}</p>:<p>此顶点暂无参考来源记录。</p>})()}
     <p>正交视图按面绕序近似隐藏背面；可在 3D 视图检查遮挡。</p>
   </div>}
-</section><section className="topo-inspector-card space-y-3">
-  <div className="topo-inspector-heading"><h3>02 · 建模操作</h3><span className="topo-eyebrow">按任务切换</span></div>
+  </div>}
+</section><section className="topo-inspector-card topo-tools-panel space-y-3">
+  <div className="topo-inspector-heading">
+    <h3>建模操作</h3>
+    <button type="button" className={btn+' !px-2 !py-1 !text-xs'} aria-pressed={inspectorExpanded}
+      onClick={()=>setInspectorExpanded(v=>!v)}>{inspectorExpanded?'返回画布布局':'展开工具区'}</button>
+  </div>
   <div className="topo-tool-tabs" role="group" aria-label="建模工具分类">
     {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label],i)=>
       <button key={id} aria-label={label} aria-pressed={toolPanel===id} className="topo-tab"
@@ -372,7 +384,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
         <span className="topo-tab-number" aria-hidden="true">{String(i+1).padStart(2,'0')}</span>{label}
       </button>)}
   </div>
-  <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
+  <div className="topo-tool-content" data-topology-scroll="true" tabIndex={0} aria-label="当前工具参数">
+    <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
   {toolPanel==='topology'&&<div className="space-y-3">
     {isBaseBox&&<div className="space-y-2 rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
       <div className="topo-tool-label">入门案例 · 从立方体开始</div>
@@ -470,7 +483,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <p className="topo-helptext mt-2">后续包括真实边倒角、任意多边面自由刀切、桥接和可转动魔方层组。</p>
     </details>
   </div>}
-  
+  </div>
 </section></>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
   {!sceneEdit && geometry && <>
     <button className={btn} onClick={() => setPreview(value => !value)} aria-expanded={preview}>
