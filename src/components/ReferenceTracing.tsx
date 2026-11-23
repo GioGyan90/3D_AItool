@@ -46,6 +46,16 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [insetFraction,setInsetFraction]=useState(.25);
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
+ // R3F camera bounds are recalculated when the canvas changes its width/height.
+ // Schedule another reset after React has committed the resized scene, so
+ // OrbitControls cannot retain an out-of-frame target on short/mobile windows.
+ useEffect(()=>{
+   if(!active)return;
+   let frame=0;
+   const recenter=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>setCameraRevision(i=>i+1))};
+   window.addEventListener('resize',recenter);
+   return()=>{window.removeEventListener('resize',recenter);cancelAnimationFrame(frame)};
+ },[active]);
  const [showCage,setShowCage]=useState(!Boolean(sceneEdit?.mesh.faceColors?.length));
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
  const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>(()=>sceneEdit?.mesh.faceColors?.length?'paint':'topology');
@@ -55,6 +65,11 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [advancedOpen,setAdvancedOpen]=useState(false);
  const [selectionExpanded,setSelectionExpanded]=useState(false);
  const [inspectorExpanded,setInspectorExpanded]=useState(false);
+ useEffect(()=>{
+   if(!active||!projectSpatialView)return;
+   const frame=requestAnimationFrame(()=>setCameraRevision(i=>i+1));
+   return()=>cancelAnimationFrame(frame);
+ },[active,projectSpatialView,inspectorExpanded]);
  const [view,setView]=useState<View>('front'),[sourceMetadata,setSourceMetadata]=useState<Record<string,unknown>>({}),[image,setImage]=useState(''),[grid,setGrid]=useState(true),[opacity,setOpacity]=useState(.6),[calibration,setCalibration]=useState(initialCalibration),[selected,setSelected]=useState<number|null>(null),[edited,setEdited]=useState<number[]>([]),[dirty,setDirty]=useState(false),[referenceDirty,setReferenceDirty]=useState(false),[draftDirty,setDraftDirty]=useState(false),[selectedFace,setSelectedFace]=useState<number|null>(null),[selectedEdgeSlot,setSelectedEdgeSlot]=useState(0),[loopFraction,setLoopFraction]=useState(.5),[loopInfo,setLoopInfo]=useState(''),[loading,setLoading]=useState(false),[imageSquare,setImageSquare]=useState(true),[mode,setMode]=useState<'select'|'point'|'face'>('select'),[constraint,setConstraint]=useState<'both'|'horizontal'|'vertical'>('both'),[depth,setDepth]=useState(0),[depthText,setDepthText]=useState('0'),[faceDraft,setFaceDraft]=useState<number[]>([]),[preview,setPreview]=useState(false),[previewLarge,setPreviewLarge]=useState(false),[previewDirection,setPreviewDirection]=useState('angle'),[error,setError]=useState(''),[drag,setDrag]=useState(false),[showLabels,setShowLabels]=useState(true),[showAll,setShowAll]=useState(false),[backup,setBackup]=useState<{geometry:Geometry|null,image:string,imageSquare:boolean,grid:boolean,opacity:number,calibration:Record<View,Calibration>,metadata:Record<string,unknown>,edited:number[],showAll:boolean}|null>(null);const dialogRef=useRef<HTMLDivElement>(null),svg=useRef<SVGSVGElement>(null),busy=useRef(false),referenceBaseline=useRef({image:'',imageSquare:true,grid:true,opacity:.6,calibration:initialCalibration(),showAll:false});const start=()=>{if(busy.current)return false;busy.current=true;setLoading(true);return true};const stop=()=>{busy.current=false;setLoading(false)};
  useEffect(()=>{if(!referenceDirty&&!loading)referenceBaseline.current={image,imageSquare,grid,opacity,calibration,showAll}},[referenceDirty,loading,image,imageSquare,grid,opacity,calibration,showAll]);
  useEffect(()=>{if(!dirty&&!referenceDirty&&!draftDirty&&!faceDraft.length)return;const handler=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue=''};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler)},[dirty,referenceDirty,draftDirty,faceDraft.length]);
