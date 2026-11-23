@@ -234,3 +234,106 @@
   .topo-inspector { max-height: 46vh; }
   .topo-inspector-card { padding: 11px; }
 }
+
+/* V4 — window-aware inspector. The selection summary and task tabs stay
+ * visible while only the active tool parameters scroll. */
+.topo-shell .topo-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden !important;
+  padding: 10px !important;
+  width: clamp(344px, 30vw, 450px) !important;
+  max-width: 46vw !important;
+  max-height: 100% !important;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.topo-shell .topo-inspector > * { flex-shrink: 0; }
+.topo-shell .topo-selection-card {
+  padding: 10px 12px;
+  overflow-x: hidden;
+}
+.topo-shell .topo-selection-details {
+  max-height: min(36vh, 300px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #45657d transparent;
+}
+.topo-shell .topo-inspector-feedback {
+  position: relative;
+  top: auto;
+  z-index: 2;
+  overflow-y: auto;
+  max-height: min(22vh, 160px);
+  padding-bottom: 0;
+  margin-top: 0;
+}
+.topo-shell .topo-inspector > details {
+  max-height: min(32vh, 240px);
+  overflow-y: auto;
+}
+.topo-shell .topo-tools-panel {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px 11px 0;
+}
+.topo-shell .topo-tools-panel > .topo-inspector-heading,
+.topo-shell .topo-tools-panel > .topo-tool-tabs { flex-shrink: 0; }
+.topo-shell .topo-tool-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 2px 5px 14px 1px;
+  overscroll-behavior: contain;
+  scrollbar-color: #4c6c83 #10202c;
+  scrollbar-width: thin;
+}
+.topo-shell .topo-tool-content > * + * { margin-top: 12px; }
+.topo-shell .topo-inspector.is-expanded {
+  width: clamp(460px, 42vw, 660px) !important;
+  max-width: 58vw !important;
+}
+.topo-shell .topo-inspector button {
+  overflow-wrap: normal;
+}
+.topo-shell .topo-tool-content button:not(.topo-color-swatch) {
+  min-height: 36px;
+}
+.topo-shell .topo-tool-tabs button { white-space: nowrap; }
+@media (max-width: 1023px) {
+  .topo-shell .topo-inspector {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: min(53dvh, 500px);
+    max-height: min(53dvh, 500px) !important;
+    padding: 9px 10px !important;
+  }
+  .topo-shell .topo-stage { min-height: 180px; }
+  .topo-shell .topo-viewport { min-height: 150px; }
+  .topo-shell .topo-inspector.is-expanded {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100dvh;
+    max-height: 100dvh !important;
+    padding: 16px !important;
+    background: #0d1720 !important;
+  }
+  .topo-shell .topo-inspector.is-expanded .topo-tool-content { padding-bottom: 35px; }
+}
+@media (max-width: 520px) {
+  .topo-shell .topo-inspector { height: min(45dvh, 420px); max-height: min(45dvh, 420px) !important; }
+  .topo-shell .topo-inspector.is-expanded { height: 100dvh; max-height: 100dvh !important; }
+  .topo-shell .topo-selection-card { padding: 8px 10px; }
+  .topo-shell .topo-tools-panel { padding: 9px 10px 0; }
+  .topo-shell .topo-tools-panel > .topo-inspector-heading { padding-bottom: 1px; }
+}

@@ -46,6 +46,17 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [insetFraction,setInsetFraction]=useState(.25);
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
+ const previewRegionRef=useRef<HTMLDivElement>(null);
+ // R3F camera bounds are recalculated when the canvas changes its width/height.
+ // Schedule another reset after React has committed the resized scene, so
+ // OrbitControls cannot retain an out-of-frame target on short/mobile windows.
+ useEffect(()=>{
+   if(!active)return;
+   let frame=0;
+   const recenter=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>setCameraRevision(i=>i+1))};
+   window.addEventListener('resize',recenter);
+   return()=>{window.removeEventListener('resize',recenter);cancelAnimationFrame(frame)};
+ },[active]);
  const [showCage,setShowCage]=useState(!Boolean(sceneEdit?.mesh.faceColors?.length));
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
  const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>(()=>sceneEdit?.mesh.faceColors?.length?'paint':'topology');
@@ -53,6 +64,15 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
  const [advancedOpen,setAdvancedOpen]=useState(false);
+ const [selectionExpanded,setSelectionExpanded]=useState(false);
+ const [inspectorExpanded,setInspectorExpanded]=useState(false);
+ const toolScrollRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{if(toolScrollRef.current)toolScrollRef.current.scrollTop=0},[toolPanel]);
+ useEffect(()=>{
+   if(!active||!projectSpatialView)return;
+   const frame=requestAnimationFrame(()=>setCameraRevision(i=>i+1));
+   return()=>cancelAnimationFrame(frame);
+ },[active,projectSpatialView,inspectorExpanded]);
  const [view,setView]=useState<View>('front'),[sourceMetadata,setSourceMetadata]=useState<Record<string,unknown>>({}),[image,setImage]=useState(''),[grid,setGrid]=useState(true),[opacity,setOpacity]=useState(.6),[calibration,setCalibration]=useState(initialCalibration),[selected,setSelected]=useState<number|null>(null),[edited,setEdited]=useState<number[]>([]),[dirty,setDirty]=useState(false),[referenceDirty,setReferenceDirty]=useState(false),[draftDirty,setDraftDirty]=useState(false),[selectedFace,setSelectedFace]=useState<number|null>(null),[selectedEdgeSlot,setSelectedEdgeSlot]=useState(0),[loopFraction,setLoopFraction]=useState(.5),[loopInfo,setLoopInfo]=useState(''),[loading,setLoading]=useState(false),[imageSquare,setImageSquare]=useState(true),[mode,setMode]=useState<'select'|'point'|'face'>('select'),[constraint,setConstraint]=useState<'both'|'horizontal'|'vertical'>('both'),[depth,setDepth]=useState(0),[depthText,setDepthText]=useState('0'),[faceDraft,setFaceDraft]=useState<number[]>([]),[preview,setPreview]=useState(false),[previewLarge,setPreviewLarge]=useState(false),[previewDirection,setPreviewDirection]=useState('angle'),[error,setError]=useState(''),[drag,setDrag]=useState(false),[showLabels,setShowLabels]=useState(true),[showAll,setShowAll]=useState(false),[backup,setBackup]=useState<{geometry:Geometry|null,image:string,imageSquare:boolean,grid:boolean,opacity:number,calibration:Record<View,Calibration>,metadata:Record<string,unknown>,edited:number[],showAll:boolean}|null>(null);const dialogRef=useRef<HTMLDivElement>(null),svg=useRef<SVGSVGElement>(null),busy=useRef(false),referenceBaseline=useRef({image:'',imageSquare:true,grid:true,opacity:.6,calibration:initialCalibration(),showAll:false});const start=()=>{if(busy.current)return false;busy.current=true;setLoading(true);return true};const stop=()=>{busy.current=false;setLoading(false)};
  useEffect(()=>{if(!referenceDirty&&!loading)referenceBaseline.current={image,imageSquare,grid,opacity,calibration,showAll}},[referenceDirty,loading,image,imageSquare,grid,opacity,calibration,showAll]);
  useEffect(()=>{if(!dirty&&!referenceDirty&&!draftDirty&&!faceDraft.length)return;const handler=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue=''};window.addEventListener('beforeunload',handler);return()=>window.removeEventListener('beforeunload',handler)},[dirty,referenceDirty,draftDirty,faceDraft.length]);
@@ -60,6 +80,21 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const protectDraft=(e:React.PointerEvent<HTMLDivElement>)=>{const input=pendingDraft();if(!input||e.target===input||(e.target as Element).closest('[data-trace-close]'))return;const text=input.value.trim();if(!text||!Number.isFinite(Number(text))){e.preventDefault();e.stopPropagation();setError('坐标尚未完成：请输入有限数字，再切换或放点');input.focus();return}if(document.activeElement===input)input.blur()};
  const protectDraftClick=(e:React.MouseEvent<HTMLDivElement>)=>{const input=pendingDraft();if(!input||e.target===input||(e.target as Element).closest('[data-trace-close]'))return;const text=input.value.trim();if(!text||!Number.isFinite(Number(text))){e.preventDefault();e.stopPropagation();setError('坐标尚未完成：请输入有限数字，再切换或放点');input.focus()}};
  const protectDraftKey=(e:React.KeyboardEvent<HTMLDivElement>)=>{if(e.key!=='Tab')return;const input=pendingDraft();if(input&&(!input.value.trim()||!Number.isFinite(Number(input.value)))){e.preventDefault();setError('坐标尚未完成：请输入有限数字，再切换或放点');input.focus()}};
+ useEffect(()=>{
+   if(!active||!previewRegionRef.current)return;
+   let frame1=0,frame2=0;
+   const schedule=()=>{
+     cancelAnimationFrame(frame1);cancelAnimationFrame(frame2);
+     // Let the canvas ResizeObserver / R3F update its actual drawing size
+     // before resetting OrbitControls to the new fitting distance.
+     frame1=requestAnimationFrame(()=>{
+       frame2=requestAnimationFrame(()=>setCameraRevision(i=>i+1));
+     });
+   };
+   const observer=new ResizeObserver(schedule);
+   observer.observe(previewRegionRef.current);
+   return()=>{observer.disconnect();cancelAnimationFrame(frame1);cancelAnimationFrame(frame2)};
+ },[active,projectSpatialView,preview,previewLarge,inspectorExpanded]);
  const cell=views.find(v=>v.id===view)!.cell;const {cx,cy,scale}=calibration[view];const updateCalibration=(patch:Partial<Calibration>)=>{setReferenceDirty(true);setCalibration(old=>({...old,[view]:{...old[view],...patch}}))};const setCx=(v:number)=>updateCalibration({cx:v});const setCy=(v:number)=>updateCalibration({cy:v});const setScale=(v:number)=>updateCalibration({scale:v});
  const {edges,visible}=useMemo(()=>{const set=new Set<string>(),visible=new Set<number>();const camera:Record<View,V>={front:[0,0,1],side:[1,0,0],back:[0,0,-1],top:[0,1,0],bottom:[0,-1,0]};geometry?.faces.forEach(f=>{let nx=0,ny=0,nz=0;for(let i=0;i<f.length;i++){const a=geometry.vertices[f[i]],b=geometry.vertices[f[(i+1)%f.length]];nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1])}const d=camera[view],facing=nx*d[0]+ny*d[1]+nz*d[2];if(!showAll&&facing<=1e-10)return;f.forEach((a,i)=>{visible.add(a);const b=f[(i+1)%f.length];set.add(a<b?`${a},${b}`:`${b},${a}`)})});if(geometry){const used=new Set(geometry.faces.flat());geometry.vertices.forEach((_,i)=>{if(!used.has(i))visible.add(i)})}return {edges:[...set].map(k=>k.split(',').map(Number)),visible}},[geometry,view,showAll]);
  const edgeToQuad=useMemo(()=>{const result=new Map<string,{face:number,slot:number}>();geometry?.faces.forEach((face,fi)=>{if(face.length!==4)return;face.forEach((id,slot)=>{const next=face[(slot+1)%4],key=id<next?`${id}:${next}`:`${next}:${id}`;if(!result.has(key))result.set(key,{face:fi,slot})})});return result},[geometry]);
@@ -256,9 +291,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
          </label>}
        </div>
      </div>
-     <div aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
+     <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
        {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
-  selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setToolPanel('model');setShowCage(true)}}} onMove={update}
+  selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
   onStartMove={remember}/>}
@@ -305,10 +340,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    {sceneEdit && projectSpatialView ? spatialPreview : <>
    <div className="mb-2 flex flex-wrap gap-2">{views.map(v=><button key={v.id} className={btn+(view===v.id?' !border-blue-400 !bg-blue-900':'')} onClick={()=>{setView(v.id);setSelected(null)}} aria-pressed={view===v.id}>{v.label}</button>)}</div>
    <div className="mb-2 flex flex-wrap items-center gap-2">{([['select','选择/移动'],['point','放置顶点'],['face','连接成面']] as const).map(([id,label])=><button key={id} className={btn+(mode===id?' !border-blue-400 !bg-blue-900':'')} disabled={!geometry||(faceDraft.length>0&&id!=='face')} onClick={()=>{setMode(id)}} aria-pressed={mode===id}>{label}</button>)}{mode==='select'&&<label>拖动约束 <select aria-label="拖动约束" className="bg-neutral-800 p-1" value={constraint} onChange={e=>setConstraint(e.target.value as typeof constraint)}><option value="both">横竖均可</option><option value="horizontal">仅水平</option><option value="vertical">仅垂直</option></select></label>}{mode==='point'&&<label>隐藏轴坐标（{view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）<input aria-label={`顶点 新顶点隐藏轴坐标（${view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）`} className="ml-2 w-24 bg-neutral-800 p-1" type="text" inputMode="decimal" data-trace-draft="true" data-dirty={depthText!==String(depth)} value={depthText} onChange={e=>{setDepthText(e.target.value);setDraftDirty(e.target.value!==String(depth))}} onBlur={()=>{const n=Number(depthText);if(depthText.trim()!==''&&Number.isFinite(n)){setDepth(n);setDepthText(String(n));setDraftDirty(false)}else setError('隐藏轴坐标无效，请输入有限数字后再放点')}}/></label>}{mode==='face'&&<><span>待连接：{faceDraft.join(' → ')||'无'}（尚未保存）</span><button className={btn} disabled={selected===null||faceDraft.includes(selected)} onClick={()=>selected!==null&&setFaceDraft(old=>[...old,selected])}>添加选中点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft(old=>old.slice(0,-1))}>撤销上一个点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft([])}>清空待连接</button><button className={btn} disabled={faceDraft.length<3} onClick={finishFace}>完成面</button></>}</div><div className="min-h-[300px] flex-1 overflow-auto bg-neutral-800"><svg ref={svg} onPointerDown={canvasPoint} viewBox="0 0 1000 1000" className="mx-auto block h-full max-h-[min(80vh,900px)] w-full touch-none select-none" onPointerMove={pointer} onPointerUp={()=>setDrag(false)} onPointerCancel={()=>setDrag(false)}><defs><clipPath id="trace-crop"><rect width="1000" height="1000"/></clipPath></defs><rect width="1000" height="1000" fill="#e9e9e9"/>{image&&<g clipPath="url(#trace-crop)" opacity={opacity}><image href={image} x={grid?-(cell%3)*1000:0} y={grid?-Math.floor(cell/3)*1000:0} width={grid?3000:1000} height={grid?3000:1000} preserveAspectRatio="xMidYMid meet"/></g>}
-    {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();chooseFace(quad.face);setSelectedEdgeSlot(quad.slot);setToolPanel('topology');setLoopInfo('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
+    {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();chooseFace(quad.face);setSelectedEdgeSlot(quad.slot);setToolPanel('topology');setLoopInfo('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setSelectionExpanded(true);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
    </>}
   </div>
-  <aside className="topo-inspector min-h-0 min-w-0 w-full shrink-0 space-y-3 overflow-x-hidden overflow-y-auto border-t border-neutral-800 p-3 text-sm lg:w-[376px] lg:max-w-[376px] lg:border-l lg:border-t-0 lg:p-4 max-h-[42vh] lg:max-h-full">{(error||loopInfo||dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<div className="topo-inspector-feedback space-y-2">
+  <aside className={'topo-inspector min-h-0 min-w-0 w-full shrink-0 border-t border-neutral-800 text-sm lg:border-l lg:border-t-0'+(inspectorExpanded?' is-expanded':'')}>{(error||loopInfo||dirty||referenceDirty||draftDirty||faceDraft.length>0)&&<div className="topo-inspector-feedback space-y-2">
     {error&&<p role="alert" className="topo-message is-error">{error}</p>}
     {!error&&loopInfo&&<p role="status" className="topo-message">{loopInfo}</p>}
     {faceDraft.length>0&&<p className="topo-message is-warning">正在连接控制面：已选 {faceDraft.length} 个顶点，请完成或清空。</p>}
@@ -318,11 +353,16 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
   <summary className="cursor-pointer font-medium text-neutral-200">参考图与正交视图参数</summary>
   <div className="mt-3 space-y-2"><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></div></details>}
-  {geometry?<><section className="topo-inspector-card text-sm space-y-3">
+  {geometry?<><section className="topo-inspector-card topo-selection-card text-sm space-y-2">
   <div className="topo-inspector-heading">
-    <strong>01 · 当前选择</strong>
-    <span className="topo-eyebrow">{selectedSummary}</span>
+    <div className="min-w-0">
+      <strong>当前选择</strong>
+      <div className="topo-eyebrow truncate">{selectedSummary}</div>
+    </div>
+    <button type="button" className={btn+' !px-2 !py-1 !text-xs'} aria-expanded={selectionExpanded}
+      onClick={()=>setSelectionExpanded(v=>!v)}>{selectionExpanded?'收起精确选择':'展开精确选择'}</button>
   </div>
+  {selectionExpanded&&<div className="topo-selection-details space-y-2">
   <p className="topo-helptext">可在画布点选元素，或输入编号精确定位。</p>
   <div className="grid grid-cols-2 gap-2">
     <label className="text-xs text-neutral-400">控制面编号
@@ -363,8 +403,13 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       return tag?<p>顶点来源：{String(tag.source??'未记录')}{tag.depth?` · ${String(tag.depth)}`:''}</p>:<p>此顶点暂无参考来源记录。</p>})()}
     <p>正交视图按面绕序近似隐藏背面；可在 3D 视图检查遮挡。</p>
   </div>}
-</section><section className="topo-inspector-card space-y-3">
-  <div className="topo-inspector-heading"><h3>02 · 建模操作</h3><span className="topo-eyebrow">按任务切换</span></div>
+  </div>}
+</section><section className="topo-inspector-card topo-tools-panel space-y-3">
+  <div className="topo-inspector-heading">
+    <h3>建模操作</h3>
+    <button type="button" className={btn+' !px-2 !py-1 !text-xs'} aria-pressed={inspectorExpanded}
+      onClick={()=>setInspectorExpanded(v=>!v)}>{inspectorExpanded?'返回画布布局':'展开工具区'}</button>
+  </div>
   <div className="topo-tool-tabs" role="group" aria-label="建模工具分类">
     {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label],i)=>
       <button key={id} aria-label={label} aria-pressed={toolPanel===id} className="topo-tab"
@@ -372,7 +417,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
         <span className="topo-tab-number" aria-hidden="true">{String(i+1).padStart(2,'0')}</span>{label}
       </button>)}
   </div>
-  <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
+  <div ref={toolScrollRef} className="topo-tool-content" data-topology-scroll="true" tabIndex={0} aria-label="当前工具参数">
+    <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
   {toolPanel==='topology'&&<div className="space-y-3">
     {isBaseBox&&<div className="space-y-2 rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
       <div className="topo-tool-label">入门案例 · 从立方体开始</div>
@@ -397,7 +443,18 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
     <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
-    <div className="space-y-2 rounded-lg border border-neutral-700 bg-neutral-950/50 p-3">
+    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>}
+    <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
+      <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
+    </label>
+    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addInset}>面内插 · Inset</button>
+    <label className="block text-xs">法线挤出距离
+      <input aria-label="挤出距离" type="number" step=".05" min="-100" max="100" className="mt-1 w-full rounded bg-neutral-800 p-2" value={extrudeDistance} onChange={e=>setExtrudeDistance(Number(e.target.value))}/>
+    </label>
+    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addExtrude}>面挤出 · Extrude</button>
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs">
+      <summary className="cursor-pointer font-medium text-slate-200">顶点对称设置 · X/Y/Z</summary>
+      <div className="space-y-2 p-1">
       <div className="text-xs font-medium text-neutral-200">对称顶点编辑 · 实时</div>
       <div className="grid grid-cols-3 gap-2">
         {(['x','y','z'] as const).map(axis=><label key={axis} className="flex cursor-pointer items-center justify-center gap-1.5 rounded border border-neutral-700 px-2 py-2 text-xs">
@@ -408,15 +465,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       </div>
       <p className="text-xs text-neutral-500">围绕 X/Y/Z=0 镜像移动已有对称点；中线自动约束，不会生成多余顶点。没有对称点时仅移动当前点。</p>
     </div>
-    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>}
-    <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
-      <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
-    </label>
-    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addInset}>面内插 · Inset</button>
-    <label className="block text-xs">法线挤出距离
-      <input aria-label="挤出距离" type="number" step=".05" min="-100" max="100" className="mt-1 w-full rounded bg-neutral-800 p-2" value={extrudeDistance} onChange={e=>setExtrudeDistance(Number(e.target.value))}/>
-    </label>
-    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addExtrude}>面挤出 · Extrude</button>
+    </details>
     <details className="rounded border border-neutral-700 p-2 text-xs"><summary className="cursor-pointer">X=0 半模型镜像</summary>
       <p className="my-2 text-neutral-400">要求网格在 X 坐标单侧，且中心线顶点在 X=0。</p>
       <button className={btn+' w-full'} disabled={faceDraft.length>0||draftDirty} onClick={addMirror}>镜像并焊接中心线</button>
@@ -424,9 +473,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}
   {toolPanel==='paint'&&<div className="space-y-3">
     <p className="topo-helptext">Shift + 点击可多选面，也可按共面或颜色批量选取。</p>
-    <div className="flex items-center justify-between text-sm">
-      <span>{selectedFaces.length? `已选 ${selectedFaces.length} 面 · 主面 #${selectedFace}`:'尚未选择控制面'}</span>
-      <button className="text-xs text-sky-300 disabled:opacity-40" disabled={!selectedFaces.length} onClick={clearFaces}>清空选择</button>
+    <div className="flex items-center justify-between gap-2 text-xs">
+      <span className="text-slate-400">{selectedFaces.length?`将编辑 ${selectedFaces.length} 个控制面`:'请先在画布选面'}</span>
+      <button className={btn+' !py-1 !px-2 !text-xs'} disabled={!selectedFaces.length} onClick={clearFaces}>清空选择</button>
     </div>
     <div className="grid grid-cols-2 gap-2">
       <button className={btn} disabled={selectedFace===null} onClick={()=>chooseFaceGroup('plane')}>选择同一平面</button>
@@ -470,7 +519,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <p className="topo-helptext mt-2">后续包括真实边倒角、任意多边面自由刀切、桥接和可转动魔方层组。</p>
     </details>
   </div>}
-  
+  </div>
 </section></>:<p className="text-amber-300">请先导入含 vertices 和 faces 的网格 JSON。</p>}
   {!sceneEdit && geometry && <>
     <button className={btn} onClick={() => setPreview(value => !value)} aria-expanded={preview}>
