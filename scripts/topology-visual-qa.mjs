@@ -179,7 +179,7 @@ try{
   await dialog.getByRole('button',{name:'配色',exact:true}).click();
   await selectFace(0);
   await dialog.getByRole('button',{name:'选择同一平面'}).click();
-  await dialog.getByText(/已选 9 面/).waitFor({timeout:10000});
+  await dialog.getByText(/将编辑 9 个控制面/).waitFor({timeout:10000});
   await dialog.getByRole('button',{name:'涂色 back'}).click();
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   await dialog.getByRole('button',{name:'重做',exact:true}).click();
