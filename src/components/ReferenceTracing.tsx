@@ -46,6 +46,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [insetFraction,setInsetFraction]=useState(.25);
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
+ const previewRegionRef=useRef<HTMLDivElement>(null);
  // R3F camera bounds are recalculated when the canvas changes its width/height.
  // Schedule another reset after React has committed the resized scene, so
  // OrbitControls cannot retain an out-of-frame target on short/mobile windows.
@@ -79,6 +80,21 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const protectDraft=(e:React.PointerEvent<HTMLDivElement>)=>{const input=pendingDraft();if(!input||e.target===input||(e.target as Element).closest('[data-trace-close]'))return;const text=input.value.trim();if(!text||!Number.isFinite(Number(text))){e.preventDefault();e.stopPropagation();setError('坐标尚未完成：请输入有限数字，再切换或放点');input.focus();return}if(document.activeElement===input)input.blur()};
  const protectDraftClick=(e:React.MouseEvent<HTMLDivElement>)=>{const input=pendingDraft();if(!input||e.target===input||(e.target as Element).closest('[data-trace-close]'))return;const text=input.value.trim();if(!text||!Number.isFinite(Number(text))){e.preventDefault();e.stopPropagation();setError('坐标尚未完成：请输入有限数字，再切换或放点');input.focus()}};
  const protectDraftKey=(e:React.KeyboardEvent<HTMLDivElement>)=>{if(e.key!=='Tab')return;const input=pendingDraft();if(input&&(!input.value.trim()||!Number.isFinite(Number(input.value)))){e.preventDefault();setError('坐标尚未完成：请输入有限数字，再切换或放点');input.focus()}};
+ useEffect(()=>{
+   if(!active||!previewRegionRef.current)return;
+   let frame1=0,frame2=0;
+   const schedule=()=>{
+     cancelAnimationFrame(frame1);cancelAnimationFrame(frame2);
+     // Let the canvas ResizeObserver / R3F update its actual drawing size
+     // before resetting OrbitControls to the new fitting distance.
+     frame1=requestAnimationFrame(()=>{
+       frame2=requestAnimationFrame(()=>setCameraRevision(i=>i+1));
+     });
+   };
+   const observer=new ResizeObserver(schedule);
+   observer.observe(previewRegionRef.current);
+   return()=>{observer.disconnect();cancelAnimationFrame(frame1);cancelAnimationFrame(frame2)};
+ },[active,projectSpatialView,preview,previewLarge,inspectorExpanded]);
  const cell=views.find(v=>v.id===view)!.cell;const {cx,cy,scale}=calibration[view];const updateCalibration=(patch:Partial<Calibration>)=>{setReferenceDirty(true);setCalibration(old=>({...old,[view]:{...old[view],...patch}}))};const setCx=(v:number)=>updateCalibration({cx:v});const setCy=(v:number)=>updateCalibration({cy:v});const setScale=(v:number)=>updateCalibration({scale:v});
  const {edges,visible}=useMemo(()=>{const set=new Set<string>(),visible=new Set<number>();const camera:Record<View,V>={front:[0,0,1],side:[1,0,0],back:[0,0,-1],top:[0,1,0],bottom:[0,-1,0]};geometry?.faces.forEach(f=>{let nx=0,ny=0,nz=0;for(let i=0;i<f.length;i++){const a=geometry.vertices[f[i]],b=geometry.vertices[f[(i+1)%f.length]];nx+=(a[1]-b[1])*(a[2]+b[2]);ny+=(a[2]-b[2])*(a[0]+b[0]);nz+=(a[0]-b[0])*(a[1]+b[1])}const d=camera[view],facing=nx*d[0]+ny*d[1]+nz*d[2];if(!showAll&&facing<=1e-10)return;f.forEach((a,i)=>{visible.add(a);const b=f[(i+1)%f.length];set.add(a<b?`${a},${b}`:`${b},${a}`)})});if(geometry){const used=new Set(geometry.faces.flat());geometry.vertices.forEach((_,i)=>{if(!used.has(i))visible.add(i)})}return {edges:[...set].map(k=>k.split(',').map(Number)),visible}},[geometry,view,showAll]);
  const edgeToQuad=useMemo(()=>{const result=new Map<string,{face:number,slot:number}>();geometry?.faces.forEach((face,fi)=>{if(face.length!==4)return;face.forEach((id,slot)=>{const next=face[(slot+1)%4],key=id<next?`${id}:${next}`:`${next}:${id}`;if(!result.has(key))result.set(key,{face:fi,slot})})});return result},[geometry]);
@@ -275,7 +291,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
          </label>}
        </div>
      </div>
-     <div aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
+     <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
        {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
