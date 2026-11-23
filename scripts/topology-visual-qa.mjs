@@ -267,7 +267,11 @@ try{
     const afterNav=await nav.boundingBox();
     assert.ok(beforeNav&&afterNav&&Math.abs(afterNav.y-beforeNav.y)<2,
       `${label}: task tabs must stay pinned while tools scroll`);
-    notes.checks.push(`${label}: tool parameters scroll independently; task tabs stay visible`);
+    await dialog.getByRole('button',{name:'塑形',exact:true}).click();
+    const resetTop=await pane.evaluate(el=>el.scrollTop);
+    assert.ok(resetTop<=2,`${label}: switching tabs should show the first parameter, got ${resetTop}`);
+    await dialog.getByRole('button',{name:'配色',exact:true}).click();
+    notes.checks.push(`${label}: tool parameters scroll independently; tabs remain pinned and reset to top`);
     if(label==='mobile'){
       await dialog.getByRole('button',{name:'展开工具区'}).click();
       const expandedBox=await dialog.locator('aside').boundingBox();
