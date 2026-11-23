@@ -286,6 +286,21 @@ try{
     assert.ok(previewBox.height>=150,`${label}: 3D viewport too short`);
     notes.checks.push(`${label} UI fits (${width}x${height})`);
   }
+  // Advanced modeling safeguards: destructive edit can be undone, an invalid
+  // full-cube mirror must be rejected without changing the existing cage.
+  await page.setViewportSize({width:1440,height:850});
+  await selectFace(0);
+  await dialog.getByRole('button',{name:/高级操作与来源/}).click();
+  await dialog.getByRole('button',{name:/删除选中控制面/}).click();
+  await counts(56,53);
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  await counts(56,54);
+  await dialog.getByRole('button',{name:'塑形',exact:true}).click();
+  await dialog.getByText('X=0 半模型镜像',{exact:true}).click();
+  await dialog.getByRole('button',{name:'镜像并焊接中心线'}).click();
+  await dialog.getByRole('alert').filter({hasText:/拓扑操作失败/}).waitFor();
+  await counts(56,54);
+  notes.checks.push('face deletion/undo and invalid mirror rejection preserve cage');
   // Standalone reference editor: previously untested import/export/preview and recovery.
   // Reload discards the unsaved scene test sample; no real user files are touched.
   page.on('dialog',prompt=>prompt.accept());
