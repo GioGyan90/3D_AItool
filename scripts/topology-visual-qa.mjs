@@ -235,7 +235,7 @@ try{
   await page.screenshot({path:desktopPath,animations:'disabled'});
   notes.shots.push({name:'12-workbench-refined-desktop',path:desktopPath,size:(await stat(desktopPath)).size});
   for(const [width,height,label] of [
-    [900,700,'tablet'],[390,844,'mobile']
+    [1280,640,'short-desktop'],[900,700,'tablet'],[390,844,'mobile']
   ]){
     await page.setViewportSize({width,height});
     await page.waitForTimeout(250);
@@ -245,7 +245,27 @@ try{
     await page.screenshot({path,animations:'disabled'});
     notes.shots.push({name:label,path,size:(await stat(path)).size});
     console.log('[RESPONSIVE QA]',JSON.stringify({label,width,height,asideBox,previewBox}));
+    const nav=dialog.getByRole('group',{name:'建模工具分类'});
+    const pane=dialog.getByLabel('当前工具参数');
+    assert.ok(await nav.isVisible() && await pane.isVisible(),`${label}: tabs and parameters must be available`);
+    const beforeNav=await nav.boundingBox();
+    const paneInfo=await pane.evaluate(el=>({height:el.clientHeight,scrollHeight:el.scrollHeight}));
+    assert.ok(paneInfo.height>=60,`${label}: tool parameter area should remain usable`);
+    await pane.evaluate(el=>{el.scrollTop=el.scrollHeight});
+    const afterNav=await nav.boundingBox();
+    assert.ok(beforeNav&&afterNav&&Math.abs(afterNav.y-beforeNav.y)<2,
+      `${label}: task tabs must stay pinned while tools scroll`);
+    notes.checks.push(`${label}: tool parameters scroll independently; task tabs stay visible`);
     if(label==='mobile'){
+      await dialog.getByRole('button',{name:'展开工具区'}).click();
+      const expandedBox=await dialog.locator('aside').boundingBox();
+      assert.ok(expandedBox&&expandedBox.width>=width-2&&expandedBox.height>=height-2,
+        'mobile full tools mode should use viewport height');
+      const fullPath=`${folder}/15-mobile-expanded-tools.png`;
+      await page.screenshot({path:fullPath,animations:'disabled'});
+      notes.shots.push({name:'mobile-expanded-tools',path:fullPath,size:(await stat(fullPath)).size});
+      await dialog.getByRole('button',{name:'返回画布布局'}).click();
+      notes.checks.push('mobile tool panel expands fullscreen and restores canvas');
       for(const name of ['撤销','重做','应用到场景']){
         const action=dialog.getByRole('button',{name,exact:true});
         const bounds=await action.boundingBox();
