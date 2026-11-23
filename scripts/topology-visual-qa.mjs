@@ -184,7 +184,19 @@ try{
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   await dialog.getByRole('button',{name:'重做',exact:true}).click();
   notes.checks.push('coplanar 9-face paint survived undo/redo');
+  // Audit remaining paint tools: matching-color group, custom color and clear / undo.
+  await selectFace(0);
+  await dialog.getByRole('button',{name:'选择相同颜色'}).click();
+  await dialog.getByText(/将编辑 \d+ 个控制面/).waitFor();
+  await dialog.getByLabel('自选颜色').fill('#6744aa');
+  await dialog.getByRole('button',{name:'应用到已选面'}).click();
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  await dialog.getByText('更多配色操作').click();
+  await dialog.getByRole('button',{name:'清空全部面颜色'}).click();
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  notes.checks.push('same-color group, custom paint, clear-all and undo');
   await dialog.getByRole('button',{name:'塑形',exact:true}).click();
+  await dialog.getByText('顶点对称设置 · X/Y/Z',{exact:true}).click();
   await dialog.getByLabel('对称 X').check();
   await dialog.getByLabel('对称 Y').check();
   assert.ok(await dialog.getByLabel('对称 X').isChecked());
@@ -194,6 +206,25 @@ try{
   await dialog.getByLabel('顶点 X').press('Tab');
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   notes.checks.push('symmetry axes enabled and coordinate edit undoable');
+  // Test view switching and editor overlays without altering the cage.
+  await dialog.getByRole('button',{name:'正交编辑',exact:true}).click();
+  for(const name of ['正面','侧面','背面','顶部','底部']){
+    const view=dialog.getByRole('button',{name,exact:true}).first();
+    await view.click();
+    assert.equal(await view.getAttribute('aria-pressed'),'true',`orthographic view ${name} should activate`);
+  }
+  for(const name of ['放置顶点','连接成面','选择/移动']){
+    const action=dialog.getByRole('button',{name,exact:true});
+    await action.click();
+    assert.equal(await action.getAttribute('aria-pressed'),'true',`edit mode ${name} should activate`);
+  }
+  await dialog.getByRole('button',{name:'3D 编辑',exact:true}).click();
+  await dialog.getByRole('button',{name:'布线',exact:true}).click();
+  await dialog.getByLabel('透视背面布线').check();
+  await dialog.getByLabel('透视背面布线').uncheck();
+  await dialog.getByRole('button',{name:'成品预览',exact:true}).click();
+  await dialog.getByRole('button',{name:'显示布线',exact:true}).click();
+  notes.checks.push('five orthographic angles, three drawing modes, X-Ray and product/cage switching');
   await dialog.getByRole('button',{name:'检查',exact:true}).click();
   await dialog.getByText('基础拓扑检查通过').waitFor();
   const inspectPath=`${folder}/14-inspect-panel.png`;
