@@ -284,6 +284,37 @@ try{
     assert.ok(previewBox.height>=150,`${label}: 3D viewport too short`);
     notes.checks.push(`${label} UI fits (${width}x${height})`);
   }
+  // Standalone reference editor: previously untested import/export/preview and recovery.
+  // Reload discards the unsaved scene test sample; no real user files are touched.
+  page.on('dialog',prompt=>prompt.accept());
+  await dialog.getByRole('button',{name:'关闭场景顶点编辑'}).click();
+  await dialog.waitFor({state:'hidden'});
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.getByRole('button',{name:'顶点对照',exact:true}).click();
+  const reference=page.getByRole('dialog',{name:'顶点参考对照'});
+  await reference.waitFor();
+  const triangle={vertices:[[0,0,0],[1,0,0],[0,1,0]],faces:[[0,1,2]]};
+  await reference.getByLabel('导入顶点 JSON').setInputFiles({
+    name:'topology-audit.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(triangle))
+  });
+  await reference.getByText(/3 顶点 \/ 1 面/).waitFor({timeout:15000});
+  const saveDownload=page.waitForEvent('download',{timeout:20000});
+  await reference.getByRole('button',{name:'保存顶点 JSON'}).click();
+  assert.match((await saveDownload).suggestedFilename(),/vertex-cage\.json$/);
+  const glbDownload=page.waitForEvent('download',{timeout:30000});
+  await reference.getByRole('button',{name:'导出 GLB'}).click();
+  assert.match((await glbDownload).suggestedFilename(),/vertex-cage\.glb$/);
+  await reference.getByRole('button',{name:'显示 3D 预览'}).click();
+  await reference.getByLabel('3D 旋转预览').waitFor();
+  notes.checks.push('standalone JSON import/export, GLB export and 3D preview');
+  await reference.getByRole('button',{name:'新建空网格'}).click();
+  await reference.getByText(/0 顶点 \/ 0 面/).waitFor();
+  const emptyDownload=page.waitForEvent('download',{timeout:15000});
+  await reference.getByRole('button',{name:'保存顶点 JSON'}).click();
+  await emptyDownload;
+  await reference.getByRole('button',{name:'恢复新建前状态'}).click();
+  await reference.getByText(/3 顶点 \/ 1 面/).waitFor();
+  notes.checks.push('standalone new mesh, save and recover previous cage');
   assert.deepEqual(notes.errors,[],'Unhandled errors occurred in browser');
   console.log('Topology browser QA passed',JSON.stringify(notes));
 }catch(error){
