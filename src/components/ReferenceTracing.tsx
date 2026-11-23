@@ -410,7 +410,18 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
     <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
-    <div className="space-y-2 rounded-lg border border-neutral-700 bg-neutral-950/50 p-3">
+    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>}
+    <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
+      <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
+    </label>
+    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addInset}>面内插 · Inset</button>
+    <label className="block text-xs">法线挤出距离
+      <input aria-label="挤出距离" type="number" step=".05" min="-100" max="100" className="mt-1 w-full rounded bg-neutral-800 p-2" value={extrudeDistance} onChange={e=>setExtrudeDistance(Number(e.target.value))}/>
+    </label>
+    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addExtrude}>面挤出 · Extrude</button>
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs">
+      <summary className="cursor-pointer font-medium text-slate-200">顶点对称设置 · X/Y/Z</summary>
+      <div className="space-y-2 p-1">
       <div className="text-xs font-medium text-neutral-200">对称顶点编辑 · 实时</div>
       <div className="grid grid-cols-3 gap-2">
         {(['x','y','z'] as const).map(axis=><label key={axis} className="flex cursor-pointer items-center justify-center gap-1.5 rounded border border-neutral-700 px-2 py-2 text-xs">
@@ -421,15 +432,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       </div>
       <p className="text-xs text-neutral-500">围绕 X/Y/Z=0 镜像移动已有对称点；中线自动约束，不会生成多余顶点。没有对称点时仅移动当前点。</p>
     </div>
-    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>}
-    <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
-      <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
-    </label>
-    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addInset}>面内插 · Inset</button>
-    <label className="block text-xs">法线挤出距离
-      <input aria-label="挤出距离" type="number" step=".05" min="-100" max="100" className="mt-1 w-full rounded bg-neutral-800 p-2" value={extrudeDistance} onChange={e=>setExtrudeDistance(Number(e.target.value))}/>
-    </label>
-    <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addExtrude}>面挤出 · Extrude</button>
+    </details>
     <details className="rounded border border-neutral-700 p-2 text-xs"><summary className="cursor-pointer">X=0 半模型镜像</summary>
       <p className="my-2 text-neutral-400">要求网格在 X 坐标单侧，且中心线顶点在 X=0。</p>
       <button className={btn+' w-full'} disabled={faceDraft.length>0||draftDirty} onClick={addMirror}>镜像并焊接中心线</button>
@@ -437,9 +440,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}
   {toolPanel==='paint'&&<div className="space-y-3">
     <p className="topo-helptext">Shift + 点击可多选面，也可按共面或颜色批量选取。</p>
-    <div className="flex items-center justify-between text-sm">
-      <span>{selectedFaces.length? `已选 ${selectedFaces.length} 面 · 主面 #${selectedFace}`:'尚未选择控制面'}</span>
-      <button className="text-xs text-sky-300 disabled:opacity-40" disabled={!selectedFaces.length} onClick={clearFaces}>清空选择</button>
+    <div className="flex items-center justify-between gap-2 text-xs">
+      <span className="text-slate-400">{selectedFaces.length?`将编辑 ${selectedFaces.length} 个控制面`:'请先在画布选面'}</span>
+      <button className={btn+' !py-1 !px-2 !text-xs'} disabled={!selectedFaces.length} onClick={clearFaces}>清空选择</button>
     </div>
     <div className="grid grid-cols-2 gap-2">
       <button className={btn} disabled={selectedFace===null} onClick={()=>chooseFaceGroup('plane')}>选择同一平面</button>
