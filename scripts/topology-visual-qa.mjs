@@ -40,7 +40,9 @@ try{
     notes.checks.push(`vertices=${v},faces=${f}`);
   };
   const selectFace=async n=>{
-    await dialog.getByLabel('控制面编号').fill(String(n));
+    const field=dialog.getByLabel('控制面编号');
+    if(!await field.isVisible())await dialog.getByRole('button',{name:'展开精确选择'}).click();
+    await field.fill(String(n));
     await dialog.getByText(`面 #${n}：`,{exact:false}).waitFor();
   };
   const screenshot=async(name)=>{
@@ -137,14 +139,26 @@ try{
   await dialog.getByRole('button',{name:'配色',exact:true}).click();
   const side=await dialog.locator('aside').boundingBox();
   const visual=await dialog.getByLabel('3D 旋转预览').boundingBox();
-  assert.ok(side&&side.width>=290&&side.width<=410,'inspector width should stay compact');
+  assert.ok(side&&side.width>=330&&side.width<=490,'inspector should adapt to available desktop width');
   assert.ok(visual&&visual.width>=800&&visual.height>=250,'3D preview needs usable space');
-  assert.ok(await dialog.getByText('02 · 建模操作').isVisible());
-  assert.ok(await dialog.getByText('01 · 当前选择').isVisible());
+  assert.ok(await dialog.getByRole('heading',{name:'建模操作'}).isVisible());
+  assert.ok(await dialog.getByText('当前选择',{exact:true}).isVisible());
   assert.ok(await dialog.getByRole('group',{name:'建模工具分类'}).isVisible());
   const asideBackground=await dialog.locator('aside').evaluate(el=>getComputedStyle(el).backgroundColor);
   assert.notEqual(asideBackground,'rgba(0, 0, 0, 0)','inspector must have a distinct background');
-  notes.checks.push('clear inspector hierarchy and separated tool navigation');
+  const activeParameters=dialog.getByLabel('当前工具参数');
+  const toolTabs=dialog.getByRole('group',{name:'建模工具分类'});
+  assert.ok(await activeParameters.isVisible(),'active tools should always be accessible');
+  assert.ok(await toolTabs.isVisible(),'task navigation should remain visible');
+  const compactSelection=await dialog.getByRole('button',{name:'展开精确选择'}).count();
+  assert.equal(compactSelection,1,'compact precision controls are opt-in');
+  notes.checks.push('compact selection, pinned task tabs, independent parameter scroll');
+  const beforeExpanded=await dialog.locator('aside').boundingBox();
+  await dialog.getByRole('button',{name:'展开工具区'}).click();
+  const wider=await dialog.locator('aside').boundingBox();
+  assert.ok(wider.width>beforeExpanded.width+30,'desktop expanded inspector should grow');
+  await dialog.getByRole('button',{name:'返回画布布局'}).click();
+  notes.checks.push('desktop inspector expand/restore');
   const uiPath=`${folder}/11-workbench-paint.png`;
   await page.screenshot({path:uiPath,animations:'disabled'});
   notes.shots.push({name:'11-workbench-paint',path:uiPath,size:(await stat(uiPath)).size});
