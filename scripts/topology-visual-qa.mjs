@@ -252,7 +252,8 @@ try{
     assert.ok(await nav.isVisible() && await pane.isVisible(),`${label}: tabs and parameters must be available`);
     const beforeNav=await nav.boundingBox();
     const paneInfo=await pane.evaluate(el=>({height:el.clientHeight,scrollHeight:el.scrollHeight}));
-    assert.ok(paneInfo.height>=60,`${label}: tool parameter area should remain usable`);
+    console.log('[PARAMETER AREA QA]',JSON.stringify({label,paneInfo,asideBox,previewBox}));
+    assert.ok(paneInfo.height>=60,`${label}: tool parameter area should remain usable (${JSON.stringify(paneInfo)})`);
     await pane.evaluate(el=>{el.scrollTop=el.scrollHeight});
     const afterNav=await nav.boundingBox();
     assert.ok(beforeNav&&afterNav&&Math.abs(afterNav.y-beforeNav.y)<2,
