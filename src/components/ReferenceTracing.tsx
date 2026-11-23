@@ -65,6 +65,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [advancedOpen,setAdvancedOpen]=useState(false);
  const [selectionExpanded,setSelectionExpanded]=useState(false);
  const [inspectorExpanded,setInspectorExpanded]=useState(false);
+ const toolScrollRef=useRef<HTMLDivElement>(null);
+ useEffect(()=>{if(toolScrollRef.current)toolScrollRef.current.scrollTop=0},[toolPanel]);
  useEffect(()=>{
    if(!active||!projectSpatialView)return;
    const frame=requestAnimationFrame(()=>setCameraRevision(i=>i+1));
@@ -399,7 +401,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
         <span className="topo-tab-number" aria-hidden="true">{String(i+1).padStart(2,'0')}</span>{label}
       </button>)}
   </div>
-  <div className="topo-tool-content" data-topology-scroll="true" tabIndex={0} aria-label="当前工具参数">
+  <div ref={toolScrollRef} className="topo-tool-content" data-topology-scroll="true" tabIndex={0} aria-label="当前工具参数">
     <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
   {toolPanel==='topology'&&<div className="space-y-3">
     {isBaseBox&&<div className="space-y-2 rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
