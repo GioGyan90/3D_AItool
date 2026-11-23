@@ -273,6 +273,15 @@ try{
     await dialog.getByRole('button',{name:'配色',exact:true}).click();
     notes.checks.push(`${label}: tool parameters scroll independently; tabs remain pinned and reset to top`);
     if(label==='mobile'){
+      const canvasMetrics=await dialog.getByLabel('3D 旋转预览').locator('canvas').evaluate(el=>{
+        const rect=el.getBoundingClientRect(),parent=el.parentElement?.getBoundingClientRect();
+        return {buffer:[el.width,el.height],css:[rect.width,rect.height],parent:[parent?.width,parent?.height]};
+      });
+      console.log('[MOBILE CANVAS METRICS]',JSON.stringify(canvasMetrics));
+      await dialog.getByRole('button',{name:'重置视角',exact:true}).click();
+      await page.waitForTimeout(350);
+      const fitJpeg=await dialog.getByLabel('3D 旋转预览').screenshot({type:'jpeg',quality:34,animations:'disabled'});
+      console.log('MOBILE_CAMERA_RESET_JPEG:'+fitJpeg.toString('base64'));
       await dialog.getByRole('button',{name:'展开工具区'}).click();
       const expandedBox=await dialog.locator('aside').boundingBox();
       assert.ok(expandedBox&&expandedBox.width>=width-2&&expandedBox.height>=height-2,
