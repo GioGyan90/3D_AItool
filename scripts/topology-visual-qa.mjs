@@ -225,6 +225,9 @@ try{
   await dialog.getByRole('button',{name:'收起精确选择'}).waitFor();
   notes.checks.push('orthographic vertex pick automatically reveals XYZ precision fields');
   await dialog.getByRole('button',{name:'3D 编辑',exact:true}).click();
+  await page.waitForTimeout(250);
+  const returnedCamera=await dialog.getByLabel('3D 旋转预览').screenshot({type:'jpeg',quality:34,animations:'disabled'});
+  console.log('CAMERA_RETURN_JPEG:'+returnedCamera.toString('base64'));
   await dialog.getByRole('button',{name:'布线',exact:true}).click();
   await dialog.getByLabel('透视背面布线').check();
   await dialog.getByLabel('透视背面布线').uncheck();
@@ -246,7 +249,7 @@ try{
     [1280,640,'short-desktop'],[900,700,'tablet'],[390,844,'mobile']
   ]){
     await page.setViewportSize({width,height});
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(600);
     const asideBox=await dialog.locator('aside').boundingBox();
     const previewBox=await dialog.getByLabel('3D 旋转预览').boundingBox();
     const path=`${folder}/13-workbench-${label}.png`;
