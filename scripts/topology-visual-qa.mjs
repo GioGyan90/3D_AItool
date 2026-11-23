@@ -231,6 +231,8 @@ try{
   await page.screenshot({path:inspectPath,animations:'disabled'});
   notes.shots.push({name:'14-inspect-panel',path:inspectPath,size:(await stat(inspectPath)).size});
   await dialog.getByRole('button',{name:'配色',exact:true}).click();
+  const collapsePrecision=dialog.getByRole('button',{name:'收起精确选择'});
+  if(await collapsePrecision.count())await collapsePrecision.click();
   const desktopPath=`${folder}/12-workbench-refined-desktop.png`;
   await page.screenshot({path:desktopPath,animations:'disabled'});
   notes.shots.push({name:'12-workbench-refined-desktop',path:desktopPath,size:(await stat(desktopPath)).size});
