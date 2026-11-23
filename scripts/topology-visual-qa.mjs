@@ -218,6 +218,12 @@ try{
     await action.click();
     assert.equal(await action.getAttribute('aria-pressed'),'true',`edit mode ${name} should activate`);
   }
+  const previousPrecision=dialog.getByRole('button',{name:'收起精确选择'});
+  if(await previousPrecision.count())await previousPrecision.click();
+  const projectedVertex=dialog.locator('svg[viewBox="0 0 1000 1000"] circle').first();
+  await projectedVertex.click();
+  await dialog.getByRole('button',{name:'收起精确选择'}).waitFor();
+  notes.checks.push('orthographic vertex pick automatically reveals XYZ precision fields');
   await dialog.getByRole('button',{name:'3D 编辑',exact:true}).click();
   await dialog.getByRole('button',{name:'布线',exact:true}).click();
   await dialog.getByLabel('透视背面布线').check();
