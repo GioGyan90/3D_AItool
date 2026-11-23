@@ -278,6 +278,30 @@ try{
         return {buffer:[el.width,el.height],css:[rect.width,rect.height],parent:[parent?.width,parent?.height]};
       });
       console.log('[MOBILE CANVAS METRICS]',JSON.stringify(canvasMetrics));
+      const previewPNG=await dialog.getByLabel('3D 旋转预览').screenshot({type:'png',animations:'disabled'});
+      const cubeCoverage=await page.evaluate(async encoded=>{
+        const img=new Image();
+        img.src='data:image/png;base64,'+encoded;
+        await img.decode();
+        const canvas=document.createElement('canvas');
+        canvas.width=img.width;canvas.height=img.height;
+        const ctx=canvas.getContext('2d',{willReadFrequently:true});
+        ctx.drawImage(img,0,0);
+        const pixels=ctx.getImageData(0,0,img.width,img.height).data;
+        let count=0,minY=img.height,maxY=0;
+        for(let y=0;y<img.height;y++)for(let x=0;x<img.width;x++){
+          const i=(y*img.width+x)*4,r=pixels[i],g=pixels[i+1],b=pixels[i+2];
+          const vividRed=r>110&&r>g*1.5&&r>b*1.3;
+          const vividBlue=b>90&&b>r*1.2&&b>g*1.2;
+          const vividGreen=g>95&&g>r*1.2&&g>b*.9;
+          if(vividRed||vividBlue||vividGreen){count++;minY=Math.min(minY,y);maxY=Math.max(maxY,y)}
+        }
+        return {count,minY,maxY,width:img.width,height:img.height};
+      },previewPNG.toString('base64'));
+      console.log('[MOBILE CUBE COVERAGE]',JSON.stringify(cubeCoverage));
+      assert.ok(cubeCoverage.count>500&&cubeCoverage.minY<cubeCoverage.height*.65&&cubeCoverage.maxY>cubeCoverage.height*.5,
+        'mobile cube should remain framed automatically after resizing, not only after manual reset');
+      notes.checks.push('mobile 3D cube stays framed automatically on resize');
       await dialog.getByRole('button',{name:'重置视角',exact:true}).click();
       await page.waitForTimeout(350);
       const fitJpeg=await dialog.getByLabel('3D 旋转预览').screenshot({type:'jpeg',quality:34,animations:'disabled'});
