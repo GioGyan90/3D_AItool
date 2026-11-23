@@ -188,7 +188,7 @@ try{
   await selectFace(0);
   await dialog.getByRole('button',{name:'选择相同颜色'}).click();
   await dialog.getByText(/将编辑 \d+ 个控制面/).waitFor();
-  await dialog.getByLabel('自选颜色').fill('#6744aa');
+  await dialog.locator('input[type="color"]').fill('#6744aa');
   await dialog.getByRole('button',{name:'应用到已选面'}).click();
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   await dialog.getByText('更多配色操作').click();
