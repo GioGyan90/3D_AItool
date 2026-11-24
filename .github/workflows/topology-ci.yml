@@ -7,6 +7,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'scripts/topology-visual-qa.mjs'
+      - 'scripts/topology-edge-lock-qa.mjs'
       - '.github/workflows/topology-ci.yml'
   push:
     branches: [main]
@@ -14,6 +15,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'scripts/topology-visual-qa.mjs'
+      - 'scripts/topology-edge-lock-qa.mjs'
       - 'package.json'
       - 'package-lock.json'
       - 'vite.config.ts'
@@ -49,6 +51,15 @@ jobs:
         run: npm install --no-save --no-package-lock playwright
       - name: Capture and inspect topology in actual WebGL canvas
         run: node scripts/topology-visual-qa.mjs
+      - name: Accept edge sliding and region locking in real WebGL UI
+        run: node scripts/topology-edge-lock-qa.mjs
+      - name: Upload edge-slide and region-lock acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shape3d-edge-lock-browser-qa
+          path: artifacts/topology-edge-lock/
+          retention-days: 14
       - name: Upload multi-angle topology screenshots
         if: always()
         uses: actions/upload-artifact@v4
