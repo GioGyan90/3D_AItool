@@ -281,3 +281,19 @@ test('local profile preserves topology and untouched axes, repairs mirrored depr
  assert.equal(calibrateProfile(mesh,{...opts,strength:0}).mesh.vertices[2][2],1.2);
  assert.equal(calibrateProfile(mesh,{...opts,mode:'lower'}).mesh.vertices[2][2],1.2);
 });
+
+import {scanProfile,calibrateProfiles} from '../src/components/profileCalibration';
+test('profile scanning respects slab connectivity and atomic profile edits preserve topology',()=>{
+ const mesh={vertices:[[0,0,1],[1,0,0.4],[2,0,1],[0,1,1],[1,1,.6],[2,1,1],[1,0,-2]] as [number,number,number][],faces:[[0,1,4,3],[1,2,5,4]]};
+ const a={along:0 as const,depth:2 as const,start:0,end:2,bulge:.1};
+ assert.deepEqual(scanProfile(mesh,a,.01,.05).map(c=>c.id),[1]);
+ assert.throws(()=>scanProfile(mesh,{...a,end:5},0,.05));
+ const j={...a,points:[1],mirrorX:false};
+ const k={...j,start:3,end:5,points:[4]};
+ const result=calibrateProfiles(mesh,[j,k]);
+ assert.equal(result.mesh.vertices[1][2],1.1);
+ assert.equal(result.mesh.vertices[4][2],1.1);
+ assert.deepEqual(result.mesh.vertices[6],mesh.vertices[6]);
+ assert.deepEqual(result.mesh.faces,mesh.faces);
+ assert.throws(()=>calibrateProfiles(mesh,[j,{...j,bulge:.2}]));
+});
