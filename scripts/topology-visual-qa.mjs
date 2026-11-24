@@ -31,6 +31,9 @@ try{
   page.on('pageerror',error=>notes.errors.push(error.message));
   await page.goto('http://127.0.0.1:3000/',{waitUntil:'domcontentloaded'});
   console.log('[QA] Editor launch');
+  assert.equal(await page.getByRole('button',{name:'魔方示例',exact:true}).count(),0,
+    'Rubik demo must not appear as a standalone homepage button');
+  notes.checks.push('Rubik test is absent from home navigation');
   await page.getByRole('button',{name:'布线建模',exact:true}).click({timeout:30000});
   const dialog=page.getByRole('dialog',{name:/场景顶点编辑/});
   await dialog.waitFor();
@@ -123,9 +126,17 @@ try{
   notes.checks.push('applied and reopened same 18/17 control cage');
   await reopened.getByRole('button',{name:'关闭场景顶点编辑'}).click();
   await reopened.waitFor({state:'hidden'});
-  // New scene sample should be a persistent colored model, not 27 boxlets.
-  await page.getByRole('button',{name:'魔方示例',exact:true}).click();
+  // The Rubik teaching shortcut belongs only inside the cube topology
+  // editor. Return to a clean scene, create a base cube and use that shortcut.
+  await page.reload({waitUntil:'domcontentloaded'});
+  assert.equal(await page.getByRole('button',{name:'魔方示例',exact:true}).count(),0,
+    'home must not expose the removed standalone Rubik demo');
+  await page.getByRole('button',{name:'布线建模',exact:true}).click();
+  await dialog.waitFor();
+  await counts(8,6);
+  await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).click();
   await counts(56,54);
+  notes.checks.push('Rubik example remains available via base cube > topology quick preset');
   await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
   await dialog.getByRole('button',{name:'重置视角',exact:true}).click();
   notes.checks.push('camera re-center action available on active preset');
