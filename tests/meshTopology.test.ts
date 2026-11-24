@@ -374,3 +374,25 @@ test('an actual inserted quad loop is closed and can slide without T-junctions',
  assert.equal(result!.mesh.vertices.length,mesh.vertices.length);
  assert.equal(result!.mesh.faces.length,mesh.faces.length);
 });
+
+
+import {surfaceQuality,vertexDisplacement,displacementColors,optimizeQuad} from '../src/components/surfaceQuality';
+test('surface diagnostics distinguish planar and warped faces and report shared edge angles',()=>{
+ const vertices:[number,number,number][]=[[0,0,0],[1,0,0],[1,1,.2],[0,1,0],[2,0,0],[2,1,0]];
+ const mesh={vertices,faces:[[0,1,2,3],[1,4,5,2]]};
+ const q=surfaceQuality(mesh);
+ assert.ok(q.faces[0].relative!>0.01);assert.equal(q.edges.length,1);assert.ok(q.edges[0].degrees>0);
+ const flat={vertices:vertices.map(v=>[v[0],v[1],0] as [number,number,number]),faces:mesh.faces};
+ assert.equal(surfaceQuality(flat).faces[0].distance,0);
+ const d=vertexDisplacement(flat,mesh);assert.equal(d.moved,1);assert.equal(d.max,.2);
+ assert.notEqual(displacementColors(d.values,d.max)[0],displacementColors(d.values,d.max)[2]);
+ assert.throws(()=>vertexDisplacement(flat,{...mesh,faces:[[0,1,2]]}));
+});
+test('quad diagonal optimization preserves winding and retains concave polygon ear cut',()=>{
+ const v:[number,number,number][]=[[0,0,0],[2,0,0],[2,1,.6],[0,1,0]];
+ const f=[0,1,2,3],original=[0,1,2,0,2,3];
+ const next=optimizeQuad(v,f,original);
+ assert.equal(next.length,6);assert.equal(new Set(next).size,4);
+ const concave:[number,number,number][]=[[0,0,0],[2,0,0],[.4,.4,0],[0,2,0]];
+ assert.deepEqual(optimizeQuad(concave,f,original),original);
+});
