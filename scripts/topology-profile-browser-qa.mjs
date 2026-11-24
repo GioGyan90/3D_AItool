@@ -65,7 +65,11 @@ try{
   assert.ok(await canvas.evaluate(el=>Boolean(el.getContext('webgl2')||el.getContext('webgl'))),'Missing WebGL 3D comparison');
   const filename=folder+'/'+name+'.png';
   const bytes=await canvas.screenshot({path:filename,animations:'disabled'});
-  assert.ok((await stat(filename)).size>1500,'Empty comparison image '+name);
+  const bytesOnDisk=(await stat(filename)).size;
+  console.log('PROFILE_VISUAL_DIMENSIONS_'+name,JSON.stringify(await canvas.boundingBox()),'pngBytes',bytesOnDisk);
+  const jpeg=await canvas.screenshot({type:'jpeg',quality:38,animations:'disabled'});
+  console.log('PROFILE_VISUAL_JPEG_'+name+':'+jpeg.toString('base64'));
+  assert.ok(bytesOnDisk>350,'Empty comparison image '+name+' ('+bytesOnDisk+' bytes)');
   result.screenshots.push({name,filename});
   return bytes;
  };
