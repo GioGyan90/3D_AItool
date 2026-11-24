@@ -25,7 +25,7 @@ function ReferencePlane({plane}:{plane:SpatialReference}){
 }
 type Props={
   references?:SpatialReference[];
-  optimizedTriangles?:boolean; vertexColors?:string[];
+  optimizedTriangles?:boolean; vertexColors?:string[]; mirrorTriangles?:boolean; symmetricLight?:boolean;
   data:Data; direction:string; selected:number|null;
   selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
@@ -34,7 +34,7 @@ type Props={
 };
 const keyOf=(a:number,b:number)=>a<b?`${a}:${b}`:`${b}:${a}`;
 
-function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,showCage=true,optimizedTriangles=false,vertexColors,orbit}:
+function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,showCage=true,optimizedTriangles=false,vertexColors,mirrorTriangles=true,orbit}:
   Omit<Props,'direction'>&{orbit:React.MutableRefObject<any>}){
   const [handle,setHandle]=useState<THREE.Group|null>(null);
   const dragging=useRef(false),transform=useRef<any>(null),dragIndex=useRef<number|null>(null);
@@ -44,7 +44,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
     const pos=data.vertices.flat(),edgeSet=new Map<string,[number,number]>();
     const edgeOwners=new Map<string,{face:number;slot:number}>();
     let idx:number[]=[];
-    try{idx=triangulateFaces(data.vertices,data.faces,optimizedTriangles)}catch{}
+    try{idx=triangulateFaces(data.vertices,data.faces,optimizedTriangles,mirrorTriangles)}catch{}
     data.faces.forEach((face,fi)=>face.forEach((a,slot)=>{
       const b=face[(slot+1)%face.length],key=keyOf(a,b);
       if(!edgeSet.has(key))edgeSet.set(key,[a,b]);
@@ -66,7 +66,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
       .filter(i=>i>=0&&i<data.faces.length);
     if(visibleSelection.length){
       try{
-        const selectedIndices=triangulateFaces(data.vertices,visibleSelection.map(i=>data.faces[i]),optimizedTriangles);
+        const selectedSet=new Set(visibleSelection);let offset=0;const selectedIndices=data.faces.flatMap((f,i)=>{const size=3*(f.length-2),t=idx.slice(offset,offset+size);offset+=size;return selectedSet.has(i)?t:[]});
         faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
         faceGeo.setIndex(selectedIndices);
       }catch{/* Keep the editor responsive if a manual face is invalid. */}
@@ -77,7 +77,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
         new THREE.Vector3(...data.vertices[selectedEdge[1]])),
       1,.008,6,false):null;
     return {mesh,lines,points,stickers,faceGeo,selectedEdgeTube,edgeOwners};
-  },[data,selectedFace,selectedFaces,selectedEdge?.[0],selectedEdge?.[1],optimizedTriangles,vertexColors]);
+  },[data,selectedFace,selectedFaces,selectedEdge?.[0],selectedEdge?.[1],optimizedTriangles,vertexColors,mirrorTriangles]);
   const faceForTriangle=useMemo(()=>data.faces.flatMap((f,i)=>Array(Math.max(0,f.length-2)).fill(i) as number[]),[data.faces]);
   useEffect(()=>()=>{mesh.dispose();lines.dispose();points.dispose();stickers.dispose();faceGeo.dispose();selectedEdgeTube?.dispose()},
     [mesh,lines,points,stickers,faceGeo,selectedEdgeTube]);
@@ -149,7 +149,7 @@ export function TracePreview(props:Props){
   return <Canvas camera={{position:[3,1.2,4],fov:40}} gl={{antialias:true}}
     raycaster={{params:{Points:{threshold:.045},Line:{threshold:.045}} as any}}>
     <color attach="background" args={['#303030']}/>
-    <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={1.3}/>
+    <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={props.symmetricLight ? .65:1.3}/><directionalLight position={[-3,4,5]} intensity={props.symmetricLight ? .65:0}/>
     {props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
     <Shape {...props} orbit={orbit}/>
     <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit}/>

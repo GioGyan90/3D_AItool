@@ -396,3 +396,29 @@ test('quad diagonal optimization preserves winding and retains concave polygon e
  const concave:[number,number,number][]=[[0,0,0],[2,0,0],[.4,.4,0],[0,2,0]];
  assert.deepEqual(optimizeQuad(concave,f,original),original);
 });
+
+
+import {mirrorTrianglesX} from '../src/components/mirrorTriangulation';
+import {triangulateFacesWithReport} from '../src/components/traceGeometry';
+test('mirror rendering preserves paired quad and pentagon winding without adding control vertices',()=>{
+ const v:[number,number,number][]=[[-1,0,0],[-2,0,0],[-2,1,.2],[-1.5,1.5,.3],[-1,1,0],[1,0,0],[2,0,0],[2,1,.2],[1.5,1.5,.3],[1,1,0]];
+ const faces=[[0,1,2,3,4],[5,9,8,7,6]];
+ const source=[[0,1,2,0,2,3,0,3,4],[5,9,8,5,8,7,5,7,6]];
+ const original=JSON.stringify({v,faces,source});
+ const result=mirrorTrianglesX(v,faces,source);
+ assert.equal(result.report.matchedVertices,10);
+ assert.equal(result.report.pairedFaces,2);
+ assert.equal(result.report.unmatchedTriangles,0);
+ assert.deepEqual(result.byFace[1],[5,7,6,5,8,7,5,9,8]);
+ assert.equal(JSON.stringify({v,faces,source}),original);
+ assert.equal(triangulateFacesWithReport(v,faces,true).report.unmatchedTriangles,0);
+ const asymmetric=v.map(p=>[...p] as [number,number,number]);asymmetric[9][2]=.1;
+ assert.deepEqual(mirrorTrianglesX(asymmetric,faces,source).byFace,source);
+ assert.equal(mirrorTrianglesX(asymmetric,faces,source).report.unmatchedTriangles,null);
+});
+test('center spanning quad reports unresolved symmetry rather than inventing vertices',()=>{
+ const v:[number,number,number][]=[[-1,0,0],[1,0,0],[1,1,0],[-1,1,0]];
+ const faces=[[0,1,2,3]],source=[[0,1,2,0,2,3]];
+ const r=mirrorTrianglesX(v,faces,source);
+ assert.deepEqual(r.byFace,source);assert.equal(r.report.unmatchedTriangles,2);assert.deepEqual(r.report.unresolvedFaces,[0]);
+});
