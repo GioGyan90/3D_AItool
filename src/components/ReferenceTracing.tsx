@@ -89,14 +89,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [slideFraction,setSlideFraction]=useState(.25);
  const [loopChain,setLoopChain]=useState<number[]>([]);
  const [loopGuide,setLoopGuide]=useState('');
- const [loopFraction,setLoopFraction]=useState(.25);
+ const [ringSlideFraction,setRingSlideFraction]=useState(.25);
  const [loopMirror,setLoopMirror]=useState(false);
  const [loopClosed,setLoopClosed]=useState(false);
  const loopPreview=useMemo(()=>{try{
    if(!geometry||loopChain.length<2||loopGuide==='')return {result:null,error:''};
-   return {result:slideContinuousEdgeLoop(geometry,loopChain,Number(loopGuide),loopFraction,{mirrorX:loopMirror,closed:loopClosed}),error:''};
+   return {result:slideContinuousEdgeLoop(geometry,loopChain,Number(loopGuide),ringSlideFraction,{mirrorX:loopMirror,closed:loopClosed}),error:''};
  }catch(e){return {result:null,error:String(e)}}
- },[geometry,loopChain,loopGuide,loopFraction,loopMirror,loopClosed]);
+ },[geometry,loopChain,loopGuide,ringSlideFraction,loopMirror,loopClosed]);
 
  const [past,setPast]=useState<MeshHistory[]>([]);
  const [future,setFuture]=useState<MeshHistory[]>([]);
@@ -570,8 +570,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
             {loopChain.length>0&&[...new Set(geometry.faces.flatMap(f=>f.flatMap((id,i)=>id===loopChain[0]?[f[(i+1)%f.length],f[(i+f.length-1)%f.length]]:[])))].filter(id=>!loopChain.includes(id)).map(id=><option value={id} key={id}>#{id}</option>)}
           </select>
         </label>
-        <label>沿引导边滑动 {Math.round(loopFraction*100)}%
-          <input aria-label="整条环线滑动比例" className="w-full" type="range" min=".05" max=".95" step=".05" value={loopFraction} onChange={e=>setLoopFraction(Number(e.target.value))}/>
+        <label>沿引导边滑动 {Math.round(ringSlideFraction*100)}%
+          <input aria-label="整条环线滑动比例" className="w-full" type="range" min=".05" max=".95" step=".05" value={ringSlideFraction} onChange={e=>setRingSlideFraction(Number(e.target.value))}/>
         </label>
         <label className="flex items-center gap-2"><input aria-label="环线 X 镜像滑动" type="checkbox" checked={loopMirror} onChange={e=>setLoopMirror(e.target.checked)}/> 同步镜像 X 另一半</label>
         {loopPreview.error&&<p role="alert" className="text-amber-300">{loopPreview.error}</p>}
