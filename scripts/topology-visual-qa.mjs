@@ -66,8 +66,10 @@ try{
     notes.shots.push({name,path,size:file.size});
   };
   await counts(8,6);
-  await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).waitFor();
   assert.equal(await dialog.getByRole('button',{name:'布线',exact:true}).getAttribute('aria-pressed'),'true');
+  await dialog.getByText('快捷示例 · 3×3 魔方环切',{exact:true}).click();
+  await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).waitFor();
+  notes.checks.push('Rubik quick example is collapsed inside the topology tab');
   await screenshot('00-cube-angle');
   // The wizard must genuinely convert the single 8-vertex base cube.
   await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).click();
@@ -134,6 +136,7 @@ try{
   await page.getByRole('button',{name:'布线建模',exact:true}).click();
   await dialog.waitFor();
   await counts(8,6);
+  await dialog.getByText('快捷示例 · 3×3 魔方环切',{exact:true}).click();
   await dialog.getByRole('button',{name:'六次环切 · 生成魔方'}).click();
   await counts(56,54);
   notes.checks.push('Rubik example remains available via base cube > topology quick preset');
