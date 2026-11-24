@@ -1,0 +1,36 @@
+name: Edge-slide and region-lock browser acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/components/ReferenceTracing.tsx'
+      - 'src/components/regionEditing.ts'
+      - 'scripts/topology-edge-lock-qa.mjs'
+      - '.github/workflows/edge-lock-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  edge-lock-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:topology
+      - name: Install browser dependency
+        run: npm install --no-save --no-package-lock playwright
+      - name: Verify real UI region locking and edge sliding
+        run: node scripts/topology-edge-lock-qa.mjs
+      - name: Upload WebGL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edge-lock-acceptance
+          path: artifacts/topology-edge-lock/
+          retention-days: 14
