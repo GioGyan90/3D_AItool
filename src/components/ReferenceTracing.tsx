@@ -3,6 +3,7 @@ import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview,type SpatialReference} from './TracePreview';
+import {CalibrationWorkbench} from './CalibrationWorkbench';
 import {triangulateFaces} from './traceGeometry';
 import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
@@ -38,6 +39,7 @@ function CoordinateInput({axis,value,onCommit,onDraft}:{axis:string,value:number
 
 export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProps){
  const [projectSpatialView, setProjectSpatialView] = useState(true);
+ const [calibrationMode,setCalibrationMode]=useState(false);
  const [references,setReferences]=useState<SpatialReference[]>([]);
  const [referenceId,setReferenceId]=useState('');
  const [referenceError,setReferenceError]=useState('');
@@ -59,7 +61,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
      setReferenceId(id);
    }catch(err){setReferenceError(String(err))}finally{refInputBusy.current=false;setReferenceLoading(false)}
  };
- const referencePanel=<details className="topo-inspector-card space-y-2">
+ const referencePanel=<details open className="topo-inspector-card space-y-2">
    <summary className="cursor-pointer font-semibold">空间参考图 · {references.length}</summary>
    <p className="topo-helptext">独立辅助平面，仅在 3D 编辑中显示；不会参与选点、布线或 GLB 导出。</p>
    <label className={btn+' inline-block cursor-pointer'}>上传空间参考图<input type="file" aria-label="上传空间参考图" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={referenceLoading||references.length>=6} onChange={addReference}/></label>
@@ -375,6 +377,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <button className={btn} disabled={!geometry} onClick={save}>保存顶点 JSON</button>
     <button className={btn} disabled={!geometry?.faces.length} onClick={exportGlb}>导出 GLB</button>
   </div>}
+  <button className={btn} disabled={!geometry||draftDirty||faceDraft.length>0} aria-pressed={calibrationMode} onClick={()=>setCalibrationMode(v=>!v)}>{calibrationMode?'返回建模':'正侧校准'}</button>
   <button className={btn} disabled={!geometry?.faces.length||draftDirty||faceDraft.length>0||Boolean(triangulationError)} onClick={openExhibition}>在 RoomBoy 展览馆查看</button>
   <div className="topo-header-actions" role="group" aria-label="编辑历史">
     <button className={btn} disabled={!past.length||draftDirty||faceDraft.length>0} onClick={undoMesh} title="Ctrl+Z">撤销</button>
@@ -386,7 +389,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     aria-label={sceneEdit?'关闭场景顶点编辑':'关闭顶点参考对照'} title="关闭">×</button>
 </header>
   <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row"><div className="topo-viewport flex min-h-[280px] min-w-0 flex-1 flex-col overflow-hidden p-2 lg:min-h-0 lg:p-3">
-   {sceneEdit && projectSpatialView ? spatialPreview : <>
+   {geometry&&calibrationMode ? <div className="min-h-0 flex-1 overflow-auto"><CalibrationWorkbench mesh={geometry} selected={selected} onSelect={id=>setSelected(id)} onFit={(id,v)=>{remember();update(id,v)}}/></div> : sceneEdit && projectSpatialView ? spatialPreview : <>
    <div className="mb-2 flex flex-wrap gap-2">{views.map(v=><button key={v.id} className={btn+(view===v.id?' !border-blue-400 !bg-blue-900':'')} onClick={()=>{setView(v.id);setSelected(null)}} aria-pressed={view===v.id}>{v.label}</button>)}</div>
    <div className="mb-2 flex flex-wrap items-center gap-2">{([['select','选择/移动'],['point','放置顶点'],['face','连接成面']] as const).map(([id,label])=><button key={id} className={btn+(mode===id?' !border-blue-400 !bg-blue-900':'')} disabled={!geometry||(faceDraft.length>0&&id!=='face')} onClick={()=>{setMode(id)}} aria-pressed={mode===id}>{label}</button>)}{mode==='select'&&<label>拖动约束 <select aria-label="拖动约束" className="bg-neutral-800 p-1" value={constraint} onChange={e=>setConstraint(e.target.value as typeof constraint)}><option value="both">横竖均可</option><option value="horizontal">仅水平</option><option value="vertical">仅垂直</option></select></label>}{mode==='point'&&<label>隐藏轴坐标（{view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）<input aria-label={`顶点 新顶点隐藏轴坐标（${view==='side'?'X':view==='top'||view==='bottom'?'Y':'Z'}）`} className="ml-2 w-24 bg-neutral-800 p-1" type="text" inputMode="decimal" data-trace-draft="true" data-dirty={depthText!==String(depth)} value={depthText} onChange={e=>{setDepthText(e.target.value);setDraftDirty(e.target.value!==String(depth))}} onBlur={()=>{const n=Number(depthText);if(depthText.trim()!==''&&Number.isFinite(n)){setDepth(n);setDepthText(String(n));setDraftDirty(false)}else setError('隐藏轴坐标无效，请输入有限数字后再放点')}}/></label>}{mode==='face'&&<><span>待连接：{faceDraft.join(' → ')||'无'}（尚未保存）</span><button className={btn} disabled={selected===null||faceDraft.includes(selected)} onClick={()=>selected!==null&&setFaceDraft(old=>[...old,selected])}>添加选中点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft(old=>old.slice(0,-1))}>撤销上一个点</button><button className={btn} disabled={!faceDraft.length} onClick={()=>setFaceDraft([])}>清空待连接</button><button className={btn} disabled={faceDraft.length<3} onClick={finishFace}>完成面</button></>}</div><div className="min-h-[300px] flex-1 overflow-auto bg-neutral-800"><svg ref={svg} onPointerDown={canvasPoint} viewBox="0 0 1000 1000" className="mx-auto block h-full max-h-[min(80vh,900px)] w-full touch-none select-none" onPointerMove={pointer} onPointerUp={()=>setDrag(false)} onPointerCancel={()=>setDrag(false)}><defs><clipPath id="trace-crop"><rect width="1000" height="1000"/></clipPath></defs><rect width="1000" height="1000" fill="#e9e9e9"/>{image&&<g clipPath="url(#trace-crop)" opacity={opacity}><image href={image} x={grid?-(cell%3)*1000:0} y={grid?-Math.floor(cell/3)*1000:0} width={grid?3000:1000} height={grid?3000:1000} preserveAspectRatio="xMidYMid meet"/></g>}
     {geometry&&<g>{edges.map(([a,b])=>{const A=screen(geometry.vertices[a]),B=screen(geometry.vertices[b]),key=a<b?`${a}:${b}`:`${b}:${a}`,quad=edgeToQuad.get(key),active=!!selectedLoopEdge&&key===(selectedLoopEdge[0]<selectedLoopEdge[1]?`${selectedLoopEdge[0]}:${selectedLoopEdge[1]}`:`${selectedLoopEdge[1]}:${selectedLoopEdge[0]}`);return <line key={`${a}-${b}`} x1={A[0]} y1={A[1]} x2={B[0]} y2={B[1]} stroke={active?'#00a4e4':'#ff791a'} strokeWidth={active?7:5} className={quad?'cursor-crosshair':''} onPointerDown={e=>{if(!quad||mode!=='select')return;e.stopPropagation();chooseFace(quad.face);setSelectedEdgeSlot(quad.slot);setToolPanel('topology');setLoopInfo('')}}/>})}{geometry.vertices.map((p,i)=>{if(!showAll&&!visible.has(i)&&selected!==i)return null;const [x,y]=screen(p);return <g key={i} onPointerDown={e=>{e.stopPropagation();dragRecorded.current=false;if(mode==='face'){setSelected(i);setFaceDraft(old=>old.includes(i)||old.length>=64?old:[...old,i])}else if(mode==='select'){e.currentTarget.setPointerCapture(e.pointerId);setSelected(i);setSelectionExpanded(true);setDrag(true)}}}><circle cx={x} cy={y} r={selected===i?8:5} fill={selected===i?'#ed2d2d':'#0964ef'} stroke="white" strokeWidth="1.5"/>{showLabels&&<text x={x+7} y={y-6} fontSize="15" fill="#132d65" stroke="white" strokeWidth=".8" paintOrder="stroke">{i}</text>}</g>})}</g>}</svg></div>
