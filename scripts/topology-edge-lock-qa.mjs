@@ -39,7 +39,7 @@ try{
  await slide.locator('summary').click();
  const target=dialog.getByLabel('滑动目标点');
  await target.selectOption({index:1});
- await dialog.getByLabel('沿边滑动比例').fill('0.25');
+ assert.equal(await dialog.getByLabel('沿边滑动比例').inputValue(),'0.25');
  const view=dialog.getByLabel('3D 旋转预览');
  const snapshot=async(name)=>{
   const canvas=view.locator('canvas');await canvas.waitFor();
