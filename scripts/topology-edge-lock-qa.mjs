@@ -33,8 +33,8 @@ try{
  const selected=dialog.getByLabel('选择顶点编号');
  await selected.fill('0');
  await dialog.getByText('顶点 #0 · 精确坐标',{exact:false}).waitFor();
- const locks=dialog.locator('details',{has:dialog.locator('summary',{hasText:'区域锁定'})});
- const slide=dialog.locator('details',{has:dialog.locator('summary',{hasText:'顶点沿边滑动'})});
+ const locks=dialog.locator('summary').filter({hasText:'区域锁定'}).locator('..');
+ const slide=dialog.locator('summary').filter({hasText:'顶点沿边滑动'}).locator('..');
  await locks.locator('summary').click();
  await slide.locator('summary').click();
  const target=dialog.getByLabel('滑动目标点');
