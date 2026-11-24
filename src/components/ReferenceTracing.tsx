@@ -98,7 +98,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  },[active]);
  const [showCage,setShowCage]=useState(!Boolean(sceneEdit?.mesh.faceColors?.length));
  const [extrudeDistance,setExtrudeDistance]=useState(.2);
- const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'>(()=>sceneEdit?.mesh.faceColors?.length?'paint':'topology');
+ const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'|'reference'>(()=>sceneEdit?.mesh.faceColors?.length?'paint':'topology');
  const [paintColor,setPaintColor]=useState<string>(RUBIK_FACE_COLORS.right);
  const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
@@ -164,6 +164,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    selectedFace!==null?`面 #${selectedFace}`:
    selected!==null?`顶点 #${selected}`:'未选择元素';
  const tabDetails={
+   reference:'上传和调整独立三维参考平面',
    topology:'添加与分割边线 · 先选择四边面的一条边',
    model:'移动顶点，或对选中控制面执行内插与挤出',
    paint:'选择一个或多个控制面，统一设置颜色',
@@ -392,7 +393,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
   <summary className="cursor-pointer font-medium text-neutral-200">参考图与正交视图参数</summary>
   <div className="mt-3 space-y-2"><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></div></details>}
-  {referencePanel}{geometry?<><section className="topo-inspector-card topo-selection-card text-sm space-y-2">
+  {geometry?<><section className="topo-inspector-card topo-selection-card text-sm space-y-2">
   <div className="topo-inspector-heading">
     <div className="min-w-0">
       <strong>当前选择</strong>
@@ -450,7 +451,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       onClick={()=>setInspectorExpanded(v=>!v)}>{inspectorExpanded?'返回画布布局':'展开工具区'}</button>
   </div>
   <div className="topo-tool-tabs" role="group" aria-label="建模工具分类">
-    {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查']] as const).map(([id,label],i)=>
+    {([['topology','布线'],['model','塑形'],['paint','配色'],['inspect','检查'],['reference','参考图']] as const).map(([id,label],i)=>
       <button key={id} aria-label={label} aria-pressed={toolPanel===id} className="topo-tab"
         onClick={()=>{setToolPanel(id);setLoopInfo('');if(id==='topology'||id==='model')setShowCage(true);if(id==='paint')setShowCage(false)}}>
         <span className="topo-tab-number" aria-hidden="true">{String(i+1).padStart(2,'0')}</span>{label}
@@ -458,7 +459,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>
   <div ref={toolScrollRef} className="topo-tool-content" data-topology-scroll="true" tabIndex={0} aria-label="当前工具参数">
     <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
-  {toolPanel==='topology'&&<div className="space-y-3">
+  {toolPanel==='reference'&&referencePanel}
+   {toolPanel==='topology'&&<div className="space-y-3">
     {isBaseBox&&<details className="rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
       <summary className="cursor-pointer text-xs font-semibold text-amber-200">快捷示例 · 3×3 魔方环切</summary>
       <div className="mt-3 space-y-2">
