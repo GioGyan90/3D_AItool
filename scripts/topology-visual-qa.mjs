@@ -132,6 +132,21 @@ try{
   await dialog.getByRole('button',{name:'返回建模',exact:true}).click();
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   await counts(8,6);
+  await dialog.getByRole('button',{name:'正侧校准',exact:true}).click();
+  await calibration.getByLabel('校准顶点编号').fill('0');
+  assert.equal(await calibration.locator('image').count(),2,'reference images must survive mode switching');
+  await calibration.getByRole('button',{name:'标记固定基准点',exact:true}).click();
+  const board=calibration.getByLabel('正面校准画板');
+  for(const [id,x,y] of [[0,.30,.35],[1,.65,.70]]){
+    await calibration.getByLabel('校准顶点编号').fill(String(id));
+    const bounds=await board.boundingBox();
+    await board.click({position:{x:bounds.width*x,y:bounds.height*y}});
+  }
+  await calibration.getByRole('button',{name:'自动标定正面（2点）',exact:true}).click();
+  await calibration.getByText(/基准 RMS 0\.00 px/).waitFor();
+  await calibration.screenshot({path:folder+'/reference-anchor-fit.png'});
+  await dialog.getByRole('button',{name:'返回建模',exact:true}).click();
+  notes.checks.push('Reference anchors, independent calibration and mode-switch retention');
   notes.checks.push('Paired reference target fitting and undo');
   notes.checks.push('Spatial references: upload two PNGs, canvas visibility and transform differences, side preset, ring cut/undo preserves reference independence, remove both');
   await counts(8,6);
@@ -303,7 +318,7 @@ try{
   }
   const previousPrecision=dialog.getByRole('button',{name:'收起精确选择'});
   if(await previousPrecision.count())await previousPrecision.click();
-  const projectedVertex=dialog.locator('svg[viewBox="0 0 1000 1000"] circle').first();
+  const projectedVertex=dialog.locator('svg[viewBox="0 0 1000 1000"]:visible circle').first();
   await projectedVertex.click();
   await dialog.getByRole('button',{name:'收起精确选择'}).waitFor();
   notes.checks.push('orthographic vertex pick automatically reveals XYZ precision fields');
