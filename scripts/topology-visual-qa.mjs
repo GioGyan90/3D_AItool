@@ -69,7 +69,6 @@ try{
   // Compare actual WebGL canvas pixels, not just the visibility of UI controls.
   await counts(8,6);
   await dialog.getByRole('button',{name:'参考图',exact:true}).click();
-  await dialog.getByText('空间参考图 · 0',{exact:true}).click();
   const png=await page.evaluate(()=>{
     const c=document.createElement('canvas');c.width=128;c.height=96;
     const ctx=c.getContext('2d');ctx.fillStyle='#ea19b7';ctx.fillRect(0,0,128,96);
@@ -115,8 +114,25 @@ try{
   await dialog.getByRole('button',{name:'参考图',exact:true}).click();
   await dialog.getByRole('button',{name:'移除当前参考图'}).click();
   await dialog.getByRole('button',{name:'移除当前参考图'}).click();
-  await dialog.getByText('空间参考图 · 0',{exact:true}).click();
+  await dialog.getByText('空间参考图 · 0',{exact:true}).waitFor();
   await dialog.getByRole('button',{name:'布线',exact:true}).click();
+  await dialog.getByRole('button',{name:'正侧校准',exact:true}).click();
+  const calibration=dialog.getByRole('region',{name:'正侧双视图校准'});
+  await calibration.getByLabel('上传校准正面图').setInputFiles({name:'front.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await calibration.getByLabel('上传校准侧面图').setInputFiles({name:'side.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await calibration.getByLabel('校准顶点编号').fill('0');
+  await calibration.getByRole('button',{name:'标记目标位置'}).click();
+  for(const label of ['正面校准画板','侧面校准画板']){
+    const svg=calibration.getByLabel(label);const box=await svg.boundingBox();
+    await svg.click({position:{x:box.width*.40,y:box.height*.60}});
+  }
+  await calibration.getByRole('button',{name:'按目标校准顶点'}).click();
+  await calibration.getByText(/偏差 0\.00 px/).first().waitFor();
+  await calibration.screenshot({path:folder+'/reference-calibration.png'});
+  await dialog.getByRole('button',{name:'返回建模',exact:true}).click();
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  await counts(8,6);
+  notes.checks.push('Paired reference target fitting and undo');
   notes.checks.push('Spatial references: upload two PNGs, canvas visibility and transform differences, side preset, ring cut/undo preserves reference independence, remove both');
   await counts(8,6);
   assert.equal(await dialog.getByRole('button',{name:'布线',exact:true}).getAttribute('aria-pressed'),'true');
