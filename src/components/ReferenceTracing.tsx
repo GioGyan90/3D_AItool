@@ -2,7 +2,7 @@ import React, {useEffect, useMemo, useRef, useState} from 'react';
 import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
-import {TracePreview} from './TracePreview';
+import {TracePreview,type SpatialReference} from './TracePreview';
 import {triangulateFaces} from './traceGeometry';
 import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
@@ -38,6 +38,45 @@ function CoordinateInput({axis,value,onCommit,onDraft}:{axis:string,value:number
 
 export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProps){
  const [projectSpatialView, setProjectSpatialView] = useState(true);
+ const [references,setReferences]=useState<SpatialReference[]>([]);
+ const [referenceId,setReferenceId]=useState('');
+ const [referenceError,setReferenceError]=useState('');
+ const [referenceLoading,setReferenceLoading]=useState(false);
+ const refInputBusy=useRef(false);
+ const currentReference=references.find(p=>p.id===referenceId);
+ const changeReference=(patch:Partial<SpatialReference>)=>setReferences(old=>old.map(p=>p.id===referenceId?{...p,...patch}:p));
+ const addReference=async(e:React.ChangeEvent<HTMLInputElement>)=>{
+   const input=e.currentTarget,file=input.files?.[0];input.value='';
+   if(!file||refInputBusy.current)return;
+   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){setReferenceError('仅支持 5 MB 以内 PNG、JPEG、WebP');return}
+   if(references.length>=6){setReferenceError('最多同时使用 6 张参考图');return}
+   refInputBusy.current=true;setReferenceLoading(true);setReferenceError('');
+   try{
+     const url=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error('读取失败'));reader.readAsDataURL(file)});
+     const aspect=await new Promise<number>((resolve,reject)=>{const img=new Image();img.onload=()=>img.naturalWidth&&img.naturalHeight?resolve(img.naturalWidth/img.naturalHeight):reject(Error('无效尺寸'));img.onerror=()=>reject(Error('图片无法解码'));img.src=url});
+     const id=crypto.randomUUID();
+     setReferences(old=>[...old,{id,name:file.name,url,aspect,position:[0,0,-.6],rotation:[0,0,0],width:Math.max(1,aspect),opacity:.55,visible:true,overlay:false}]);
+     setReferenceId(id);
+   }catch(err){setReferenceError(String(err))}finally{refInputBusy.current=false;setReferenceLoading(false)}
+ };
+ const referencePanel=<details className="topo-inspector-card space-y-2">
+   <summary className="cursor-pointer font-semibold">空间参考图 · {references.length}</summary>
+   <p className="topo-helptext">独立辅助平面，仅在 3D 编辑中显示；不会参与选点、布线或 GLB 导出。</p>
+   <label className={btn+' inline-block cursor-pointer'}>上传空间参考图<input type="file" aria-label="上传空间参考图" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={referenceLoading||references.length>=6} onChange={addReference}/></label>
+   {referenceError&&<p role="alert" className="text-amber-300">{referenceError}</p>}
+   {references.length>0&&<select aria-label="当前空间参考图" className="w-full bg-neutral-800 p-2" value={referenceId} onChange={e=>setReferenceId(e.target.value)}>{references.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select>}
+   {currentReference&&<>
+     <div className="flex flex-wrap gap-1">{([
+       ['正面',[0,0,-.6],[0,0,0]],['侧面',[-.6,0,0],[0,90,0]],['背面',[0,0,.6],[0,180,0]],['俯视',[0,-.6,0],[-90,0,0]],['仰视',[0,.6,0],[90,0,0]]
+     ] as [string,V,V][]).map(([label,position,rotation])=><button key={label} className={btn} onClick={()=>changeReference({position,rotation})}>{label}参考</button>)}</div>
+     {(['position','rotation'] as const).map(key=><div key={key}><p>{key==='position'?'位置 XYZ':'旋转 XYZ（度）'}</p><div className="grid grid-cols-3 gap-1">{(['X','Y','Z'] as const).map((axis,i)=><label key={axis}>{axis}<input aria-label={'参考图 '+(key==='position'?'位置 ':'旋转 ')+axis} className="w-full bg-neutral-800 p-1" type="number" step={key==='position'?.05:5} value={currentReference[key][i]} onChange={e=>{const n=e.target.valueAsNumber;if(Number.isFinite(n)){const v=[...currentReference[key]] as V;v[i]=n;changeReference({[key]:v})}}}/></label>)}</div></div>)}
+     <label className="block">宽度（保持图片比例）<input aria-label="参考图宽度" className="w-full bg-neutral-800 p-1" type="number" min=".01" max="100" step=".05" value={currentReference.width} onChange={e=>{const n=e.target.valueAsNumber;if(n>=.01&&n<=100)changeReference({width:n})}}/></label>
+     <label className="block">透明度 {Math.round(currentReference.opacity*100)}%<input aria-label="空间参考图透明度" className="w-full" type="range" min="0" max="1" step=".01" value={currentReference.opacity} onChange={e=>changeReference({opacity:+e.target.value})}/></label>
+     <div className="flex flex-wrap gap-2"><label><input type="checkbox" checked={currentReference.visible} onChange={e=>changeReference({visible:e.target.checked})}/> 显示</label><label><input type="checkbox" checked={currentReference.overlay} onChange={e=>changeReference({overlay:e.target.checked})}/> 前景叠加</label></div>
+     <button className={btn} onClick={()=>{const remaining=references.filter(p=>p.id!==referenceId);setReferences(remaining);setReferenceId(remaining[0]?.id??'')}}>移除当前参考图</button>
+   </>}
+   <p className="topo-helptext">本轮参考图为临时工作区内容，关闭编辑器后不保留。</p>
+ </details>;
  // An editor for a scene layer is mounted per session and edits its own copy.
  const [geometry, setGeometry] = useState<Geometry | null>(() => sceneEdit ? readGeometry(sceneEdit.mesh) : null);
  const [past,setPast]=useState<MeshHistory[]>([]);
@@ -279,7 +318,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        {!sceneEdit && <button className={btn} onClick={()=>setPreviewLarge(value=>!value)} aria-pressed={previewLarge}>
          {previewLarge?'恢复小预览':'放大 3D 编辑'}</button>}
        <span className="topo-camera-label">观察角度</span>
-       {([['front','正面'],['back','背面'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
+       {([['front','正面'],['back','背面'],['side','侧面'],['top','俯视'],['bottom','仰视'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
          <button key={direction} className={btn} onClick={()=>{setPreviewDirection(direction);setCameraRevision(n=>n+1)}}
            aria-pressed={previewDirection===direction} title={`切换到${label}机位`}>{label}</button>
        ))}
@@ -292,7 +331,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        </div>
      </div>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+       {active && <TracePreview references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
@@ -353,7 +392,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}{referenceDirty&&<button className={btn} onClick={undoReference}>撤销参考更改</button>}{!(sceneEdit && projectSpatialView) && <details className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-3 text-xs text-neutral-300">
   <summary className="cursor-pointer font-medium text-neutral-200">参考图与正交视图参数</summary>
   <div className="mt-3 space-y-2"><p className="text-neutral-300">正交投影的顶点会覆盖在参考图上。拖动只修改当前视图的两个坐标，第三个坐标保留。</p><label className="flex gap-2"><input type="checkbox" checked={grid} disabled={!imageSquare} onChange={e=>{setGrid(e.target.checked);setReferenceDirty(true)}}/>参考图为 3×3 九宫格</label><label className="flex gap-2"><input type="checkbox" checked={showAll} onChange={e=>{setShowAll(e.target.checked);setReferenceDirty(true)}}/>前后点线同时显示</label><label className="flex gap-2"><input type="checkbox" checked={showLabels} onChange={e=>setShowLabels(e.target.checked)}/>显示顶点编号</label><label className="block">参考透明度 <input className="w-full" type="range" min="0" max="1" step=".01" value={opacity} onChange={e=>{setOpacity(+e.target.value);setReferenceDirty(true)}}/></label><label className="block">模型比例 <input className="w-full" type="range" min="50" max="700" value={scale} onChange={e=>setScale(+e.target.value)}/></label><div className="grid grid-cols-2 gap-2">{[['水平中心',cx,setCx],['垂直中心',cy,setCy]].map(([label,val,setter])=><label key={String(label)}>{String(label)}<input className="w-full bg-neutral-800 p-1" type="number" value={val as number} onChange={e=>(setter as (v:number)=>void)(+e.target.value)}/></label>)}</div></div></details>}
-  {geometry?<><section className="topo-inspector-card topo-selection-card text-sm space-y-2">
+  {referencePanel}{geometry?<><section className="topo-inspector-card topo-selection-card text-sm space-y-2">
   <div className="topo-inspector-heading">
     <div className="min-w-0">
       <strong>当前选择</strong>
