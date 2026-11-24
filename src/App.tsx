@@ -12,7 +12,7 @@ import { BoneRigEditor } from './components/BoneRigEditor';
 import { SceneNode, NodeType, PropertyTrack, AnimationData, Keyframe, ControlMesh } from './types';
 import { buildEditableGeometry, parseStudioProject } from './studioProject';
 import { createPrimitiveControlMesh } from './components/meshTopology';
-import {createRubikControlMesh} from './components/rubikPreset';
+
 import type { StudioProject } from './studioProject';
 import { Timeline } from './components/Timeline';
 import { CodeEditor } from './components/CodeEditor';
@@ -1883,24 +1883,6 @@ return mesh;` : undefined,
     }
   };
 
-  const addRubikExample = () => {
-    try {
-      const mesh=createRubikControlMesh();
-      const initial=selectedNode?.position??[0,.5,0];
-      const newId=crypto.randomUUID();
-      const created:SceneNode={
-        id:newId,name:'魔方 · 单立方体六次环切',type:'csg',parentId:null,
-        position:[initial[0]+1.75,initial[1],initial[2]],
-        rotation:[0,0,0],scale:[1,1,1],color:'#ffffff',
-        parameters:{},material:{roughness:.45},visible:true,
-        controlMesh:mesh,geometryData:buildEditableGeometry(mesh),
-      };
-      const next=[...nodes,created];
-      setNodes(next);setSelectedIds([newId]);pushHistory(next,[newId]);
-      setEditingControlMeshId(newId);
-    }catch(cause){setProjectError('魔方生成失败：'+String(cause instanceof Error?cause.message:cause))}
-  };
-
   const startTopologyModeling = () => {
     if (!selectedNode) {
       const mesh = createPrimitiveControlMesh('box');
@@ -2166,7 +2148,6 @@ return mesh;` : undefined,
               {selectedNode?.controlMesh ? '编辑顶点' : '顶点对照'}
             </button>
             <button onClick={startTopologyModeling} className="bg-sky-950/70 hover:bg-sky-900 text-sky-200 border border-sky-700/50 px-3 py-1 rounded text-[11px] font-bold tracking-wider" title="从基础形状开始，沿四边面插入环线并移动顶点">布线建模</button>
-            <button onClick={addRubikExample} className="bg-amber-950/60 hover:bg-amber-900 text-amber-200 border border-amber-700/50 px-3 py-1 rounded text-[11px] font-bold tracking-wider" title="由单个立方体执行六次真实环切，生成 56 顶点和 54 控制面的彩色魔方">魔方示例</button>
             <label className="bg-white/5 hover:bg-white/10 text-[#e0e0e0] px-3 py-1 rounded text-[11px] font-bold tracking-wider transition-colors cursor-pointer flex items-center gap-1.5">
               <Upload className="w-3 h-3" />
               IMPORT

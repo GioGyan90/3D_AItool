@@ -420,11 +420,13 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   <div ref={toolScrollRef} className="topo-tool-content" data-topology-scroll="true" tabIndex={0} aria-label="当前工具参数">
     <p className="topo-tool-description">{tabDetails[toolPanel]}</p>
   {toolPanel==='topology'&&<div className="space-y-3">
-    {isBaseBox&&<div className="space-y-2 rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
-      <div className="topo-tool-label">入门案例 · 从立方体开始</div>
-      <p className="topo-helptext">六次真实环切，生成共享顶点的 3×3 魔方网格。</p>
-      <button className={btn+' w-full'} onClick={makeRubik} disabled={draftDirty||faceDraft.length>0}>六次环切 · 生成魔方</button>
-    </div>}
+    {isBaseBox&&<details className="rounded-lg border border-amber-800/40 bg-amber-950/20 p-3">
+      <summary className="cursor-pointer text-xs font-semibold text-amber-200">快捷示例 · 3×3 魔方环切</summary>
+      <div className="mt-3 space-y-2">
+        <p className="topo-helptext">在基础立方体上执行六次真实环切，生成共享顶点的 3×3 网格。</p>
+        <button className={btn+' w-full'} onClick={makeRubik} disabled={draftDirty||faceDraft.length>0}>六次环切 · 生成魔方</button>
+      </div>
+    </details>}
     <p className="topo-helptext">点击橙色边线或输入面编号，再调整切割比例。</p>
     {selectedLoopFace?.length===4?
       <label className="block text-xs">起始面 #{selectedFace} · 边
