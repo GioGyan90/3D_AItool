@@ -3,6 +3,7 @@ import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview,type SpatialReference} from './TracePreview';
+import {SurfaceQualityPanel} from './SurfaceQualityPanel';
 import {CalibrationWorkbench} from './CalibrationWorkbench';
 import {ProfileCalibrationPanel} from './ProfileCalibrationPanel';
 import {assertRegionProtected,slideOnEdge} from './regionEditing';
@@ -99,6 +100,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  },[geometry,loopChain,loopGuide,ringSlideFraction,loopMirror,loopClosed]);
 
  const [past,setPast]=useState<MeshHistory[]>([]);
+ const [optimizedTriangles,setOptimizedTriangles]=useState(false);
+ const [qualityColors,setQualityColors]=useState<string[]|undefined>();
  const [future,setFuture]=useState<MeshHistory[]>([]);
  const dragRecorded=useRef(false);
  const [insetFraction,setInsetFraction]=useState(.25);
@@ -363,7 +366,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        </div>
      </div>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+       {active && <TracePreview optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
@@ -652,6 +655,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <p className="mt-1">{meshQuality?.error||`开放边：${meshQuality?.boundaryEdges??'—'} · 已着色面：${geometry.faceColors?.length??0} · 修改顶点：${edited.length}`}</p>
     </div>
     <p className="topo-helptext">检查共享边、面绕序与非流形结构。可旋转三维画面或打开 X-Ray 检查背面。</p>
+    <SurfaceQualityPanel mesh={geometry} onFace={chooseFace} onVertex={id=>{clearFaces();setSelected(id);setShowCage(true)}} optimized={optimizedTriangles} onOptimize={setOptimizedTriangles} onColors={setQualityColors}/>
     <details className="rounded-lg border border-neutral-700 p-2 text-xs text-slate-400">
       <summary className="cursor-pointer">尚未支持的高级功能</summary>
       <p className="topo-helptext mt-2">后续包括真实边倒角、任意多边面自由刀切、桥接和可转动魔方层组。</p>
