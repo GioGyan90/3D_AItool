@@ -276,6 +276,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const deleteVertex=()=>{if(!geometry||selected===null||faceDraft.length>0||geometry.faces.some(f=>f.includes(selected)))return;const oldCount=geometry.vertices.length;remember();setGeometry(g=>g?{...g,vertices:g.vertices.filter((_,i)=>i!==selected),faces:g.faces.map(f=>f.map(i=>i>selected?i-1:i))}:g);setSourceMetadata(old=>{const m=old.meta;if(!m||typeof m!=='object')return old;const obj=m as Record<string,unknown>,tags=obj.tags;if(!Array.isArray(tags)||tags.length>oldCount)return old;return {...old,meta:{...obj,tags:tags.filter((_,i)=>i!==selected)}}});setEdited(old=>old.filter(i=>i!==selected).map(i=>i>selected?i-1:i));setSelected(null);setDirty(true)};
  const deleteFace=()=>{if(!geometry||faceDraft.length>0||selectedFace===null||selectedFace<0||selectedFace>=geometry.faces.length)return;remember();setGeometry(g=>g?{...g,faces:g.faces.filter((_,i)=>i!==selectedFace),...(g.faceColors?{faceColors:g.faceColors.filter((_,i)=>i!==selectedFace)}:{})}:g);setSelectedFace(null);setSelectedFaces([]);setDirty(true)};
  const save=()=>{if(!geometry)return;download(new Blob([JSON.stringify({...sourceMetadata,...geometry,reference:{image,grid,opacity,calibration,showAll,editedVertexIds:edited}},null,2)],{type:'application/json'}),'vertex-cage.json');setDirty(false);setReferenceDirty(false)};
+ const openExhibition=()=>{
+   if(!geometry?.faces.length||draftDirty||faceDraft.length||triangulationError)return;
+   const url='https://giogyan90.github.io/RoomBoy/?view=topology-exhibition';
+   const bytes=new TextEncoder().encode(JSON.stringify(geometry));
+   if(bytes.length>100000){download(new Blob([JSON.stringify(geometry)],{type:'application/json'}),'exhibition-mesh.json');window.open(url,'_blank','noopener,noreferrer');setLoopInfo('模型较大，已下载 JSON，请在展览馆导入。');return;}
+   const encoded=btoa(Array.from(bytes,n=>String.fromCharCode(n)).join(''));
+   window.open(url+'#'+new URLSearchParams({mesh:encoded}).toString(),'_blank','noopener,noreferrer');
+ };
  const exportGlb=()=>{
    if(!geometry||!geometry.faces.length)return;
    let geo:THREE.BufferGeometry|undefined,exportGeometry:THREE.BufferGeometry|undefined;
@@ -367,6 +375,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <button className={btn} disabled={!geometry} onClick={save}>保存顶点 JSON</button>
     <button className={btn} disabled={!geometry?.faces.length} onClick={exportGlb}>导出 GLB</button>
   </div>}
+  <button className={btn} disabled={!geometry?.faces.length||draftDirty||faceDraft.length>0||Boolean(triangulationError)} onClick={openExhibition}>在 RoomBoy 展览馆查看</button>
   <div className="topo-header-actions" role="group" aria-label="编辑历史">
     <button className={btn} disabled={!past.length||draftDirty||faceDraft.length>0} onClick={undoMesh} title="Ctrl+Z">撤销</button>
     <button className={btn} disabled={!future.length||draftDirty||faceDraft.length>0} onClick={redoMesh} title="Ctrl+Shift+Z / Ctrl+Y">重做</button>
