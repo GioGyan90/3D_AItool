@@ -25,6 +25,7 @@ function ReferencePlane({plane}:{plane:SpatialReference}){
 }
 type Props={
   references?:SpatialReference[];
+  optimizedTriangles?:boolean; vertexColors?:string[];
   data:Data; direction:string; selected:number|null;
   selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
@@ -33,7 +34,7 @@ type Props={
 };
 const keyOf=(a:number,b:number)=>a<b?`${a}:${b}`:`${b}:${a}`;
 
-function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,showCage=true,orbit}:
+function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,onMove,onSelectFace,onSelectEdge,onStartMove,xray=false,showCage=true,optimizedTriangles=false,vertexColors,orbit}:
   Omit<Props,'direction'>&{orbit:React.MutableRefObject<any>}){
   const [handle,setHandle]=useState<THREE.Group|null>(null);
   const dragging=useRef(false),transform=useRef<any>(null),dragIndex=useRef<number|null>(null);
@@ -43,7 +44,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
     const pos=data.vertices.flat(),edgeSet=new Map<string,[number,number]>();
     const edgeOwners=new Map<string,{face:number;slot:number}>();
     let idx:number[]=[];
-    try{idx=triangulateFaces(data.vertices,data.faces)}catch{}
+    try{idx=triangulateFaces(data.vertices,data.faces,optimizedTriangles)}catch{}
     data.faces.forEach((face,fi)=>face.forEach((a,slot)=>{
       const b=face[(slot+1)%face.length],key=keyOf(a,b);
       if(!edgeSet.has(key))edgeSet.set(key,[a,b]);
@@ -58,13 +59,14 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
     lines.setAttribute('position',new THREE.Float32BufferAttribute(edgePos,3));
     const points=new THREE.BufferGeometry();
     points.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    if(vertexColors?.length===data.vertices.length)points.setAttribute('color',new THREE.Float32BufferAttribute(vertexColors.flatMap(c=>new THREE.Color(c).toArray()),3));
     const stickers=buildPaintStickerGeometry(data);
     const faceGeo=new THREE.BufferGeometry();
     const visibleSelection=(selectedFaces?.length ? selectedFaces : selectedFace!=null ? [selectedFace] : [])
       .filter(i=>i>=0&&i<data.faces.length);
     if(visibleSelection.length){
       try{
-        const selectedIndices=triangulateFaces(data.vertices,visibleSelection.map(i=>data.faces[i]));
+        const selectedIndices=triangulateFaces(data.vertices,visibleSelection.map(i=>data.faces[i]),optimizedTriangles);
         faceGeo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
         faceGeo.setIndex(selectedIndices);
       }catch{/* Keep the editor responsive if a manual face is invalid. */}
@@ -75,7 +77,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
         new THREE.Vector3(...data.vertices[selectedEdge[1]])),
       1,.008,6,false):null;
     return {mesh,lines,points,stickers,faceGeo,selectedEdgeTube,edgeOwners};
-  },[data,selectedFace,selectedFaces,selectedEdge?.[0],selectedEdge?.[1]]);
+  },[data,selectedFace,selectedFaces,selectedEdge?.[0],selectedEdge?.[1],optimizedTriangles,vertexColors]);
   const faceForTriangle=useMemo(()=>data.faces.flatMap((f,i)=>Array(Math.max(0,f.length-2)).fill(i) as number[]),[data.faces]);
   useEffect(()=>()=>{mesh.dispose();lines.dispose();points.dispose();stickers.dispose();faceGeo.dispose();selectedEdgeTube?.dispose()},
     [mesh,lines,points,stickers,faceGeo,selectedEdgeTube]);
@@ -107,10 +109,10 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
     {showCage&&selectedEdgeTube&&<mesh geometry={selectedEdgeTube} raycast={()=>null}>
       <meshBasicMaterial color="#39e8ff" depthTest={false}/>
     </mesh>}
-    {showCage&&<points geometry={points} onPointerDown={e=>{
+    {(showCage||!!vertexColors)&&<points geometry={points} onPointerDown={e=>{
       e.stopPropagation();if(e.index===undefined||dragging.current||transform.current?.axis)return;
       onSelect(e.index);
-    }}><pointsMaterial color="#48a4ff" size={.045} sizeAttenuation depthTest={!xray} depthWrite={false}/></points>}
+    }}><pointsMaterial color={vertexColors?"#ffffff":"#48a4ff"} vertexColors={!!vertexColors} size={vertexColors?.length ? .065 : .045} sizeAttenuation depthTest={!xray&&!vertexColors} depthWrite={false}/></points>}
     {showCage&&current&&<group ref={setHandle} position={current}>
       <mesh><sphereGeometry args={[.027,10,10]}/><meshBasicMaterial color="#f6b72f" depthTest={false}/></mesh>
     </group>}
