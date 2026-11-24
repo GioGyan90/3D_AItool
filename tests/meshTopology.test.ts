@@ -310,3 +310,67 @@ test('edge slide keeps indices and respects protected vertices',()=>{
  assert.throws(()=>slideOnEdge(mesh,0,1,1));
  assert.throws(()=>assertRegionProtected(mesh,{...mesh,faces:[[0,1,2]]},[3]));
 });
+
+
+import {slideContinuousEdgeLoop} from '../src/components/loopSlide';
+test('a connected quad edge chain slides atomically toward either adjacent side',()=>{
+ const vertices=[] as [number,number,number][];
+ for(let y=0;y<3;y++)for(let x=0;x<3;x++)vertices.push([x-1,y,0]);
+ const faces:number[][]=[];
+ for(let y=0;y<2;y++)for(let x=0;x<2;x++){
+  const a=y*3+x;faces.push([a,a+1,a+4,a+3]);
+ }
+ const mesh={vertices,faces},snapshot=JSON.stringify(mesh);
+ const left=slideContinuousEdgeLoop(mesh,[1,4,7],0,.25);
+ assert.deepEqual(left.mesh.vertices[1],[-.25,0,0]);
+ assert.deepEqual(left.mesh.vertices[4],[-.25,1,0]);
+ assert.deepEqual(left.mesh.vertices[7],[-.25,2,0]);
+ assert.equal(left.report.movedVertices,3);
+ assert.ok(left.report.maxNormalDeviationDegrees<1e-5);
+ assert.ok(left.report.minFaceAreaRatio>0);
+ assert.deepEqual(left.mesh.faces,faces);
+ assert.equal(JSON.stringify(mesh),snapshot);
+ const right=slideContinuousEdgeLoop(mesh,[1,4,7],2,.5);
+ assert.deepEqual(right.mesh.vertices[4],[.5,1,0]);
+ assert.throws(()=>slideContinuousEdgeLoop(mesh,[1,7],0,.25),/环线/);
+ assert.throws(()=>slideContinuousEdgeLoop(mesh,[1,4,7],1,.25),/引导顶点/);
+ assert.throws(()=>slideContinuousEdgeLoop(mesh,[1,4,7],0,1),/比例/);
+ assert.throws(()=>assertRegionProtected(mesh,left.mesh,[4]),/锁定顶点/);
+});
+test('continuous loop guide can optionally mirror the paired half without index changes',()=>{
+ const vertices=[] as [number,number,number][];
+ for(let y=0;y<3;y++)for(let x=-2;x<=2;x++)vertices.push([x,y,0]);
+ const faces:number[][]=[];
+ for(let y=0;y<2;y++)for(let x=0;x<4;x++){
+  const a=y*5+x;faces.push([a,a+1,a+6,a+5]);
+ }
+ const mesh={vertices,faces};
+ const result=slideContinuousEdgeLoop(mesh,[1,6,11],0,.25,{mirrorX:true});
+ assert.equal(result.report.movedVertices,6);
+ for(const y of [0,1,2]){
+  assert.equal(result.mesh.vertices[y*5+1][0],-1.25);
+  assert.equal(result.mesh.vertices[y*5+3][0],1.25);
+ }
+ assert.deepEqual(result.mesh.faces,faces);
+ assert.throws(()=>slideContinuousEdgeLoop(mesh,[2,7,12],1,.2,{mirrorX:true}),/镜像后目标冲突/);
+});
+test('an actual inserted quad loop is closed and can slide without T-junctions',()=>{
+ const base=createPrimitiveControlMesh('box');
+ const mesh=insertQuadEdgeLoop(base,0,0,.5);
+ const ids=mesh.vertices.map((_,i)=>i).filter(i=>i>=base.vertices.length);
+ const neighbors=(v:number)=>[...new Set(mesh.faces.flatMap(f=>f.flatMap((a,i)=>a===v?[f[(i+1)%f.length],f[(i+f.length-1)%f.length]]:[])))].filter(i=>ids.includes(i));
+ const chain=[ids[0]];
+ let previous=-1;
+ while(chain.length<ids.length){
+  const next=neighbors(chain.at(-1)!).find(i=>i!==previous&&!chain.includes(i));
+  assert.notEqual(next,undefined);
+  previous=chain.at(-1)!;chain.push(next!);
+ }
+ assert.ok(neighbors(chain.at(-1)!).includes(chain[0]));
+ const guides=[...new Set(mesh.faces.flatMap(f=>f.flatMap((a,i)=>a===chain[0]?[f[(i+1)%f.length],f[(i+f.length-1)%f.length]]:[])))].filter(i=>!ids.includes(i));
+ const result=guides.map(guide=>{try{return slideContinuousEdgeLoop(mesh,chain,guide,.2,{closed:true})}catch{return null}}).find(Boolean);
+ assert.ok(result,'at least one valid adjacent quad strip should accept a closed loop');
+ checkClosed(result!.mesh);
+ assert.equal(result!.mesh.vertices.length,mesh.vertices.length);
+ assert.equal(result!.mesh.faces.length,mesh.faces.length);
+});
