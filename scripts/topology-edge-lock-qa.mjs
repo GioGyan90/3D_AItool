@@ -103,6 +103,22 @@ try{
  await dialog.getByText(/8 顶点 \/ 6 面/).first().waitFor();
  await snapshot('08-edge-chain-undo');
  report.checks.push('Guided edge-chain slide is undoable');
+ await dialog.getByRole('button',{name:'检查',exact:true}).click();
+ const quality=dialog.getByLabel('曲面质量诊断');
+ await quality.getByText('控制面平整度检测',{exact:true}).waitFor();
+ await quality.getByLabel('平整度阈值').fill('0.5');
+ await quality.getByLabel('曲率夹角阈值').fill('30');
+ await quality.getByText(/高转折共享边：/).waitFor();
+ await quality.getByRole('checkbox',{name:'启用四边面优化预览'}).check();
+ await quality.getByRole('button',{name:'记录当前版本为基准'}).click();
+ await quality.getByRole('checkbox',{name:'显示位移热力图'}).check();
+ await quality.getByText(/移动 0 点/).waitFor();
+ await snapshot('09-quality-baseline');
+ await dialog.getByRole('button',{name:'重做',exact:true}).click();
+ await quality.getByText(/移动 2 点/).waitFor();
+ await snapshot('10-displacement-heatmap');
+ report.checks.push('Surface quality panel, optimized triangulation and real displacement heatmap');
+
 
  assert.deepEqual(report.errors,[],'Browser JavaScript errors');
  console.log('EDGE_LOCK_ACCEPTANCE_SUCCESS',JSON.stringify(report));
