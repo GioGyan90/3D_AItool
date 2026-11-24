@@ -112,7 +112,7 @@
 }
 .topo-tool-tabs {
   position: relative;
-  display: grid; grid-template-columns: repeat(4,minmax(0,1fr));
+  display: grid; grid-template-columns: repeat(5,minmax(0,1fr));
   gap: 4px; background: #0a141e;
   border: 1px solid #263b4d;
   padding: 4px; border-radius: 10px;
@@ -336,4 +336,20 @@
   .topo-shell .topo-selection-card { padding: 8px 10px; }
   .topo-shell .topo-tools-panel { padding: 9px 10px 0; }
   .topo-shell .topo-tools-panel > .topo-inspector-heading { padding-bottom: 1px; }
+}
+
+/* Keep camera controls on a single scrollable line on narrow displays.
+   Preserve the measured viewport and independent inspector scrolling. */
+@media (max-width: 1023px) {
+  .topo-shell .topo-camera-bar { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .topo-shell .topo-camera-bar > * { flex-shrink: 0; }
+  .topo-shell .topo-camera-actions { flex-wrap: nowrap; margin-left: 0; }
+  .topo-shell .topo-stage-foot { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
+  .topo-shell .topo-stage-foot > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .topo-shell .topo-inspector { height: min(48dvh, 460px); max-height: min(48dvh, 460px) !important; }
+  .topo-shell .topo-inspector.is-expanded { height: 100dvh; max-height: 100dvh !important; }
+}
+@media (max-width: 520px) {
+  .topo-shell .topo-inspector { height: min(43dvh, 400px); max-height: min(43dvh, 400px) !important; }
+  .topo-shell .topo-inspector.is-expanded { height: 100dvh; max-height: 100dvh !important; }
 }
