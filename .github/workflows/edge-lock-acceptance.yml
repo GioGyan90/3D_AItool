@@ -6,6 +6,7 @@ on:
       - 'src/components/ReferenceTracing.tsx'
       - 'src/components/regionEditing.ts'
       - 'scripts/topology-edge-lock-qa.mjs'
+      - 'scripts/topology-profile-browser-qa.mjs'
       - '.github/workflows/edge-lock-acceptance.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +28,15 @@ jobs:
         run: npm install --no-save --no-package-lock playwright
       - name: Verify real UI region locking and edge sliding
         run: node scripts/topology-edge-lock-qa.mjs
+      - name: Validate profile scanner, joint edits and 3D before-after UI
+        run: node scripts/topology-profile-browser-qa.mjs
+      - name: Upload profile-calibration screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: topology-profile-acceptance
+          path: artifacts/topology-profile-browser/
+          retention-days: 14
       - name: Upload WebGL evidence
         if: always()
         uses: actions/upload-artifact@v4
