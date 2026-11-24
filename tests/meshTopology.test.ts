@@ -297,3 +297,16 @@ test('profile scanning respects slab connectivity and atomic profile edits prese
  assert.deepEqual(result.mesh.faces,mesh.faces);
  assert.throws(()=>calibrateProfiles(mesh,[j,{...j,bulge:.2}]));
 });
+
+import {assertRegionProtected,slideOnEdge} from '../src/components/regionEditing';
+test('edge slide keeps indices and respects protected vertices',()=>{
+ const mesh={vertices:[[0,0,0],[2,0,0],[2,2,0],[0,2,0]] as [number,number,number][],faces:[[0,1,2,3]]};
+ const next=slideOnEdge(mesh,0,1,.25);
+ assert.deepEqual(next.vertices[0],[.5,0,0]);assert.deepEqual(next.faces,mesh.faces);
+ assert.deepEqual(mesh.vertices[0],[0,0,0]);assert.deepEqual(next.vertices.slice(1),mesh.vertices.slice(1));
+ assert.doesNotThrow(()=>assertRegionProtected(mesh,next,[1,2]));
+ assert.throws(()=>assertRegionProtected(mesh,next,[0]));
+ assert.throws(()=>slideOnEdge(mesh,0,2,.25));
+ assert.throws(()=>slideOnEdge(mesh,0,1,1));
+ assert.throws(()=>assertRegionProtected(mesh,{...mesh,faces:[[0,1,2]]},[3]));
+});
