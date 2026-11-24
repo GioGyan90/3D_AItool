@@ -77,6 +77,29 @@ try{
  await dialog.getByText(/请先解锁再撤销/).waitFor();
  report.checks.push('Undo of a protected edit is refused explicitly');
  await snapshot('06-protected-undo');
+
+ // P1 acceptance: connected two-vertex edge chain with guide-side quad strip.
+ await locks.getByRole('button',{name:'解除全部锁定'}).click();
+ const ring=dialog.locator('summary').filter({hasText:'整条环线滑动'}).locator('..');
+ await selected.fill('4');
+ await ring.locator('summary').click();
+ await ring.getByRole('button',{name:'追加当前顶点'}).click();
+ await selected.fill('5');
+ await ring.getByRole('button',{name:'追加当前顶点'}).click();
+ await ring.getByText('有序链：#4 → #5').waitFor();
+ await ring.getByLabel('环线引导顶点编号').selectOption('7');
+ await ring.getByLabel('整条环线滑动比例').fill('0.25');
+ await ring.getByLabel('环线滑动预估偏差').waitFor();
+ await ring.getByRole('button',{name:'应用整条环线滑动'}).click();
+ await dialog.getByText('连续环线滑动完成').waitFor();
+ await dialog.getByText(/8 顶点 \/ 6 面/).first().waitFor();
+ await snapshot('07-open-edge-chain-slid');
+ report.checks.push('Real WebGL: open edge-chain guided slide, deviation preview and unchanged topology');
+ await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+ await dialog.getByText(/8 顶点 \/ 6 面/).first().waitFor();
+ await snapshot('08-edge-chain-undo');
+ report.checks.push('Guided edge-chain slide is undoable');
+
  assert.deepEqual(report.errors,[],'Browser JavaScript errors');
  console.log('EDGE_LOCK_ACCEPTANCE_SUCCESS',JSON.stringify(report));
 }finally{
