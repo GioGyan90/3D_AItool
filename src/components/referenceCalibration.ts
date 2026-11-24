@@ -19,3 +19,32 @@ export function fitLandmark(v:Vec3,l:Landmark,front:ImageCalibration,side:ImageC
 export function landmarkError(v:Vec3,p:[number,number],view:CalibrationView,c:ImageCalibration){
  const q=projectLandmark(v,view,c);return {dx:q[0]-p[0],dy:q[1]-p[1],pixels:Math.hypot(q[0]-p[0],q[1]-p[1])};
 }
+
+export type Anchor={vertex:number;pixel:[number,number]};
+// Least-squares similarity fit: translation, uniform scale and image-plane rotation.
+export function calibrateAnchors(vertices:Vec3[],view:CalibrationView,anchors:Anchor[],flip=false):ImageCalibration{
+ if(anchors.length<2)throw Error('至少需要两个已知对应点');
+ const pairs=anchors.map(a=>{const v=vertices[a.vertex];if(!v||!a.pixel.every(Number.isFinite))throw Error('无效标定点');return {x:(view==='front'?v[0]:v[2])*(flip?-1:1),y:-v[1],u:a.pixel[0],v:a.pixel[1]}});
+ const n=pairs.length,mean=(key:'x'|'y'|'u'|'v')=>pairs.reduce((s,p)=>s+p[key],0)/n;
+ const x=mean('x'),y=mean('y'),u=mean('u'),v=mean('v');
+ let den=0,dot=0,cross=0;
+ for(const p of pairs){const a=p.x-x,b=p.y-y,c=p.u-u,d=p.v-v;den+=a*a+b*b;dot+=a*c+b*d;cross+=a*d-b*c;}
+ if(den<1e-10)throw Error('标定点过于接近');
+ const A=dot/den,B=cross/den,scale=Math.hypot(A,B);
+ if(!Number.isFinite(scale)||scale<1e-6)throw Error('标定点无有效比例');
+ return {cx:u-A*x+B*y,cy:v-B*x-A*y,scale,rotation:Math.atan2(B,A)*180/Math.PI,flip};
+}
+export function edgeResidual(a:Vec3,b:Vec3,pa:[number,number],pb:[number,number],view:CalibrationView,c:ImageCalibration){
+ const u=projectLandmark(a,view,c),v=projectLandmark(b,view,c),dx=v[0]-u[0],dy=v[1]-u[1],tx=pb[0]-pa[0],ty=pb[1]-pa[1];
+ const length=Math.hypot(dx,dy),targetLength=Math.hypot(tx,ty);
+ return {length,targetLength,lengthError:length-targetLength,angleError:length>1e-8&&targetLength>1e-8?Math.atan2(Math.abs(dx*ty-dy*tx),dx*tx+dy*ty)*180/Math.PI:null};
+}
+// View direction is +Z for front and -X for side (nose points right).
+// Back-facing polygons are excluded by their Newell normal, independent of triangulation.
+export function facingEdges(vertices:Vec3[],faces:number[][],view:CalibrationView){
+ const edges=new Set<string>(),points=new Set<number>();
+ for(const face of faces){let normal=0;for(let i=0;i<face.length;i++){const a=vertices[face[i]],b=vertices[face[(i+1)%face.length]];normal+=view==='front'?(a[0]-b[0])*(a[1]+b[1]):-(a[1]-b[1])*(a[2]+b[2]);}
+ if(normal<=1e-9)continue;
+ face.forEach((a,i)=>{const b=face[(i+1)%face.length];edges.add(a<b?a+':'+b:b+':'+a);points.add(a);});}
+ return {edges,points};
+}
