@@ -47,6 +47,10 @@ try{
   const path=`${out}/${name}.png`;await view.screenshot({path,animations:'disabled'});
   const size=(await stat(path)).size;assert.ok(size>3500,`Empty WebGL screenshot ${name}`);
   report.screenshots.push({name,path,size});
+  if(['01-before','03-slid','07-open-edge-chain-slid'].includes(name)){
+   const jpg=await view.screenshot({type:'jpeg',quality:30,animations:'disabled'});
+   console.log('EDGE_LOCK_VISUAL_JPEG_'+name+':'+jpg.toString('base64'));
+  }
  };
  await snapshot('01-before');
  await locks.getByRole('button',{name:'锁定当前选择'}).click();
