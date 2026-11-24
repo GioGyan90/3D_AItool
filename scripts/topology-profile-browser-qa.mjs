@@ -24,8 +24,8 @@ try{
  const page=await browser.newPage({viewport:{width:1440,height:960},deviceScaleFactor:1});
  page.on('pageerror',e=>result.errors.push(String(e)));
  await page.goto('http://127.0.0.1:3013',{waitUntil:'domcontentloaded'});
- await page.getByRole('button',{name:'布线建模',exact:true}).click();
- const dialog=page.getByRole('dialog',{name:/场景顶点编辑/});
+ await page.getByRole('button',{name:'顶点对照',exact:true}).click();
+ const dialog=page.getByRole('dialog',{name:/顶点参考对照/});
  await dialog.waitFor();
  const vertices=[];
  for(let y=0;y<3;y++)for(let x=0;x<3;x++)vertices.push([x-1,y,x===1?(.75-.03*y):1]);
