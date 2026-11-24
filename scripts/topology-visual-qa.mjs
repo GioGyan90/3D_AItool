@@ -68,6 +68,7 @@ try{
   // Reference image acceptance: generate an opaque high-contrast PNG locally.
   // Compare actual WebGL canvas pixels, not just the visibility of UI controls.
   await counts(8,6);
+  await dialog.getByRole('button',{name:'参考图',exact:true}).click();
   await dialog.getByText('空间参考图 · 0',{exact:true}).click();
   const png=await page.evaluate(()=>{
     const c=document.createElement('canvas');c.width=128;c.height=96;
@@ -105,14 +106,17 @@ try{
   await page.waitForTimeout(300);
   await screenshot('reference-two-planes');
   await counts(8,6);
+  await dialog.getByRole('button',{name:'布线',exact:true}).click();
   await selectFace(0);
   await dialog.getByRole('button',{name:'连续环线'}).click();
   await counts(12,10);
   await dialog.getByRole('button',{name:'撤销',exact:true}).click();
   await counts(8,6);
+  await dialog.getByRole('button',{name:'参考图',exact:true}).click();
   await dialog.getByRole('button',{name:'移除当前参考图'}).click();
   await dialog.getByRole('button',{name:'移除当前参考图'}).click();
   await dialog.getByText('空间参考图 · 0',{exact:true}).click();
+  await dialog.getByRole('button',{name:'布线',exact:true}).click();
   notes.checks.push('Spatial references: upload two PNGs, canvas visibility and transform differences, side preset, ring cut/undo preserves reference independence, remove both');
   await counts(8,6);
   assert.equal(await dialog.getByRole('button',{name:'布线',exact:true}).getAttribute('aria-pressed'),'true');
