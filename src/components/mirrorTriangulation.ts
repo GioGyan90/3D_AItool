@@ -3,6 +3,7 @@ type Vertex=readonly number[];
 export type MirrorReport={matchedVertices:number;pairedFaces:number;unmatchedTriangles:number|null;unresolvedFaces:number[]};
 const key=(ids:readonly number[])=>[...ids].sort((a,b)=>a-b).join(':');
 const oriented=(a:number[],b:number[])=>a.length===b.length&&a.some((_,k)=>a.every((x,i)=>x===b[(i+k)%b.length]));
+const windingKey=(ids:number[])=>{const k=ids.indexOf(Math.min(...ids));return [ids[k],ids[(k+1)%3],ids[(k+2)%3]].join(':')};
 const groups=(indices:number[])=>Array.from({length:indices.length/3},(_,i)=>indices.slice(i*3,i*3+3));
 export function mirrorTrianglesX(vertices:readonly Vertex[],faces:readonly number[][],source:readonly number[][],enabled=true){
  const output=source.map(t=>[...t]);
@@ -32,8 +33,8 @@ export function mirrorTrianglesX(vertices:readonly Vertex[],faces:readonly numbe
    if(candidates.length!==1){unresolvedFaces.push(i);continue}
    const j=candidates[0];
    if(j===i){
-    const ts=groups(source[i]),set=new Set(ts.map(key));
-    if(ts.some(t=>!set.has(key(t.map(id=>mirror[id])))))unresolvedFaces.push(i);
+    const ts=groups(source[i]),set=new Set(ts.map(windingKey));
+    if(ts.some(t=>!set.has(windingKey([mirror[t[0]],mirror[t[2]],mirror[t[1]]]))))unresolvedFaces.push(i);
     continue; // Some center-spanning polygons cannot be mirrored without adding vertices.
    }
    if(i>j)continue;
@@ -42,8 +43,8 @@ export function mirrorTrianglesX(vertices:readonly Vertex[],faces:readonly numbe
    if(enabled)output[j]=groups(source[i]).flatMap(([a,b,c])=>[mirror[a],mirror[c],mirror[b]]);
   }
  }
- const triangles=output.flatMap(groups),set=new Set(triangles.map(key));
- const unmatchedTriangles=complete?triangles.filter(t=>!set.has(key(t.map(i=>mirror[i])))).length:null;
+ const triangles=output.flatMap(groups),set=new Set(triangles.map(windingKey));
+ const unmatchedTriangles=complete?triangles.filter(t=>!set.has(windingKey([mirror[t[0]],mirror[t[2]],mirror[t[1]]]))).length:null;
  const report:MirrorReport={matchedVertices:mirror.filter(i=>i>=0).length,pairedFaces,unmatchedTriangles,unresolvedFaces};
  return {indices:output.flat(),byFace:output,report};
 }
