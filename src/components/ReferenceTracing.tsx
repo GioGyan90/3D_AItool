@@ -6,6 +6,7 @@ import {TracePreview,type SpatialReference} from './TracePreview';
 import {CalibrationWorkbench} from './CalibrationWorkbench';
 import {ProfileCalibrationPanel} from './ProfileCalibrationPanel';
 import {assertRegionProtected,slideOnEdge} from './regionEditing';
+import {slideContinuousEdgeLoop} from './loopSlide';
 import {triangulateFaces} from './traceGeometry';
 import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
@@ -86,6 +87,17 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [locked,setLocked]=useState<number[]>([]);
  const [slideTarget,setSlideTarget]=useState('');
  const [slideFraction,setSlideFraction]=useState(.25);
+ const [loopChain,setLoopChain]=useState<number[]>([]);
+ const [loopGuide,setLoopGuide]=useState('');
+ const [loopFraction,setLoopFraction]=useState(.25);
+ const [loopMirror,setLoopMirror]=useState(false);
+ const [loopClosed,setLoopClosed]=useState(false);
+ const loopPreview=useMemo(()=>{try{
+   if(!geometry||loopChain.length<2||loopGuide==='')return {result:null,error:''};
+   return {result:slideContinuousEdgeLoop(geometry,loopChain,Number(loopGuide),loopFraction,{mirrorX:loopMirror,closed:loopClosed}),error:''};
+ }catch(e){return {result:null,error:String(e)}}
+ },[geometry,loopChain,loopGuide,loopFraction,loopMirror,loopClosed]);
+
  const [past,setPast]=useState<MeshHistory[]>([]);
  const [future,setFuture]=useState<MeshHistory[]>([]);
  const dragRecorded=useRef(false);
@@ -527,6 +539,46 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
           <option value="">请选择</option>{selected!==null&&[...new Set(geometry.faces.flatMap(f=>f.flatMap((id,i)=>id===selected?[f[(i+1)%f.length],f[(i+f.length-1)%f.length]]:[])))].map(i=><option key={i} value={i}>#{i}</option>)}</select></label>
         <label>滑动比例 {Math.round(slideFraction*100)}%<input aria-label="沿边滑动比例" type="range" min="0.05" max=".95" step=".05" className="w-full" value={slideFraction} onChange={e=>setSlideFraction(+e.target.value)}/></label>
         <button className={btn+' w-full'} disabled={selected===null||slideTarget===''||draftDirty||faceDraft.length>0} onClick={()=>{if(selected!==null)operateMesh(()=>{if(symmetryAxes.length)throw Error('沿边滑动暂不支持镜像，请关闭对称编辑');return slideOnEdge(geometry,selected,Number(slideTarget),slideFraction)},'沿边滑动完成')}}>应用沿边滑动</button>
+      </div>
+    </details>
+
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs">
+      <summary className="cursor-pointer font-medium text-slate-200">整条环线滑动 · 连续边链</summary>
+      <div className="mt-2 space-y-2">
+        <p className="topo-helptext">沿现有四边面条带连续移动一条边链。依次点选顶点或控制边构成连续路径，首个引导邻点决定左右滑动侧。共享顶点索引和所有面连接保持不变，跨三角面或存在引导歧义会拒绝操作。</p>
+        <p>有序链：{loopChain.length?loopChain.map(id=>'#'+id).join(' → '):'尚未选择'}</p>
+        <div className="flex flex-wrap gap-1">
+          <button className={btn} disabled={selected===null} onClick={()=>{if(selected!==null&&!loopChain.includes(selected))setLoopChain(old=>[...old,selected])}}>追加当前顶点</button>
+          <button className={btn} disabled={selectedFace===null} onClick={()=>{
+            if(selectedFace===null)return;
+            const face=geometry.faces[selectedFace];
+            const a=face[selectedEdgeSlot],b=face[(selectedEdgeSlot+1)%face.length];
+            if(!loopChain.length){setLoopChain([a,b]);setLoopClosed(false);return}
+            const tail=loopChain[loopChain.length-1];
+            if(tail===a&&!loopChain.includes(b)){setLoopChain(old=>[...old,b]);return}
+            if(tail===b&&!loopChain.includes(a)){setLoopChain(old=>[...old,a]);return}
+            if((tail===a&&b===loopChain[0])||(tail===b&&a===loopChain[0])){setLoopClosed(true);return}
+            setError('新边必须从当前链的末端继续连接，且不能重复中间顶点');
+          }}>追加选中控制边</button>
+          <button className={btn} disabled={!loopChain.length} onClick={()=>{setLoopChain(old=>old.slice(0,-1));setLoopClosed(false)}}>退回一个顶点</button>
+          <button className={btn} disabled={!loopChain.length} onClick={()=>{setLoopChain([]);setLoopGuide('');setLoopClosed(false)}}>清空边链</button>
+        </div>
+        <label className="flex items-center gap-2"><input aria-label="环线闭合" type="checkbox" checked={loopClosed} onChange={e=>setLoopClosed(e.target.checked)}/> 将首尾连接为闭合环</label>
+        <label>引导邻点（决定滑动侧）
+          <select aria-label="环线引导顶点编号" className="mt-1 w-full" value={loopGuide} onChange={e=>setLoopGuide(e.target.value)}>
+            <option value="">先选择边链与引导侧</option>
+            {loopChain.length>0&&[...new Set(geometry.faces.flatMap(f=>f.flatMap((id,i)=>id===loopChain[0]?[f[(i+1)%f.length],f[(i+f.length-1)%f.length]]:[])))].filter(id=>!loopChain.includes(id)).map(id=><option value={id} key={id}>#{id}</option>)}
+          </select>
+        </label>
+        <label>沿引导边滑动 {Math.round(loopFraction*100)}%
+          <input aria-label="整条环线滑动比例" className="w-full" type="range" min=".05" max=".95" step=".05" value={loopFraction} onChange={e=>setLoopFraction(Number(e.target.value))}/>
+        </label>
+        <label className="flex items-center gap-2"><input aria-label="环线 X 镜像滑动" type="checkbox" checked={loopMirror} onChange={e=>setLoopMirror(e.target.checked)}/> 同步镜像 X 另一半</label>
+        {loopPreview.error&&<p role="alert" className="text-amber-300">{loopPreview.error}</p>}
+        {loopPreview.result&&<p className="topo-helptext" aria-label="环线滑动预估偏差">预估移动 {loopPreview.result.report.movedVertices} 点 · 最大位移 {loopPreview.result.report.maxDisplacement.toFixed(4)} · 最大面法线偏角 {loopPreview.result.report.maxNormalDeviationDegrees.toFixed(2)}° · 最小面积比 {loopPreview.result.report.minFaceAreaRatio.toFixed(3)}。这是原始边弦插值，不保证曲面严格不变。</p>}
+        <button className={btn+' w-full'} disabled={!loopPreview.result||draftDirty||faceDraft.length>0} onClick={()=>{
+          if(loopPreview.result)operateMesh(()=>loopPreview.result!.mesh,'连续环线滑动完成');
+        }}>应用整条环线滑动</button>
       </div>
     </details>
     <ProfileCalibrationPanel mesh={geometry} selected={selected} disabled={draftDirty||faceDraft.length>0||loading} onApply={next=>operateMesh(()=>next,'局部截面校准')}/>
