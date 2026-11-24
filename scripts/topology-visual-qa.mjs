@@ -65,6 +65,55 @@ try{
     assert.ok(file.size>3500,`3D preview screenshot ${name} seems empty (${file.size} B)`);
     notes.shots.push({name,path,size:file.size});
   };
+  // Reference image acceptance: generate an opaque high-contrast PNG locally.
+  // Compare actual WebGL canvas pixels, not just the visibility of UI controls.
+  await counts(8,6);
+  await dialog.getByText('空间参考图 · 0',{exact:true}).click();
+  const png=await page.evaluate(()=>{
+    const c=document.createElement('canvas');c.width=128;c.height=96;
+    const ctx=c.getContext('2d');ctx.fillStyle='#ea19b7';ctx.fillRect(0,0,128,96);
+    ctx.fillStyle='#1beac1';ctx.fillRect(8,8,48,72);
+    return c.toDataURL('image/png').split(',')[1];
+  });
+  const refUpload=dialog.getByLabel('上传空间参考图');
+  await refUpload.setInputFiles({name:'qa-reference.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await dialog.getByLabel('当前空间参考图').waitFor();
+  await dialog.getByRole('button',{name:'正面参考',exact:true}).click();
+  await dialog.getByRole('button',{name:'正面',exact:true}).first().click();
+  await dialog.getByLabel('参考图宽度',{exact:true}).fill('1.8');
+  const region=dialog.getByLabel('3D 旋转预览');
+  const capture=()=>region.locator('canvas').screenshot({animations:'disabled'});
+  // Allow the texture decode and upload to settle.
+  await page.waitForTimeout(700);
+  const withRef=await capture();
+  await screenshot('reference-front');
+  await dialog.getByLabel('显示',{exact:true}).uncheck();
+  await page.waitForTimeout(200);
+  const withoutRef=await capture();
+  assert.ok(!withRef.equals(withoutRef),'reference visibility must affect rendered canvas');
+  await dialog.getByLabel('显示',{exact:true}).check();
+  await dialog.getByLabel('参考图 位置 X',{exact:true}).fill('0.3');
+  await dialog.getByLabel('参考图 旋转 Z',{exact:true}).fill('15');
+  await dialog.getByLabel('前景叠加',{exact:true}).check();
+  await page.waitForTimeout(250);
+  assert.ok(!(await capture()).equals(withRef),'reference transform/overlay must affect rendered canvas');
+  await screenshot('reference-overlay-transform');
+  await refUpload.setInputFiles({name:'qa-side.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+  await dialog.getByText('空间参考图 · 2',{exact:true}).waitFor();
+  await dialog.getByRole('button',{name:'侧面参考',exact:true}).click();
+  await dialog.getByRole('button',{name:'3/4',exact:true}).first().click();
+  await page.waitForTimeout(300);
+  await screenshot('reference-two-planes');
+  await counts(8,6);
+  await selectFace(0);
+  await dialog.getByRole('button',{name:'连续环线'}).click();
+  await counts(12,10);
+  await dialog.getByRole('button',{name:'撤销',exact:true}).click();
+  await counts(8,6);
+  await dialog.getByRole('button',{name:'移除当前参考图'}).click();
+  await dialog.getByRole('button',{name:'移除当前参考图'}).click();
+  await dialog.getByText('空间参考图 · 0',{exact:true}).click();
+  notes.checks.push('Spatial references: upload two PNGs, canvas visibility and transform differences, side preset, ring cut/undo preserves reference independence, remove both');
   await counts(8,6);
   assert.equal(await dialog.getByRole('button',{name:'布线',exact:true}).getAttribute('aria-pressed'),'true');
   await dialog.getByText('快捷示例 · 3×3 魔方环切',{exact:true}).click();
