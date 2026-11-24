@@ -264,3 +264,20 @@ test('facing edge filter keeps front-facing control surfaces',()=>{
  const f=facingEdges(v,[[0,1,2,3],[7,6,5,4]],'front');
  assert.deepEqual([...f.points],[0,1,2,3]);assert.equal(f.edges.size,4);
 });
+
+import {calibrateProfile,type ProfileOptions} from '../src/components/profileCalibration';
+test('local profile preserves topology and untouched axes, repairs mirrored depressions',()=>{
+ const mesh={vertices:[[0,0,1.4],[-.8,0,1.2],[-.2,0,1.2],[.8,0,1.2],[.2,0,1.2],[0,1,1.4]] as [number,number,number][],faces:[[0,2,5],[2,1,5],[0,5,4],[4,5,3]]};
+ const opts:ProfileOptions={along:0,depth:2,start:0,end:1,points:[2],bulge:.04,strength:1,mode:'fit',mirrorX:true};
+ const result=calibrateProfile(mesh,opts);
+ assert.deepEqual(result.mesh.faces,mesh.faces);
+ assert.ok(Math.abs(result.mesh.vertices[2][2]-1.38)<1e-9);
+ assert.equal(result.mesh.vertices[2][2],result.mesh.vertices[4][2]);
+ assert.equal(mesh.vertices[2][2],1.2);
+ for(const i of [0,1,3,5])assert.deepEqual(result.mesh.vertices[i],mesh.vertices[i]);
+ for(let i=0;i<mesh.vertices.length;i++)assert.deepEqual(result.mesh.vertices[i].slice(0,2),mesh.vertices[i].slice(0,2));
+ assert.throws(()=>calibrateProfile(mesh,{...opts,points:[3]}));
+ assert.throws(()=>calibrateProfile(mesh,{...opts,depth:0}));
+ assert.equal(calibrateProfile(mesh,{...opts,strength:0}).mesh.vertices[2][2],1.2);
+ assert.equal(calibrateProfile(mesh,{...opts,mode:'lower'}).mesh.vertices[2][2],1.2);
+});
