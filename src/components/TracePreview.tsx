@@ -8,7 +8,23 @@ import type {ControlMesh} from '../types';
 
 type V=[number,number,number];
 type Data=ControlMesh;
+export type SpatialReference={id:string;name:string;url:string;aspect:number;position:V;rotation:V;width:number;opacity:number;visible:boolean;overlay:boolean};
+function ReferencePlane({plane}:{plane:SpatialReference}){
+  const [texture,setTexture]=useState<THREE.Texture|null>(null);
+  useEffect(()=>{
+    let alive=true;
+    const tex=new THREE.TextureLoader().load(plane.url,t=>{if(alive){t.colorSpace=THREE.SRGBColorSpace;setTexture(t)}});
+    return()=>{alive=false;tex.dispose()};
+  },[plane.url]);
+  if(!plane.visible||!texture)return null;
+  return <mesh position={plane.position} rotation={plane.rotation.map(v=>v*Math.PI/180) as V}
+    renderOrder={plane.overlay?10:-1} raycast={()=>null}>
+    <planeGeometry args={[plane.width,plane.width/plane.aspect]}/>
+    <meshBasicMaterial map={texture} transparent opacity={plane.opacity} side={THREE.DoubleSide} depthWrite={false} depthTest={!plane.overlay} toneMapped={false}/>
+  </mesh>;
+}
 type Props={
+  references?:SpatialReference[];
   data:Data; direction:string; selected:number|null;
   selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
@@ -107,7 +123,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
 function Camera({direction,bounds,orbit,revision}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>,revision:number}){
   const {camera,invalidate,size}=useThree();
   useEffect(()=>{
-    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],angle:[3,1.2,4],low:[3,-2,4]};
+    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4]};
     const dir=new THREE.Vector3(...p[direction]).normalize();
     const fov=(camera as THREE.PerspectiveCamera).fov*Math.PI/180;
     const aspect=size.width/Math.max(size.height,1);
@@ -132,6 +148,7 @@ export function TracePreview(props:Props){
     raycaster={{params:{Points:{threshold:.045},Line:{threshold:.045}} as any}}>
     <color attach="background" args={['#303030']}/>
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={1.3}/>
+    {props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
     <Shape {...props} orbit={orbit}/>
     <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit}/>
     <OrbitControls ref={orbit} makeDefault/>
