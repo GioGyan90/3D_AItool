@@ -118,6 +118,12 @@ try{
  await quality.getByText(/移动 2 点/).waitFor();
  await snapshot('10-displacement-heatmap');
  report.checks.push('Surface quality panel, optimized triangulation and real displacement heatmap');
+ await dialog.getByRole('checkbox',{name:'对称光照检查'}).check();
+ await dialog.getByRole('checkbox',{name:'镜像三角化预览'}).uncheck();
+ await dialog.getByRole('checkbox',{name:'镜像三角化预览'}).check();
+ await snapshot('11-symmetry-review');
+ report.checks.push('Mirror triangulation and symmetric light controls operate in real inspector');
+
 
 
  assert.deepEqual(report.errors,[],'Browser JavaScript errors');
