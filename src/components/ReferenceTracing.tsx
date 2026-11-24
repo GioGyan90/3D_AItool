@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview,type SpatialReference} from './TracePreview';
 import {CalibrationWorkbench} from './CalibrationWorkbench';
+import {ProfileCalibrationPanel} from './ProfileCalibrationPanel';
 import {triangulateFaces} from './traceGeometry';
 import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
@@ -500,6 +501,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   {toolPanel==='model'&&<div className="space-y-3">
     <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
     {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>}
+    <ProfileCalibrationPanel mesh={geometry} selected={selected} disabled={draftDirty||faceDraft.length>0||loading} onApply={next=>operateMesh(()=>next,'局部截面校准')}/>
     <label className="block text-xs">内插收缩 {Math.round(insetFraction*100)}%
       <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
     </label>
