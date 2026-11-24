@@ -243,3 +243,24 @@ test('multi-axis symmetry applies sign combinations and pins central seams',()=>
   assert.equal(pinned.changed.length,1);
   assert.equal(pinned.unmatched,0);
 });
+
+import {calibrateAnchors,projectLandmark,edgeResidual,facingEdges,fitLandmark,type Vec3} from '../src/components/referenceCalibration';
+test('independent reference crops recover scale, center, rotation and world coordinates',()=>{
+ const v:Vec3[]=[[-1,2,0],[1,1,2],[0,-2,-1],[.4,.1,1.3]];
+ const front={cx:420,cy:510,scale:150,rotation:4,flip:false};
+ const side={cx:610,cy:440,scale:220,rotation:-7,flip:true};
+ for(const [view,c] of [['front',front],['side',side]] as const){
+  const fitted=calibrateAnchors(v,view,v.slice(0,3).map((p,vertex)=>({vertex,pixel:projectLandmark(p,view,c)})),c.flip);
+  for(const p of v)assert.ok(Math.hypot(...projectLandmark(p,view,c).map((x,i)=>x-projectLandmark(p,view,fitted)[i]))<1e-8);
+ }
+ const p=v[3],q=fitLandmark([0,0,0],{vertex:3,front:projectLandmark(p,'front',front),side:projectLandmark(p,'side',side)},front,side);
+ assert.ok(Math.hypot(...q.map((x,i)=>x-p[i]))<1e-8);
+ assert.throws(()=>calibrateAnchors(v,'front',[{vertex:0,pixel:[10,10]},{vertex:0,pixel:[11,11]}]));
+ const a:Vec3=[0,0,0],z:Vec3=[1,0,0],c={cx:0,cy:0,scale:10,rotation:0,flip:false};
+ const e=edgeResidual(a,z,[0,0],[0,20],'front',c);assert.equal(e.angleError,90);assert.equal(e.lengthError,-10);
+});
+test('facing edge filter keeps front-facing control surfaces',()=>{
+ const v:Vec3[]=[[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1],[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1]];
+ const f=facingEdges(v,[[0,1,2,3],[7,6,5,4]],'front');
+ assert.deepEqual([...f.points],[0,1,2,3]);assert.equal(f.edges.size,4);
+});
