@@ -422,3 +422,15 @@ test('center spanning quad reports unresolved symmetry rather than inventing ver
  const r=mirrorTrianglesX(v,faces,source);
  assert.deepEqual(r.byFace,source);assert.equal(r.report.unmatchedTriangles,2);assert.deepEqual(r.report.unresolvedFaces,[0]);
 });
+
+
+import {projectionResiduals,residualColor} from '../src/components/referenceCalibration';
+test('projection residual map ranks measured landmarks without treating missing targets as zero',()=>{
+ const v:Vec3[]=[[0,0,0],[1,0,0],[0,1,0]];
+ const c={cx:500,cy:500,scale:100,flip:false,rotation:0};
+ const report=projectionResiduals(v,[{vertex:0,front:[503,504]},{vertex:1,front:[620,500]},{vertex:2,side:[500,400]},{vertex:99,front:[0,0]}],'front',c);
+ assert.equal(report.count,2);assert.deepEqual(report.rows.map(r=>r.id),[1,0]);assert.equal(report.max,20);
+ assert.ok(Math.abs(report.rms-Math.sqrt(212.5))<1e-9);
+ assert.equal(residualColor(5,5),'#65d995');assert.equal(residualColor(10,5),'#ffcc66');assert.equal(residualColor(11,5),'#ff6666');
+ assert.equal(projectionResiduals(v,[],'front',c).count,0);
+});

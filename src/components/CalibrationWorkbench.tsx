@@ -1,5 +1,5 @@
 import React,{useState,useRef,useMemo,useEffect} from 'react';
-import {projectLandmark,fitLandmark,landmarkError,calibrateAnchors,edgeResidual,facingEdges,type Vec3,type Landmark,type CalibrationView,type ImageCalibration} from './referenceCalibration';
+import {projectionResiduals,residualColor,projectLandmark,fitLandmark,landmarkError,calibrateAnchors,edgeResidual,facingEdges,type Vec3,type Landmark,type CalibrationView,type ImageCalibration} from './referenceCalibration';
 import type {ControlMesh} from '../types';
 type Props={mesh:ControlMesh;selected:number|null;onSelect:(id:number)=>void;onFit:(id:number,v:Vec3)=>void};
 type Ref={url:string;aspect:number;cal:ImageCalibration};
@@ -10,6 +10,7 @@ export function CalibrationWorkbench({mesh,selected,onSelect,onFit}:Props){
  const [targets,setTargets]=useState<Record<number,Landmark>>({});
  const [mark,setMark]=useState(false),[linked,setLinked]=useState(true),[opacity,setOpacity]=useState(.65),[error,setError]=useState('');
  const [showVertices,setShowVertices]=useState(true);
+ const [showResiduals,setShowResiduals]=useState(true),[residualThreshold,setResidualThreshold]=useState(5);
  const [showHidden,setShowHidden]=useState(false),[showTargets,setShowTargets]=useState(true),[zoom,setZoom]=useState(1);
  const [anchorMode,setAnchorMode]=useState(false);
  const [anchors,setAnchors]=useState<Record<CalibrationView,Record<number,[number,number]>>>({front:{},side:{}});
@@ -55,12 +56,15 @@ export function CalibrationWorkbench({mesh,selected,onSelect,onFit}:Props){
   <button className={button} aria-pressed={anchorMode} onClick={()=>{setAnchorMode(v=>!v);setMark(false)}} disabled={selected===null}>{anchorMode?'退出基准点标记':'标记固定基准点'}</button>
   <label><input type="checkbox" checked={showHidden} onChange={e=>setShowHidden(e.target.checked)}/> 显示背向边</label>
   <label><input type="checkbox" checked={showTargets} onChange={e=>setShowTargets(e.target.checked)}/> 目标线</label>
+  <label><input type="checkbox" checked={showResiduals} onChange={e=>setShowResiduals(e.target.checked)}/> 全局投影误差图</label>
+  <label>误差容差 (px) <input aria-label="投影误差容差" type="number" min="0.1" max="1000" step="1" value={residualThreshold} onChange={e=>{const n=e.target.valueAsNumber;if(Number.isFinite(n)&&n>=.1&&n<=1000)setResidualThreshold(n)}} className="w-16 bg-neutral-800 p-1"/></label>
   <label>局部放大 <input aria-label="校准局部放大" type="range" min="1" max="4" step=".25" value={zoom} onChange={e=>setZoom(+e.target.value)}/></label>
   </div><p className="text-xs text-neutral-400">先选已认可的基准顶点，标记其原图位置，每个视图至少两个点后自动求解比例、旋转和中心。建议三至六个分散的基准点；不要用待修正的鼻部当基准。背向边过滤不是完整遮挡检测。</p>
   <p className="text-xs text-neutral-400">正面横轴为 X，侧面横轴为 Z（鼻朝右）。标定参数作用于网格投影而非改变网格；目标高度不一致时拒绝拟合。目标误差单位为画板像素（1000×1000），不是原图像素。</p>
   {error&&<p role="alert" className="text-amber-300">{error}</p>}
   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">{(['front','side'] as const).map(view=>{
    const ref=refs[view],c=ref.cal,points=mesh.vertices.map(v=>projectLandmark(v,view,c)),label=view==='front'?'正面':'侧面',goal=target?.[view],q=selected===null?undefined:points[selected],err=current&&goal?landmarkError(current,goal,view,c):null;
+   const residual=projectionResiduals(mesh.vertices,Object.values(targets),view,c);
    const measured=targetEdges(view),anchorCount=Object.keys(anchors[view]).length,anchorErrors=Object.entries(anchors[view]).map(([id,p])=>mesh.vertices[+id]?landmarkError(mesh.vertices[+id],p,view,c).pixels:0),span=1000/zoom,focus=zoom===1?[500,500]:(q??[500,500]);
    return <div key={view} className="min-w-0 rounded border border-neutral-700 p-2 space-y-1">
     <div className="flex flex-wrap gap-2 items-center"><strong>{label}</strong><label className={button+' cursor-pointer'}>上传{label}图<input aria-label={'上传校准'+label+'图'} className="hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>{void load(view,e.target.files?.[0]);e.target.value=''}}/></label><label><input type="checkbox" checked={c.flip} onChange={e=>update(view,{flip:e.target.checked})}/> 翻转投影</label></div>
@@ -80,8 +84,11 @@ export function CalibrationWorkbench({mesh,selected,onSelect,onFit}:Props){
      {Object.entries(anchors[view]).map(([id,p])=><g key={id} pointerEvents="none"><rect x={p[0]-5} y={p[1]-5} width="10" height="10" fill="#7bdc9a"/><text x={p[0]+9} y={p[1]-8} fontSize="15" fill="#7bdc9a">A{id}</text></g>)}
      {showTargets&&measured.map(e=><line key={e.a+':'+e.b} x1={e.pa[0]} y1={e.pa[1]} x2={e.pb[0]} y2={e.pb[1]} stroke="#a7f08d" strokeWidth="3" strokeDasharray="7 4" pointerEvents="none"/>)}
      {showTargets&&Object.entries(targets).map(([id,t])=>t[view]&&<circle key={id} cx={t[view]![0]} cy={t[view]![1]} r="5" fill="none" stroke="#a7f08d" strokeWidth="2" pointerEvents="none"/>)}
-     {goal&&q&&<g pointerEvents="none"><line x1={q[0]} y1={q[1]} x2={goal[0]} y2={goal[1]} stroke="#ff6262" strokeWidth="4"/><circle cx={goal[0]} cy={goal[1]} r="9" fill="none" stroke="#ff6262" strokeWidth="3"/></g>}
-    </svg><p className="text-xs">已标定边 {measured.length} · 最大角度偏差 {measured.length?Math.max(...measured.map(e=>e.angleError??0)).toFixed(1)+'°':'—'} · 最大长度偏差 {measured.length?Math.max(...measured.map(e=>Math.abs(e.lengthError))).toFixed(1)+' px':'—'}</p><p className="text-xs">{err?'偏差 '+err.pixels.toFixed(2)+' px · ΔX '+err.dx.toFixed(2)+' · ΔY '+err.dy.toFixed(2):'选择顶点后标记参考目标'}</p>
+     {showResiduals&&residual.rows.map(r=><g key={'residual-'+r.id} pointerEvents="none" data-residual-vertex={r.id}><line x1={r.projected[0]} y1={r.projected[1]} x2={r.target[0]} y2={r.target[1]} stroke={residualColor(r.pixels,residualThreshold)} strokeWidth="3" vectorEffect="non-scaling-stroke"/><circle cx={r.target[0]} cy={r.target[1]} r={6/zoom} fill="none" stroke={residualColor(r.pixels,residualThreshold)} strokeWidth="2" vectorEffect="non-scaling-stroke"/></g>)}
+     {!showResiduals&&goal&&q&&<g pointerEvents="none"><line x1={q[0]} y1={q[1]} x2={goal[0]} y2={goal[1]} stroke="#ff6262" strokeWidth="4"/><circle cx={goal[0]} cy={goal[1]} r="9" fill="none" stroke="#ff6262" strokeWidth="3"/></g>}
+    </svg>
+    {showResiduals&&<section aria-label={label+'全局投影误差'} className="space-y-1"><p>已测目标 {residual.count} / {mesh.vertices.length} · RMS {residual.count?residual.rms.toFixed(2):'—'} px · 最大 {residual.count?residual.max.toFixed(2):'—'} px</p><p className="text-xs"><span style={{color:'#65d995'}}>≤容差</span> / <span style={{color:'#ffcc66'}}>≤2倍容差</span> / <span style={{color:'#ff6666'}}>超2倍容差</span> · 未标记顶点不参与统计</p><div className="max-h-24 overflow-auto">{residual.rows.slice(0,100).map(r=><button key={r.id} className={button+' w-full text-left'} style={{color:residualColor(r.pixels,residualThreshold)}} onClick={()=>onSelect(r.id)}>#{r.id} · {r.pixels.toFixed(2)} px · ΔX {r.dx.toFixed(2)} / ΔY {r.dy.toFixed(2)}</button>)}</div></section>}
+    <p className="text-xs">已标定边 {measured.length} · 最大角度偏差 {measured.length?Math.max(...measured.map(e=>e.angleError??0)).toFixed(1)+'°':'—'} · 最大长度偏差 {measured.length?Math.max(...measured.map(e=>Math.abs(e.lengthError))).toFixed(1)+' px':'—'}</p><p className="text-xs">{err?'偏差 '+err.pixels.toFixed(2)+' px · ΔX '+err.dx.toFixed(2)+' · ΔY '+err.dy.toFixed(2):'选择顶点后标记参考目标'}</p>
    </div>
   })}</div>
  </section>

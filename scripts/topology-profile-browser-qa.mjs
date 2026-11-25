@@ -89,6 +89,28 @@ try{
   assert.ok(Math.abs(z-1.04)<1e-6,'Joint profile did not restore #'+id+': '+z);
  }
  result.checks.push('Applied joint calibration moves both midpoint Z values to 1.04');
+ await dialog.getByRole('button',{name:'正侧校准',exact:true}).click();
+ const calibration=dialog.getByLabel('正侧双视图校准');
+ const board=calibration.getByLabel('正面校准画板');
+ const idInput=calibration.getByLabel('校准顶点编号');
+ await idInput.fill('1');
+ await calibration.getByRole('button',{name:'标记目标位置',exact:true}).click();
+ const clickBoard=async(x,y)=>{const p=await board.evaluate((svg,p)=>{const s=svg.createSVGPoint();s.x=p[0];s.y=p[1];const q=s.matrixTransform(svg.getScreenCTM());return {x:q.x,y:q.y}},[x,y]);await page.mouse.click(p.x,p.y);};
+ await board.scrollIntoViewIfNeeded();
+ await clickBoard(510,500);
+ await idInput.fill('7');
+ await board.scrollIntoViewIfNeeded();
+ await clickBoard(530,100);
+ const summary=calibration.getByLabel('正面全局投影误差');
+ await summary.getByText(/已测目标 2 \/ 9/).waitFor();
+ assert.equal(await board.locator('[data-residual-vertex]').count(),2);
+ await calibration.getByLabel('投影误差容差').fill('2');
+ await board.screenshot({path:folder+'/03-projection-residual-map.png'});
+ console.log('PROFILE_VISUAL_JPEG_residual-map:'+ (await board.screenshot({type:'jpeg',quality:50})).toString('base64'));
+ await calibration.getByRole('checkbox',{name:'全局投影误差图'}).uncheck();
+ assert.equal(await board.locator('[data-residual-vertex]').count(),0);
+ result.checks.push('Global marked-landmark projection residual map, tolerance and visibility controls');
+
  assert.deepEqual(result.errors,[],'Browser runtime errors');
  console.log('PROFILE_CALIBRATION_BROWSER_ACCEPTANCE_SUCCESS',JSON.stringify(result));
 }finally{

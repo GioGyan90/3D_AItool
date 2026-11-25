@@ -35,3 +35,10 @@ test('vertex collapse preserves closed cube cage and rejects nonadjacent endpoin
  const m=createPrimitiveControlMesh('box'),next=mergeEdgeVertices(m,4,5);
  assert.equal(next.vertices.length,7);closed(next);assert.throws(()=>mergeEdgeVertices(m,0,6),/相邻/);
 });
+
+test('convex pentagon and valid concave polygon can be cut without altering boundary',()=>{
+ const pent={vertices:[[0,0,0],[2,0,0],[3,1,0],[1.5,2,0],[0,1,0]] as [number,number,number][],faces:[[0,1,2,3,4]]};
+ const p=knifeCut(pent,[{face:0,from:{vertex:0},to:{vertex:2}}]);assert.equal(p.faces.length,2);assert.equal(p.vertices.length,5);assert.equal(validateControlTopology(p).boundaryEdges,5);
+ const concave={vertices:[[0,0,0],[3,0,0],[3,3,0],[2,3,0],[2,1,0],[1,1,0],[1,3,0],[0,3,0]] as [number,number,number][],faces:[[0,1,2,3,4,5,6,7]]};
+ const c=knifeCut(concave,[{face:0,from:{vertex:0},to:{vertex:4}}]);assert.equal(c.faces.length,2);assert.equal(validateControlTopology(c).boundaryEdges,8);
+});

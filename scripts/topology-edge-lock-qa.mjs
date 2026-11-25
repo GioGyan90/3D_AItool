@@ -123,6 +123,24 @@ try{
  await dialog.getByRole('checkbox',{name:'镜像三角化预览'}).check();
  await snapshot('11-symmetry-review');
  report.checks.push('Mirror triangulation and symmetric light controls operate in real inspector');
+ await dialog.getByRole('button',{name:'正交投影',exact:true}).click();
+ assert.equal(await dialog.getByRole('button',{name:'正交投影',exact:true}).getAttribute('aria-pressed'),'true');
+ await dialog.getByRole('button',{name:'塑形',exact:true}).click();
+ await dialog.getByLabel('选择顶点编号').fill('4');
+ await dialog.getByRole('button',{name:'聚焦选择',exact:true}).click();
+ await dialog.getByLabel('三维局部放大').waitFor();
+ await dialog.getByRole('button',{name:'正面',exact:true}).click();
+ await page.waitForTimeout(350);
+ await snapshot('12-ortho-local-front');
+ await dialog.getByRole('button',{name:'侧面',exact:true}).click();
+ await page.waitForTimeout(350);
+ await snapshot('13-ortho-local-side');
+ await dialog.getByRole('button',{name:'返回全局',exact:true}).click();
+ await dialog.getByLabel('三维局部放大').waitFor({state:'hidden'});
+ await dialog.getByRole('button',{name:'正交投影',exact:true}).click();
+ await snapshot('14-perspective-restored');
+ report.checks.push('Orthographic projection, persistent selected focus across views and global reset');
+
 
 
 
@@ -133,3 +151,6 @@ try{
  await browser?.close();
  server.kill('SIGTERM');
 }
+
+// Run independent free-topology browser suite after the existing regressions.
+await import('./topology-knife-browser-qa.mjs');
