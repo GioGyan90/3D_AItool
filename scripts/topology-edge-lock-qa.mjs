@@ -125,6 +125,8 @@ try{
  report.checks.push('Mirror triangulation and symmetric light controls operate in real inspector');
  await dialog.getByRole('button',{name:'正交投影',exact:true}).click();
  assert.equal(await dialog.getByRole('button',{name:'正交投影',exact:true}).getAttribute('aria-pressed'),'true');
+ await dialog.getByRole('button',{name:'塑形',exact:true}).click();
+ await dialog.getByLabel('选择顶点编号').fill('4');
  await dialog.getByRole('button',{name:'聚焦选择',exact:true}).click();
  await dialog.getByLabel('三维局部放大').waitFor();
  await dialog.getByRole('button',{name:'正面',exact:true}).click();
