@@ -1,0 +1,60 @@
+{
+  "source": "User-provided 2026-11-24 original two step sheets; first sheet row four; recovered crop 1020x570. Reference not republished.",
+  "frame": {
+    "front": {
+      "cx": 828,
+      "cy": 215.36351525423729,
+      "scale": 150.28248587570621
+    },
+    "side": {
+      "cx": 266,
+      "cy": 215.36351525423729,
+      "scale": 150.28248587570621
+    }
+  },
+  "observations": [
+    {
+      "pair": [
+        8,
+        37
+      ],
+      "front": [
+        750,
+        95
+      ],
+      "side": [
+        416,
+        95
+      ],
+      "source": "Both assigned same reference landmark in STAGE4_C_REVIEW; original front visually has one junction; side correspondence less certain."
+    },
+    {
+      "pair": [
+        25,
+        41
+      ],
+      "front": [
+        906,
+        95
+      ],
+      "side": [
+        416,
+        95
+      ],
+      "source": "Mirrored pair."
+    }
+  ],
+  "trial": {
+    "remove": [
+      37,
+      41
+    ],
+    "keep": [
+      8,
+      25
+    ],
+    "expectedVertices": 60,
+    "expectedFaces": 56,
+    "method": "Use existing vertex merge UI, one operation per side, verify unchanged remaining coordinates and compare screenshots; do not treat as accepted anatomy until reviewed."
+  }
+}
