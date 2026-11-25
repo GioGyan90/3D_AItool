@@ -156,15 +156,34 @@ export function TracePreview(props:Props){
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={props.symmetricLight ? .65:1.3}/><directionalLight position={[-3,4,5]} intensity={props.symmetricLight ? .65:0}/>
     {props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
     <Shape {...props} orbit={orbit}/>
-    <KnifeOverlay segments={props.knifeSegments}/>
+    <KnifeOverlay segments={props.knifeSegments} radius={bounds.radius}/>
     <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit} focus={props.focus} focusZoom={props.focusZoom}/>
     <OrbitControls ref={orbit} makeDefault/>
   </Canvas>;
 }
 
-function KnifeOverlay({segments}:{segments?:V[]}){
- const geo=useMemo(()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute((segments??[]).flat(),3));return g},[segments]);
- useEffect(()=>()=>geo.dispose(),[geo]);
- if(!segments?.length)return null;
- return <group renderOrder={30}><lineSegments geometry={geo} raycast={()=>null}><lineBasicMaterial color="#36f59a" depthTest={false} depthWrite={false}/></lineSegments><points geometry={geo} raycast={()=>null}><pointsMaterial color="#36f59a" size={.065} depthTest={false} depthWrite={false}/></points></group>;
+// Use world-space tubes rather than implementation-dependent WebGL line widths.
+// Draw after translucent face selection, with exact display color and no picking.
+function KnifeOverlay({segments,radius}:{segments?:V[];radius:number}){
+ const parts=useMemo(()=>{
+   const result:{position:THREE.Vector3;rotation:THREE.Quaternion;length:number}[]=[];
+   for(let i=0;i+1<(segments?.length??0);i+=2){
+     const a=new THREE.Vector3(...segments![i]),b=new THREE.Vector3(...segments![i+1]),delta=b.clone().sub(a);
+     if(delta.lengthSq()<1e-20)continue;
+     result.push({position:a.clone().add(b).multiplyScalar(.5),rotation:new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),delta.clone().normalize()),length:delta.length()});
+   }
+   return result;
+ },[segments]);
+ if(!parts.length)return null;
+ const width=Math.max(radius*.004,.00001);
+ return <group renderOrder={40}>
+   {parts.map((p,i)=><mesh key={i} position={p.position} quaternion={p.rotation} renderOrder={40} raycast={()=>null}>
+     <cylinderGeometry args={[width,width,p.length,8]}/>
+     <meshBasicMaterial color="#36f59a" toneMapped={false} transparent depthTest={false} depthWrite={false}/>
+   </mesh>)}
+   {segments!.map((p,i)=><mesh key={'point-'+i} position={p} renderOrder={41} raycast={()=>null}>
+     <sphereGeometry args={[width*2.1,10,8]}/>
+     <meshBasicMaterial color="#36f59a" toneMapped={false} transparent depthTest={false} depthWrite={false}/>
+   </mesh>)}
+ </group>;
 }

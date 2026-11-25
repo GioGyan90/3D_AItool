@@ -673,7 +673,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
     <SurfaceQualityPanel mesh={geometry} onFace={chooseFace} onVertex={id=>{clearFaces();setSelected(id);setShowCage(true)}} optimized={optimizedTriangles} onOptimize={setOptimizedTriangles} onColors={setQualityColors}/>
     <details className="rounded-lg border border-neutral-700 p-2 text-xs text-slate-400">
       <summary className="cursor-pointer">尚未支持的高级功能</summary>
-      <p className="topo-helptext mt-2">后续包括真实边倒角、任意多边面自由刀切、桥接和可转动魔方层组。</p>
+      <p className="topo-helptext mt-2">后续包括真实边倒角、画布直接刀切、局部镜像拓扑、桥接和可转动魔方层组。</p>
     </details>
   </div>}
   </div>
