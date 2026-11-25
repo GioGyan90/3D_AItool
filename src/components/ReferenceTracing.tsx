@@ -111,6 +111,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [insetFraction,setInsetFraction]=useState(.25);
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
+ const [knifeSegments,setKnifeSegments]=useState<V[]>([]);
  const previewRegionRef=useRef<HTMLDivElement>(null);
  // R3F camera bounds are recalculated when the canvas changes its width/height.
  // Schedule another reset after React has committed the resized scene, so
@@ -372,7 +373,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        </div>
      </div>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+       {active && <TracePreview knifeSegments={knifeSegments} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
@@ -526,7 +527,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割</button>
     </div>
     <p className="topo-helptext">局部切割仅影响选中的面，并自动修复相邻共享边。</p>
-    <KnifePanel mesh={geometry} selectedFace={selectedFace} selectedVertex={selected} locked={locked.length>0} disabled={draftDirty||faceDraft.length>0||loading||symmetryAxes.length>0} onApply={(next,label)=>operateMesh(()=>next,label)}/>
+    <KnifePanel onPreview={setKnifeSegments} mesh={geometry} selectedFace={selectedFace} selectedVertex={selected} locked={locked.length>0} disabled={draftDirty||faceDraft.length>0||loading||symmetryAxes.length>0} onApply={(next,label)=>operateMesh(()=>next,label)}/>
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
     <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
