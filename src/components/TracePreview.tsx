@@ -30,7 +30,7 @@ type Props={
   selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
   onSelect:(i:number|null)=>void; onMove:(i:number,v:V)=>void;
   onSelectFace?:(i:number,additive?:boolean)=>void; onSelectEdge?:(face:number,slot:number)=>void;
-  onStartMove?:()=>void; xray?:boolean; showCage?:boolean; cameraRevision?:number;
+  onStartMove?:()=>void; xray?:boolean; showCage?:boolean; cameraRevision?:number; orthographic?:boolean; focus?:V; focusZoom?:number;
 };
 const keyOf=(a:number,b:number)=>a<b?`${a}:${b}`:`${b}:${a}`;
 
@@ -122,20 +122,23 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
       onMouseUp={()=>{dragging.current=false;dragIndex.current=null;if(orbit.current)orbit.current.enabled=true}}/>}
   </>;
 }
-function Camera({direction,bounds,orbit,revision}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>,revision:number}){
+function Camera({direction,bounds,orbit,revision,focus,focusZoom=1}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>,revision:number,focus?:V,focusZoom?:number}){
   const {camera,invalidate,size}=useThree();
   useEffect(()=>{
     const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4]};
     const dir=new THREE.Vector3(...p[direction]).normalize();
-    const fov=(camera as THREE.PerspectiveCamera).fov*Math.PI/180;
+    const fov=40*Math.PI/180;
     const aspect=size.width/Math.max(size.height,1);
     const half=Math.atan(Math.tan(fov/2)*Math.min(1,aspect));
-    const distance=bounds.radius/Math.sin(half)*1.08;
-    camera.position.copy(bounds.center).addScaledVector(dir,distance);
-    camera.up.set(0,1,0);camera.lookAt(bounds.center);camera.updateProjectionMatrix();
-    if(orbit.current){orbit.current.target.copy(bounds.center);orbit.current.update()}
+    const target=focus?new THREE.Vector3(...focus):bounds.center;
+    const radius=bounds.radius/Math.max(1,focusZoom);
+    const distance=radius/Math.sin(half)*1.08;
+    if(camera instanceof THREE.OrthographicCamera){const halfHeight=radius*1.12/Math.min(1,aspect);camera.left=-halfHeight*aspect;camera.right=halfHeight*aspect;camera.top=halfHeight;camera.bottom=-halfHeight;camera.zoom=1;}
+    camera.position.copy(target).addScaledVector(dir,camera instanceof THREE.OrthographicCamera?bounds.radius*4:distance);
+    camera.up.set(0,1,0);camera.lookAt(target);(camera as THREE.PerspectiveCamera|THREE.OrthographicCamera).updateProjectionMatrix();
+    if(orbit.current){orbit.current.target.copy(target);orbit.current.update()}
     invalidate();
-  },[camera,direction,revision,invalidate,bounds,orbit,size.width,size.height]);
+  },[camera,direction,revision,invalidate,bounds,orbit,size.width,size.height,focus?.[0],focus?.[1],focus?.[2],focusZoom]);
   return null;
 }
 export function TracePreview(props:Props){
@@ -146,13 +149,13 @@ export function TracePreview(props:Props){
     const sphere=box.getBoundingSphere(new THREE.Sphere());
     return {center:sphere.center,radius:Math.max(sphere.radius,.05)};
   },[props.data.faces]);
-  return <Canvas camera={{position:[3,1.2,4],fov:40}} gl={{antialias:true}}
+  return <Canvas key={props.orthographic?'ortho':'perspective'} orthographic={props.orthographic} camera={props.orthographic?{position:[3,1.2,4],near:.001,far:100000}:{position:[3,1.2,4],fov:40}} gl={{antialias:true}}
     raycaster={{params:{Points:{threshold:.045},Line:{threshold:.045}} as any}}>
     <color attach="background" args={['#303030']}/>
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={props.symmetricLight ? .65:1.3}/><directionalLight position={[-3,4,5]} intensity={props.symmetricLight ? .65:0}/>
     {props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
     <Shape {...props} orbit={orbit}/>
-    <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit}/>
+    <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit} focus={props.focus} focusZoom={props.focusZoom}/>
     <OrbitControls ref={orbit} makeDefault/>
   </Canvas>;
 }
