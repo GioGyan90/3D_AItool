@@ -353,3 +353,12 @@
   .topo-shell .topo-inspector { height: min(43dvh, 400px); max-height: min(43dvh, 400px) !important; }
   .topo-shell .topo-inspector.is-expanded { height: 100dvh; max-height: 100dvh !important; }
 }
+
+/* Canvas knife lives in the existing camera strip; never steals a second row
+ * from the actual WebGL viewport. Horizontal scrolling works on narrow screens. */
+.topo-shell .topo-camera-bar {flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;}
+.topo-shell .topo-camera-bar > * {flex-shrink:0;}
+.topo-shell .topo-camera-actions {flex-wrap:nowrap;}
+.topo-knife-tools {display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:11px;padding-right:6px;border-right:1px solid #344454;}
+.topo-knife-tools label {display:flex;gap:4px;align-items:center;}
+.topo-knife-error {flex:none;padding:4px 9px;font-size:11px;color:#ffd28a;background:#3d2921;max-height:36px;overflow:auto;}

@@ -128,7 +128,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
 function Camera({direction,bounds,orbit,revision,focus,focusZoom=1}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>,revision:number,focus?:V,focusZoom?:number}){
   const {camera,invalidate,size}=useThree();
   useEffect(()=>{
-    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4]};
+    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],left:[-4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4]};
     const dir=new THREE.Vector3(...p[direction]).normalize();
     const fov=40*Math.PI/180;
     const aspect=size.width/Math.max(size.height,1);

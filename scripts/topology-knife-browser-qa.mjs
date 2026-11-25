@@ -64,10 +64,28 @@ try{
  await tool.getByRole('button',{name:'执行画布刀切'}).click();await counts(9,8);await undo();await counts(8,6);
  await startCanvas();await tool.getByRole('checkbox',{name:'X 局部镜像'}).check();
  await mousePoint(-.98,-.98);await mousePoint(.98,.98);await tool.getByText(/1 段/).waitFor();await counts(8,6);await shot('canvas-05-mirror-preview',true);
- await tool.getByRole('button',{name:'执行画布刀切'}).click();await counts(8,8);await shot('canvas-06-mirror-commit');await undo();await counts(8,6);await redo();await counts(8,8);await undo();await counts(8,6);
+ await front('3/4');await shot('canvas-05a-mirror-angle',true);
+ await front('左侧');await shot('canvas-05b-mirror-left',true);
+ await tool.getByRole('button',{name:'执行画布刀切'}).click();await counts(8,8);await shot('canvas-06-mirror-commit');await front('侧面');await shot('canvas-06a-mirror-right-commit');await undo();await counts(8,6);await redo();await counts(8,8);await undo();await counts(8,6);
  await startCanvas();await tool.getByRole('checkbox',{name:'X 局部镜像'}).uncheck();await tool.getByRole('button',{name:'取消画布刀切'}).click();
+ // Same-face mirror conflict must not mutate source or enqueue a partial cut.
+ await front('正面');await startCanvas();await tool.getByRole('checkbox',{name:'X 局部镜像'}).check();
+ await mousePoint(-.98,-.98);await mousePoint(.98,.98);await d.getByRole('alert').filter({hasText:'冲突'}).waitFor();await counts(8,6);
+ assert.ok(await tool.getByRole('button',{name:'执行画布刀切'}).isDisabled());
+ await tool.getByRole('button',{name:'取消画布刀切'}).click();
+ await startCanvas();await tool.getByRole('checkbox',{name:'X 局部镜像'}).uncheck();await tool.getByRole('button',{name:'取消画布刀切'}).click();
+ // Active knife mode must retain the same viewport on narrow displays.
+ for(const [width,height] of [[900,700],[390,844]]){
+   await page.setViewportSize({width,height});await page.waitForTimeout(350);
+   const idle=await view.boundingBox();assert.ok(idle.height>=150);
+   await startCanvas();await page.waitForTimeout(350);
+   const editing=await view.boundingBox();assert.ok(editing.height>=150&&editing.height>=idle.height-5,'Knife strip shrank viewport');
+   const p=out+'/canvas-layout-'+width+'.png';await page.screenshot({path:p,animations:'disabled'});report.screenshots.push({name:'canvas-layout-'+width,path:p,size:(await stat(p)).size});
+   await tool.getByRole('button',{name:'取消画布刀切'}).click();
+ }
+ await page.setViewportSize({width:1440,height:900});await page.waitForTimeout(350);
  await camera.getByRole('button',{name:'正交投影',exact:true}).click();await front('3/4');
- report.checks.push('Real canvas clicks: vertex snapping, hover, Enter/Escape, cross-face edge snap, paired X mirror, atomic undo/redo');
+ report.checks.push('Real canvas clicks: vertex snapping, hover, Enter/Escape, cross-face edge snap, paired X mirror, atomic undo/redo, mirror conflict rejection, active responsive layout');
  await face.fill('0');await open('自由刀切');
  const from=section.getByLabel('刀切起点',{exact:true}),to=section.getByLabel('刀切终点',{exact:true});
  const add=section.getByRole('button',{name:'加入切割路径'});

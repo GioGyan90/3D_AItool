@@ -383,10 +383,15 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        ? 'fixed inset-4 z-[205] flex flex-col rounded border border-neutral-600 bg-neutral-900 p-3 shadow-xl'
        : undefined}>
      <div className="topo-camera-bar" role="toolbar" aria-label="三维视图工具栏">
+     <div className="topo-knife-tools" aria-label="画布刀切工具">
+       <button className={btn} disabled={knifeBlocked||!geometry.faces.length} aria-pressed={canvasKnife} onClick={()=>{if(canvasKnife)cancelCanvasKnife();else{clearCanvasPath();setKnifeSource(geometry);setCanvasKnife(true);setShowCage(true);setToolPanel('topology')}}}>画布刀切</button>
+       {canvasKnife&&<><label><input type="checkbox" checked={knifeMirror} onChange={e=>{setKnifeMirror(e.target.checked);clearCanvasPath()}}/> X 局部镜像</label><span aria-live="polite">{canvasSteps.length} 段 · {knifeStart?'选择下一切点':'选择起点'}{canvasResult.mesh?' · 预检 '+canvasResult.mesh.vertices.length+' 顶点 / '+canvasResult.mesh.faces.length+' 面':''}</span><button className={btn} disabled={!canvasSteps.length} onClick={()=>{setKnifeStart(canvasSteps.at(-1)!.from);setCanvasSteps(old=>old.slice(0,-1));setKnifeError('')}}>撤回画布末段</button><button className={btn} disabled={!canvasResult.mesh||knifeBlocked} onClick={applyCanvasKnife}>执行画布刀切</button><button className={btn} onClick={cancelCanvasKnife}>取消画布刀切</button></>}
+     </div>
+
        {!sceneEdit && <button className={btn} onClick={()=>setPreviewLarge(value=>!value)} aria-pressed={previewLarge}>
          {previewLarge?'恢复小预览':'放大 3D 编辑'}</button>}
        <span className="topo-camera-label">观察角度</span>
-       {([['front','正面'],['back','背面'],['side','侧面'],['top','俯视'],['bottom','仰视'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
+       {([['front','正面'],['back','背面'],['side','侧面'],['left','左侧'],['top','俯视'],['bottom','仰视'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
          <button key={direction} className={btn} onClick={()=>{setPreviewDirection(direction);setCameraRevision(n=>n+1)}}
            aria-pressed={previewDirection===direction} title={`切换到${label}机位`}>{label}</button>
        ))}
@@ -401,10 +406,6 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
          </label>}
        </div>
      </div>
-     <div className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs" aria-label="画布刀切工具">
-       <button className={btn} disabled={knifeBlocked||!geometry.faces.length} aria-pressed={canvasKnife} onClick={()=>{if(canvasKnife)cancelCanvasKnife();else{clearCanvasPath();setKnifeSource(geometry);setCanvasKnife(true);setShowCage(true);setToolPanel('topology')}}}>画布刀切</button>
-       {canvasKnife&&<><label><input type="checkbox" checked={knifeMirror} onChange={e=>{setKnifeMirror(e.target.checked);clearCanvasPath()}}/> X 局部镜像</label><span aria-live="polite">{canvasSteps.length} 段 · {knifeStart?'选择下一切点':'选择起点'}{canvasResult.mesh?' · 预检 '+canvasResult.mesh.vertices.length+' 顶点 / '+canvasResult.mesh.faces.length+' 面':''}</span><button className={btn} disabled={!canvasSteps.length} onClick={()=>{setKnifeStart(canvasSteps.at(-1)!.from);setCanvasSteps(old=>old.slice(0,-1));setKnifeError('')}}>撤回画布末段</button><button className={btn} disabled={!canvasResult.mesh||knifeBlocked} onClick={applyCanvasKnife}>执行画布刀切</button><button className={btn} onClick={cancelCanvasKnife}>取消画布刀切</button><span>左键吸附 · 右键旋转 · Enter 执行 · Esc 取消</span>{(knifeError||canvasResult.error)&&<span role="alert" className="text-amber-300">{knifeError||canvasResult.error}</span>}</>}
-     </div>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
        {active && <TracePreview orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeActive?canvasResult.lines:knifeSegments} knifeDraft={knifeActive&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={knifeActive&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={knifeActive?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
@@ -414,8 +415,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
      </div>
      <div className="topo-stage-foot">
        <span>{showCage?'编辑布线':'成品预览'} · {selectedSummary}</span>
-       <span>拖动空白旋转 · Shift + 点击多选 · Esc 清空选择</span>
+       <span>{canvasKnife?"左键吸附 · 右键旋转 · Enter 执行 · Esc 取消":"拖动空白旋转 · Shift + 点击多选 · Esc 清空选择"}</span>
      </div>
+     {canvasKnife&&(knifeError||canvasResult.error)&&<p role="alert" className="topo-knife-error">{knifeError||canvasResult.error}</p>}
      {triangulationError && <p role="alert" className="text-amber-300">面暂不可三角化，预览仅显示点和线。{triangulationError}</p>}
    </div>
  );
