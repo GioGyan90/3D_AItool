@@ -10,7 +10,9 @@ const normal=(v:V[],f:number[])=>{const n=new T.Vector3(),o=new T.Vector3(...v[f
 const finish=(mesh:ControlMesh)=>{validateControlTopology(mesh);triangulateFaces(mesh.vertices,mesh.faces,false,false);return mesh;};
 function path(f:number[],a:number,b:number){const out=[f[a]];while(a!==b){a=(a+1)%f.length;out.push(f[a])}return out;}
 /** A continuous path of one chord per original polygon. No mesh mutation on failure. */
-export function knifeCut(mesh:ControlMesh,steps:KnifeStep[]):ControlMesh{
+export function knifeCut(mesh:ControlMesh,steps:KnifeStep[]):ControlMesh{return knifeCutPaths(mesh,[steps]);}
+function knifeCutPaths(mesh:ControlMesh,paths:KnifeStep[][]):ControlMesh{
+ const steps=paths.flat();
  validateControlTopology(mesh);triangulateFaces(mesh.vertices,mesh.faces,false,false);
  if(!steps.length||steps.length>1000||new Set(steps.map(s=>s.face)).size!==steps.length)throw Error('需要连续路径，每个控制面最多切割一次');
  const vertices=mesh.vertices.map(v=>[...v] as V),cuts=new Map<string,{id:number;t:number}>();
@@ -23,8 +25,8 @@ export function knifeCut(mesh:ControlMesh,steps:KnifeStep[]):ControlMesh{
   if(old){if(Math.abs(old.t-sorted)>1e-8)throw Error('同一共享边的切点不一致');return old.id;}
   const id=vertices.length;vertices.push(mesh.vertices[a].map((x,i)=>x*(1-t)+mesh.vertices[b][i]*t) as V);cuts.set(k,{id,t:sorted});return id;
  };
- const pairs=new Map<number,[number,number]>();let last:number|undefined;
- for(const s of steps){const f=mesh.faces[s.face];if(!f)throw Error('控制面编号无效');const a=resolve(f,s.from),b=resolve(f,s.to);if(a===b||last!==undefined&&last!==a)throw Error('刀切路径不连续或端点重合');pairs.set(s.face,[a,b]);last=b;}
+ const pairs=new Map<number,[number,number]>();
+ for(const steps of paths){let last:number|undefined;for(const s of steps){const f=mesh.faces[s.face];if(!f)throw Error('控制面编号无效');const a=resolve(f,s.from),b=resolve(f,s.to);if(a===b||last!==undefined&&last!==a)throw Error('刀切路径不连续或端点重合');pairs.set(s.face,[a,b]);last=b;}}
  const faces:number[][]=[],colors:string[]=[];
  const push=(i:number,...fs:number[][])=>{faces.push(...fs);if(mesh.faceColors)colors.push(...fs.map(()=>mesh.faceColors![i]));};
  mesh.faces.forEach((f,i)=>{
@@ -90,4 +92,42 @@ export function mergeEdgeVertices(mesh:ControlMesh,remove:number,keep:number):Co
  if(before.boundaryEdges===0&&after.boundaryEdges!==0)throw Error('合并会破坏封闭网格');
  if(!faces.length)throw Error('合并将删除全部控制面');
  return next;
+}
+
+// Local X mirror uses only involved vertices and faces, never a global weld.
+// Ambiguous counterparts or a conflicting chord on a self-mirrored face reject
+// the entire operation before a new control mesh is returned.
+export function mirroredKnifeSteps(mesh:ControlMesh,steps:KnifeStep[],tolerance=1e-5):KnifeStep[]{
+ const map=new Map<number,number>();
+ const counterpart=(id:number)=>{
+  if(map.has(id))return map.get(id)!;
+  const p=mesh.vertices[id];if(!p)throw Error('镜像顶点无效');
+  const matches=mesh.vertices.flatMap((v,i)=>Math.abs(v[0]+p[0])<=tolerance&&Math.abs(v[1]-p[1])<=tolerance&&Math.abs(v[2]-p[2])<=tolerance?[i]:[]);
+  if(matches.length!==1)throw Error('局部镜像缺少唯一对应顶点 #'+id);
+  map.set(id,matches[0]);return matches[0];
+ };
+ const point=(p:KnifePoint):KnifePoint=>'vertex' in p?{vertex:counterpart(p.vertex)}:{edge:[counterpart(p.edge[0]),counterpart(p.edge[1])],fraction:p.fraction};
+ return steps.map(s=>{
+  const f=mesh.faces[s.face];if(!f)throw Error('镜像控制面无效');
+  const reversed=f.map(counterpart).reverse();
+  const matches=mesh.faces.flatMap((g,i)=>g.length===reversed.length&&g.some((_,j)=>reversed.every((id,k)=>g[(j+k)%g.length]===id))?[i]:[]);
+  if(matches.length!==1)throw Error('局部镜像缺少唯一反向控制面 #'+s.face);
+  return {face:matches[0],from:point(s.from),to:point(s.to)};
+ });
+}
+const pointKey=(p:KnifePoint)=>'vertex' in p?'v'+p.vertex:'e'+key(...p.edge)+':'+Math.round((p.edge[0]<p.edge[1]?p.fraction:1-p.fraction)*1e8);
+const chordKey=(s:KnifeStep)=>[pointKey(s.from),pointKey(s.to)].sort().join('|');
+export function knifeCutMirroredX(mesh:ControlMesh,steps:KnifeStep[]):ControlMesh{
+ const mirror=mirroredKnifeSteps(mesh,steps);
+ const original=new Map(steps.map(s=>[s.face,s]));
+ const paths:KnifeStep[][]=[steps];let run:KnifeStep[]=[];
+ for(const s of mirror){
+  const existing=original.get(s.face);
+  if(existing){
+   if(chordKey(existing)!==chordKey(s))throw Error('镜像刀切在同一控制面产生冲突，请先建立中心环线');
+   if(run.length)paths.push(run);run=[];
+  }else run.push(s);
+ }
+ if(run.length)paths.push(run);
+ return knifeCutPaths(mesh,paths);
 }

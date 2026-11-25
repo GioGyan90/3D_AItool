@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPrimitiveControlMesh,validateControlTopology} from '../src/components/meshTopology';
 import {triangulateFaces} from '../src/components/traceGeometry';
-import {knifeCut,dissolveEdge,mergeEdgeVertices,type KnifeStep} from '../src/components/knifeTopology';
+import {knifeCut,knifeCutMirroredX,dissolveEdge,mergeEdgeVertices,type KnifeStep} from '../src/components/knifeTopology';
 const closed=(m:ReturnType<typeof createPrimitiveControlMesh>)=>{const s=validateControlTopology(m);assert.equal(s.boundaryEdges,0);assert.equal(m.vertices.length-s.edges+m.faces.length,2);assert.equal(triangulateFaces(m.vertices,m.faces).length/3,m.faces.reduce((n,f)=>n+f.length-2,0))};
 test('continuous knife crosses two cube faces via exactly one shared edge vertex',()=>{
  const m=createPrimitiveControlMesh('box'),before=JSON.stringify(m);
@@ -53,4 +53,25 @@ test('reference mark remap preserves survivors, removes only deleted vertex, and
  assert.deepEqual(next.anchors.front,{1:[12,23],4:[67,78]});
  assert.equal(JSON.stringify(s),before);
  assert.equal(next.refs,s.refs);
+});
+
+test('local X mirrored knife edits paired cube side faces in one transaction',()=>{
+ const m=createPrimitiveControlMesh('box'),before=JSON.stringify(m);
+ const next=knifeCutMirroredX(m,[{face:2,from:{vertex:0},to:{edge:[4,7],fraction:.35}}]);
+ assert.equal(next.vertices.length,10);assert.equal(next.faces.length,8);closed(next);
+ assert.ok(next.vertices[8].every((v,i)=>Math.abs(v-(i===0?-next.vertices[9][i]:next.vertices[9][i]))<1e-8));
+ assert.equal(JSON.stringify(m),before);
+});
+test('mirror rejects ambiguous, absent and conflicting face counterpart without changing source',()=>{
+ const m=createPrimitiveControlMesh('box');
+ const asymmetric={...m,vertices:m.vertices.map((v,i)=>i===5?[.6,v[1],v[2]] as [number,number,number]:v)};
+ const before=JSON.stringify(asymmetric);
+ assert.throws(()=>knifeCutMirroredX(asymmetric,[{face:2,from:{vertex:0},to:{vertex:7}}]),/镜像/);
+ assert.equal(JSON.stringify(asymmetric),before);
+ assert.throws(()=>knifeCutMirroredX(m,[{face:0,from:{vertex:4},to:{vertex:6}}]),/冲突/);
+});
+test('self-mirrored chord is applied once and center edge cut points are shared',()=>{
+ const m=createPrimitiveControlMesh('box');
+ const next=knifeCutMirroredX(m,[{face:0,from:{edge:[4,5],fraction:.5},to:{edge:[6,7],fraction:.5}}]);
+ assert.equal(next.vertices.length,10);assert.equal(next.faces.length,7);closed(next);
 });
