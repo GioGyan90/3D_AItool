@@ -8,6 +8,7 @@ import {CalibrationWorkbench} from './CalibrationWorkbench';
 import {ProfileCalibrationPanel} from './ProfileCalibrationPanel';
 import {assertRegionProtected,slideOnEdge} from './regionEditing';
 import {slideContinuousEdgeLoop} from './loopSlide';
+import {KnifePanel} from './KnifePanel';
 import {triangulateFaces,triangulateFacesWithReport} from './traceGeometry';
 import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
@@ -523,6 +524,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割</button>
     </div>
     <p className="topo-helptext">局部切割仅影响选中的面，并自动修复相邻共享边。</p>
+    <KnifePanel mesh={geometry} selectedFace={selectedFace} selectedVertex={selected} locked={locked.length>0} disabled={draftDirty||faceDraft.length>0||loading||symmetryAxes.length>0} onApply={(next,label)=>operateMesh(()=>next,label)}/>
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
     <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
