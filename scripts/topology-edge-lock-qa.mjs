@@ -151,3 +151,6 @@ try{
  await browser?.close();
  server.kill('SIGTERM');
 }
+
+// Run independent free-topology browser suite after the existing regressions.
+await import('./topology-knife-browser-qa.mjs');

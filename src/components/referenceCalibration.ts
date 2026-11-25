@@ -57,3 +57,23 @@ export function projectionResiduals(vertices:Vec3[],targets:Landmark[],view:Cali
 export function residualColor(pixels:number,threshold:number){
  return pixels<=threshold?'#65d995':pixels<=threshold*2?'#ffcc66':'#ff6666';
 }
+
+export type CalibrationReference={url:string;aspect:number;cal:ImageCalibration};
+export type CalibrationSession={
+ refs:Record<CalibrationView,CalibrationReference>;
+ targets:Record<number,Landmark>;
+ anchors:Record<CalibrationView,Record<number,[number,number]>>;
+ linked:boolean;
+};
+export function createCalibrationSession():CalibrationSession{
+ const initial=():CalibrationReference=>({url:'',aspect:1,cal:{cx:500,cy:500,scale:250,flip:false,rotation:0}});
+ return {refs:{front:initial(),side:initial()},targets:{},anchors:{front:{},side:{}},linked:true};
+}
+// Remap existing vertex identity; a removed landmark is not silently moved to
+// a different geometric feature. The survivor retains its own original mark.
+export function remapCalibrationSession(session:CalibrationSession,oldToNew:ReadonlyArray<number|null>):CalibrationSession{
+ const targets:CalibrationSession['targets']={},anchors:CalibrationSession['anchors']={front:{},side:{}};
+ for(const t of Object.values(session.targets)){const id=oldToNew[t.vertex];if(id!=null)targets[id]={...t,vertex:id}}
+ for(const view of ['front','side'] as const)for(const [old,p] of Object.entries(session.anchors[view])){const id=oldToNew[Number(old)];if(id!=null)anchors[view][id]=p}
+ return {...session,targets,anchors};
+}

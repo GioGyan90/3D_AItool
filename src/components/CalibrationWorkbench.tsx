@@ -1,21 +1,20 @@
-import React,{useState,useRef,useMemo,useEffect} from 'react';
-import {projectionResiduals,residualColor,projectLandmark,fitLandmark,landmarkError,calibrateAnchors,edgeResidual,facingEdges,type Vec3,type Landmark,type CalibrationView,type ImageCalibration} from './referenceCalibration';
+import React,{useState,useRef,useMemo} from 'react';
+import {projectionResiduals,residualColor,projectLandmark,fitLandmark,landmarkError,calibrateAnchors,edgeResidual,facingEdges,type Vec3,type CalibrationView,type ImageCalibration,type CalibrationSession} from './referenceCalibration';
 import type {ControlMesh} from '../types';
-type Props={mesh:ControlMesh;selected:number|null;onSelect:(id:number)=>void;onFit:(id:number,v:Vec3)=>void};
-type Ref={url:string;aspect:number;cal:ImageCalibration};
-const initial=():Ref=>({url:'',aspect:1,cal:{cx:500,cy:500,scale:250,flip:false,rotation:0}});
+type Props={mesh:ControlMesh;selected:number|null;onSelect:(id:number)=>void;onFit:(id:number,v:Vec3)=>void;session:CalibrationSession;setSession:React.Dispatch<React.SetStateAction<CalibrationSession>>};
 const button='topo-button rounded border px-2 py-1 text-xs';
-export function CalibrationWorkbench({mesh,selected,onSelect,onFit}:Props){
- const [refs,setRefs]=useState<Record<CalibrationView,Ref>>({front:initial(),side:initial()});
- const [targets,setTargets]=useState<Record<number,Landmark>>({});
- const [mark,setMark]=useState(false),[linked,setLinked]=useState(true),[opacity,setOpacity]=useState(.65),[error,setError]=useState('');
+export function CalibrationWorkbench({mesh,selected,onSelect,onFit,session,setSession}:Props){
+ const {refs,targets,anchors,linked}=session;
+ const field=<K extends keyof CalibrationSession,>(key:K,action:React.SetStateAction<CalibrationSession[K]>)=>setSession(old=>({...old,[key]:typeof action==='function'?(action as (v:CalibrationSession[K])=>CalibrationSession[K])(old[key]):action}));
+ const setRefs=(a:React.SetStateAction<CalibrationSession['refs']>)=>field('refs',a);
+ const setTargets=(a:React.SetStateAction<CalibrationSession['targets']>)=>field('targets',a);
+ const setAnchors=(a:React.SetStateAction<CalibrationSession['anchors']>)=>field('anchors',a);
+ const setLinked=(a:boolean)=>field('linked',a);
+ const [mark,setMark]=useState(false),[opacity,setOpacity]=useState(.65),[error,setError]=useState('');
  const [showVertices,setShowVertices]=useState(true);
  const [showResiduals,setShowResiduals]=useState(true),[residualThreshold,setResidualThreshold]=useState(5);
  const [showHidden,setShowHidden]=useState(false),[showTargets,setShowTargets]=useState(true),[zoom,setZoom]=useState(1);
  const [anchorMode,setAnchorMode]=useState(false);
- const [anchors,setAnchors]=useState<Record<CalibrationView,Record<number,[number,number]>>>({front:{},side:{}});
- const topologyKey=JSON.stringify(mesh.faces);
- useEffect(()=>{setTargets({});setAnchors({front:{},side:{}})},[topologyKey]);
  const solve=(view:CalibrationView)=>{
   try{
    const c=calibrateAnchors(mesh.vertices,view,Object.entries(anchors[view]).map(([vertex,pixel])=>({vertex:Number(vertex),pixel})),refs[view].cal.flip);
