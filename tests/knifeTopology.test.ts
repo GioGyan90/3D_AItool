@@ -1,3 +1,4 @@
+import {createCalibrationSession,remapCalibrationSession} from '../src/components/referenceCalibration';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPrimitiveControlMesh,validateControlTopology} from '../src/components/meshTopology';
@@ -41,4 +42,15 @@ test('convex pentagon and valid concave polygon can be cut without altering boun
  const p=knifeCut(pent,[{face:0,from:{vertex:0},to:{vertex:2}}]);assert.equal(p.faces.length,2);assert.equal(p.vertices.length,5);assert.equal(validateControlTopology(p).boundaryEdges,5);
  const concave={vertices:[[0,0,0],[3,0,0],[3,3,0],[2,3,0],[2,1,0],[1,1,0],[1,3,0],[0,3,0]] as [number,number,number][],faces:[[0,1,2,3,4,5,6,7]]};
  const c=knifeCut(concave,[{face:0,from:{vertex:0},to:{vertex:4}}]);assert.equal(c.faces.length,2);assert.equal(validateControlTopology(c).boundaryEdges,8);
+});
+
+test('reference mark remap preserves survivors, removes only deleted vertex, and does not mutate undo snapshot',()=>{
+ const initial=createCalibrationSession();
+ const s={...initial,targets:{1:{vertex:1,front:[10,20] as [number,number]},4:{vertex:4,front:[40,50] as [number,number]},5:{vertex:5,side:[60,70] as [number,number]}},anchors:{front:{1:[12,23] as [number,number],4:[45,56] as [number,number],5:[67,78] as [number,number]},side:{}}};
+ const before=JSON.stringify(s);
+ const next=remapCalibrationSession(s,[0,1,2,3,null,4,5,6]);
+ assert.deepEqual(next.targets,{1:{vertex:1,front:[10,20]},4:{vertex:4,side:[60,70]}});
+ assert.deepEqual(next.anchors.front,{1:[12,23],4:[67,78]});
+ assert.equal(JSON.stringify(s),before);
+ assert.equal(next.refs,s.refs);
 });

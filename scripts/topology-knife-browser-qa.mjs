@@ -70,6 +70,14 @@ try{
  await face.fill('0');await open('共享边溶解');await edge.selectOption({index:1});
  await section.getByRole('alert').filter({hasText:'夹角'}).waitFor();assert.ok(await section.getByRole('button',{name:'应用共享边溶解'}).isDisabled());
  report.checks.push('Coplanar dissolve restores cage, undo/redo, hard-edge rejection');
+ // Mark a removed vertex and its survivor so history must distinguish identities.
+ await d.getByRole('button',{name:'正侧校准',exact:true}).click();
+ const calibration=d.getByLabel('正侧双视图校准'),board=calibration.getByLabel('正面校准画板'),cid=calibration.getByLabel('校准顶点编号');
+ const mark=async(id,x,y)=>{await cid.fill(String(id));const p=await board.evaluate((svg,p)=>{const s=svg.createSVGPoint();s.x=p[0];s.y=p[1];const q=s.matrixTransform(svg.getScreenCTM());return {x:q.x,y:q.y}},[x,y]);await page.mouse.click(p.x,p.y)};
+ await cid.fill('4');await calibration.getByRole('button',{name:'标记目标位置',exact:true}).click();await board.scrollIntoViewIfNeeded();await mark(4,440,440);await mark(5,550,550);
+ assert.equal(await board.locator('[data-residual-vertex]').count(),2);
+ await calibration.getByRole('button',{name:'标记固定基准点',exact:true}).click();await mark(5,570,570);
+ await d.getByRole('button',{name:'返回建模',exact:true}).click();
  await vertex.fill('4');
  const coord=async()=>Promise.all(['X','Y','Z'].map(k=>d.getByLabel('顶点 '+k,{exact:true}).inputValue()));
  await vertex.fill('5');const expected=await coord();await vertex.fill('4');
@@ -81,9 +89,15 @@ try{
  assert.ok(!(await keep.locator('option[value="2"]').count()),'Non-neighbor offered');
  await section.getByRole('button',{name:'应用顶点合并'}).click();
  await d.getByText('相邻顶点合并完成').waitFor();await counts(7,6);await vertex.fill('4');assert.deepEqual(await coord(),expected);
- await shot('06-merged');await undo();await counts(8,6);await redo();await counts(7,6);
+ await shot('06-merged');
+ await d.getByRole('button',{name:'正侧校准',exact:true}).click();
+ assert.equal(await board.locator('[data-residual-vertex]').count(),1);assert.equal(await board.locator('[data-residual-vertex="4"]').count(),1);
+ await calibration.getByRole('button',{name:'自动标定正面（1点）',exact:true}).waitFor();
+ await undo();await counts(8,6);assert.equal(await board.locator('[data-residual-vertex]').count(),2);assert.equal(await board.locator('[data-residual-vertex="5"]').count(),1);
+ await redo();await counts(7,6);assert.equal(await board.locator('[data-residual-vertex]').count(),1);assert.equal(await board.locator('[data-residual-vertex="4"]').count(),1);
+ await d.getByRole('button',{name:'返回建模',exact:true}).click();
  await vertex.fill('4');assert.deepEqual(await coord(),expected);
- report.checks.push('Merge preserves survivor coordinates, lock refuses topology edit, non-neighbor absent, undo/redo');
+ report.checks.push('Merge preserves survivor coordinates, lock refuses topology edit, non-neighbor absent, remapped reference marks and undo/redo');
  assert.deepEqual(report.errors,[]);
  console.log('KNIFE_BROWSER_ACCEPTANCE_SUCCESS',JSON.stringify(report));
 }catch(e){report.errors.push(String(e));if(page)await page.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});throw e}
