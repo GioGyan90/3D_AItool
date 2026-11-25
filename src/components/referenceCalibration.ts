@@ -48,3 +48,12 @@ export function facingEdges(vertices:Vec3[],faces:number[][],view:CalibrationVie
  face.forEach((a,i)=>{const b=face[(i+1)%face.length];edges.add(a<b?a+':'+b:b+':'+a);points.add(a);});}
  return {edges,points};
 }
+
+
+export function projectionResiduals(vertices:Vec3[],targets:Landmark[],view:CalibrationView,c:ImageCalibration){
+ const rows=targets.flatMap(t=>{const p=t[view],v=vertices[t.vertex];return p&&v?[{id:t.vertex,target:p,projected:projectLandmark(v,view,c),...landmarkError(v,p,view,c)}]:[]}).sort((a,b)=>b.pixels-a.pixels);
+ return {rows,count:rows.length,max:Math.max(0,...rows.map(r=>r.pixels)),rms:Math.sqrt(rows.reduce((s,r)=>s+r.pixels*r.pixels,0)/Math.max(1,rows.length))};
+}
+export function residualColor(pixels:number,threshold:number){
+ return pixels<=threshold?'#65d995':pixels<=threshold*2?'#ffcc66':'#ff6666';
+}
