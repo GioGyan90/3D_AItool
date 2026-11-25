@@ -112,6 +112,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
  const [knifeSegments,setKnifeSegments]=useState<V[]>([]);
+ const [orthographic,setOrthographic]=useState(false);
+ const [localFocus,setLocalFocus]=useState<V|undefined>();
+ const [focusZoom,setFocusZoom]=useState(3);
  const previewRegionRef=useRef<HTMLDivElement>(null);
  // R3F camera bounds are recalculated when the canvas changes its width/height.
  // Schedule another reset after React has committed the resized scene, so
@@ -365,6 +368,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
            aria-pressed={previewDirection===direction} title={`切换到${label}机位`}>{label}</button>
        ))}
        <div className="topo-camera-actions">
+         <button className={btn} aria-pressed={orthographic} onClick={()=>setOrthographic(v=>!v)}>正交投影</button>
+         <button className={btn} disabled={selected===null&&selectedFace===null} onClick={()=>{const p=selected!==null?geometry.vertices[selected]:undefined;const face=selectedFace!==null?geometry.faces[selectedFace]:undefined;if(p)setLocalFocus([...p] as V);else if(face)setLocalFocus([0,1,2].map(k=>face.reduce((n,i)=>n+geometry.vertices[i][k],0)/face.length) as V);setCameraRevision(n=>n+1)}}>聚焦选择</button>
+         {localFocus&&<><label className="text-xs">局部放大 <input aria-label="三维局部放大" type="range" min="1" max="6" step=".5" value={focusZoom} onChange={e=>setFocusZoom(+e.target.value)}/></label><button className={btn} onClick={()=>{setLocalFocus(undefined);setCameraRevision(n=>n+1)}}>返回全局</button></>}
          <button className={btn} onClick={()=>setCameraRevision(n=>n+1)} title="返回当前预设机位">重置视角</button>
          <button className={btn} aria-pressed={!showCage} onClick={()=>setShowCage(v=>!v)}>{showCage?'成品预览':'显示布线'}</button>
          {showCage&&<label className="flex items-center gap-1 text-xs text-slate-300">
@@ -373,7 +379,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        </div>
      </div>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview knifeSegments={knifeSegments} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+       {active && <TracePreview orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeSegments} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
