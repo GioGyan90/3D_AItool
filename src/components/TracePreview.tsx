@@ -25,6 +25,7 @@ function ReferencePlane({plane}:{plane:SpatialReference}){
 }
 type Props={
   references?:SpatialReference[];
+  knifeSegments?:V[];
   optimizedTriangles?:boolean; vertexColors?:string[]; mirrorTriangles?:boolean; symmetricLight?:boolean;
   data:Data; direction:string; selected:number|null;
   selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
@@ -152,7 +153,15 @@ export function TracePreview(props:Props){
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={props.symmetricLight ? .65:1.3}/><directionalLight position={[-3,4,5]} intensity={props.symmetricLight ? .65:0}/>
     {props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
     <Shape {...props} orbit={orbit}/>
+    <KnifeOverlay segments={props.knifeSegments}/>
     <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit}/>
     <OrbitControls ref={orbit} makeDefault/>
   </Canvas>;
+}
+
+function KnifeOverlay({segments}:{segments?:V[]}){
+ const geo=useMemo(()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute((segments??[]).flat(),3));return g},[segments]);
+ useEffect(()=>()=>geo.dispose(),[geo]);
+ if(!segments?.length)return null;
+ return <group renderOrder={30}><lineSegments geometry={geo} raycast={()=>null}><lineBasicMaterial color="#36f59a" depthTest={false} depthWrite={false}/></lineSegments><points geometry={geo} raycast={()=>null}><pointsMaterial color="#36f59a" size={.065} depthTest={false} depthWrite={false}/></points></group>;
 }
