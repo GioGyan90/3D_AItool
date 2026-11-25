@@ -44,6 +44,30 @@ try{
   if(green)assert.ok(pixels>=100,'Expected visible high-contrast green knife pixels');
   return pixels;
  };
+ // Actual mouse input, not programmatic vertex/face selection.
+ const camera=d.getByLabel('三维视图工具栏'),tool=d.getByLabel('画布刀切工具');
+ const front=async(name)=>{await camera.getByRole('button',{name,exact:true}).click();await page.waitForTimeout(250)};
+ const cubePoint=async(x,y)=>{const b=await view.locator('canvas').boundingBox();const half=Math.min(b.height,b.width)*.5*.5/(Math.sqrt(.75)*1.12);return {x:b.x+b.width/2+x*half,y:b.y+b.height/2-y*half}};
+ const mousePoint=async(x,y,click=true)=>{const p=await cubePoint(x,y);await page.mouse.move(p.x,p.y);await page.waitForTimeout(100);if(click)await page.mouse.click(p.x,p.y)};
+ const startCanvas=()=>tool.getByRole('button',{name:'画布刀切',exact:true}).click();
+ await camera.getByRole('button',{name:'正交投影',exact:true}).click();
+ await front('正面');await startCanvas();
+ await mousePoint(-.98,-.98);await tool.getByText(/选择下一切点/).waitFor();
+ await mousePoint(.98,.98,false);await shot('canvas-01-hover');
+ await mousePoint(.98,.98);await tool.getByText(/1 段/).waitFor();await counts(8,6);await shot('canvas-02-preview',true);
+ await page.keyboard.press('Enter');await counts(8,7);await shot('canvas-03-committed');
+ await undo();await counts(8,6);await redo();await counts(8,7);await undo();await counts(8,6);
+ await startCanvas();await mousePoint(-.98,-.98);await page.keyboard.press('Escape');await counts(8,6);assert.equal(await tool.getByRole('button',{name:'画布刀切',exact:true}).getAttribute('aria-pressed'),'false');
+ await startCanvas();await mousePoint(-.98,-.98);await mousePoint(.98,0);await tool.getByText(/1 段/).waitFor();
+ await front('侧面'); // right face shares the first cut's right edge
+ await mousePoint(.98,.98);await tool.getByText(/2 段/).waitFor();await counts(8,6);await shot('canvas-04-cross-face',true);
+ await tool.getByRole('button',{name:'执行画布刀切'}).click();await counts(9,8);await undo();await counts(8,6);
+ await startCanvas();await tool.getByRole('checkbox',{name:'X 局部镜像'}).check();
+ await mousePoint(-.98,-.98);await mousePoint(.98,.98);await tool.getByText(/1 段/).waitFor();await counts(8,6);await shot('canvas-05-mirror-preview',true);
+ await tool.getByRole('button',{name:'执行画布刀切'}).click();await counts(8,8);await shot('canvas-06-mirror-commit');await undo();await counts(8,6);await redo();await counts(8,8);await undo();await counts(8,6);
+ await startCanvas();await tool.getByRole('checkbox',{name:'X 局部镜像'}).uncheck();await tool.getByRole('button',{name:'取消画布刀切'}).click();
+ await camera.getByRole('button',{name:'正交投影',exact:true}).click();await front('3/4');
+ report.checks.push('Real canvas clicks: vertex snapping, hover, Enter/Escape, cross-face edge snap, paired X mirror, atomic undo/redo');
  await face.fill('0');await open('自由刀切');
  const from=section.getByLabel('刀切起点',{exact:true}),to=section.getByLabel('刀切终点',{exact:true});
  const add=section.getByRole('button',{name:'加入切割路径'});

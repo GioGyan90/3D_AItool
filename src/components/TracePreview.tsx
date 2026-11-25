@@ -163,7 +163,7 @@ export function TracePreview(props:Props){
     <KnifeOverlay segments={props.knifeDraft} radius={bounds.radius} color="#ffd56a" dashed/>
     {props.knifeSnap&&<mesh position={props.knifeSnap} renderOrder={42} raycast={()=>null}><sphereGeometry args={[bounds.radius*.014,12,8]}/><meshBasicMaterial color="#ffe08b" toneMapped={false} transparent depthTest={false} depthWrite={false}/></mesh>}
     <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit} focus={props.focus} focusZoom={props.focusZoom}/>
-    <OrbitControls ref={orbit} makeDefault mouseButtons={props.canvasKnife?{LEFT:null as unknown as THREE.MOUSE,MIDDLE:THREE.MOUSE.PAN,RIGHT:THREE.MOUSE.ROTATE}:undefined}/>
+    <OrbitControls ref={orbit} makeDefault mouseButtons={props.canvasKnife?{LEFT:null as unknown as THREE.MOUSE,MIDDLE:THREE.MOUSE.PAN,RIGHT:THREE.MOUSE.ROTATE}:{LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN}}/>
   </Canvas>;
 }
 

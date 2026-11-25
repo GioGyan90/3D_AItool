@@ -116,7 +116,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
  const [knifeSegments,setKnifeSegments]=useState<V[]>([]);
- const [canvasKnife,setCanvasKnife]=useState(false),[knifeMirror,setKnifeMirror]=useState(false),[canvasSteps,setCanvasSteps]=useState<KnifeStep[]>([]),[knifeStart,setKnifeStart]=useState<KnifePoint|null>(null),[knifeHover,setKnifeHover]=useState<KnifeHit|null>(null),[knifeError,setKnifeError]=useState('');
+ const [canvasKnife,setCanvasKnife]=useState(false),[knifeSource,setKnifeSource]=useState<Geometry|null>(null),[knifeMirror,setKnifeMirror]=useState(false),[canvasSteps,setCanvasSteps]=useState<KnifeStep[]>([]),[knifeStart,setKnifeStart]=useState<KnifePoint|null>(null),[knifeHover,setKnifeHover]=useState<KnifeHit|null>(null),[knifeError,setKnifeError]=useState('');
  const [orthographic,setOrthographic]=useState(false);
  const [localFocus,setLocalFocus]=useState<V|undefined>();
  const [focusZoom,setFocusZoom]=useState(3);
@@ -361,10 +361,10 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  };
  const knifeBlocked=!!(locked.length||draftDirty||faceDraft.length||loading||symmetryAxes.length||calibrationMode);
  const clearCanvasPath=()=>{setCanvasSteps([]);setKnifeStart(null);setKnifeHover(null);setKnifeError('')};
- const cancelCanvasKnife=()=>{setCanvasKnife(false);clearCanvasPath()};
+ const cancelCanvasKnife=()=>{setCanvasKnife(false);setKnifeSource(null);clearCanvasPath()};
  useEffect(()=>{setCanvasKnife(false);setCanvasSteps([]);setKnifeStart(null);setKnifeHover(null);setKnifeError('')},[geometry,active]);
  useEffect(()=>{if(knifeBlocked||sceneEdit&&!projectSpatialView||!sceneEdit&&!preview){setCanvasKnife(false);setCanvasSteps([]);setKnifeStart(null);setKnifeHover(null);setKnifeError('')}},[knifeBlocked,sceneEdit,projectSpatialView,preview]);
- const canvasResult=useMemo(()=>{if(!geometry||!canvasSteps.length)return {mesh:null,error:'',lines:[] as V[]};try{const next=knifeMirror?knifeCutMirroredX(geometry,canvasSteps):knifeCut(geometry,canvasSteps);return {mesh:next,error:'',lines:knifeLines(geometry,knifeMirror?[...canvasSteps,...mirroredKnifeSteps(geometry,canvasSteps)]:canvasSteps)}}catch(e){return {mesh:null,error:String(e),lines:knifeLines(geometry,canvasSteps)}}},[geometry,canvasSteps,knifeMirror]);
+ const canvasResult=useMemo(()=>{if(!geometry||knifeSource!==geometry||!canvasSteps.length)return {mesh:null,error:'',lines:[] as V[]};try{const next=knifeMirror?knifeCutMirroredX(geometry,canvasSteps):knifeCut(geometry,canvasSteps);return {mesh:next,error:'',lines:knifeLines(geometry,knifeMirror?[...canvasSteps,...mirroredKnifeSteps(geometry,canvasSteps)]:canvasSteps)}}catch(e){return {mesh:null,error:String(e),lines:knifeLines(geometry,canvasSteps)}}},[geometry,canvasSteps,knifeMirror,knifeSource]);
  const pickCanvasKnife=(hit:KnifeHit)=>{
    if(!geometry||knifeBlocked)return;
    if(!knifeStart){setKnifeStart(hit.point);setKnifeError('');return}
@@ -374,7 +374,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    try{knifeMirror?knifeCutMirroredX(geometry,next):knifeCut(geometry,next);setCanvasSteps(next);setKnifeStart(hit.point);setKnifeError('')}catch(e){setKnifeError(String(e))}
  };
  const applyCanvasKnife=()=>{if(!canvasResult.mesh||knifeBlocked)return;try{commitMesh(canvasResult.mesh,knifeMirror?'X 局部镜像刀切完成':'画布刀切完成');cancelCanvasKnife()}catch(e){setKnifeError(String(e))}};
- const hoverStep=geometry?knifeChord(geometry,knifeStart,knifeHover):null;
+ const knifeActive=canvasKnife&&knifeSource===geometry&&!knifeBlocked;
+ const hoverStep=knifeActive&&geometry?knifeChord(geometry,knifeStart,knifeHover):null;
  const spatialPreview = geometry && (
    <div className={sceneEdit
      ? 'topo-stage'
@@ -401,11 +402,11 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        </div>
      </div>
      <div className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs" aria-label="画布刀切工具">
-       <button className={btn} disabled={knifeBlocked||!geometry.faces.length} aria-pressed={canvasKnife} onClick={()=>{if(canvasKnife)cancelCanvasKnife();else{clearCanvasPath();setCanvasKnife(true);setShowCage(true);setToolPanel('topology')}}}>画布刀切</button>
+       <button className={btn} disabled={knifeBlocked||!geometry.faces.length} aria-pressed={canvasKnife} onClick={()=>{if(canvasKnife)cancelCanvasKnife();else{clearCanvasPath();setKnifeSource(geometry);setCanvasKnife(true);setShowCage(true);setToolPanel('topology')}}}>画布刀切</button>
        {canvasKnife&&<><label><input type="checkbox" checked={knifeMirror} onChange={e=>{setKnifeMirror(e.target.checked);clearCanvasPath()}}/> X 局部镜像</label><span aria-live="polite">{canvasSteps.length} 段 · {knifeStart?'选择下一切点':'选择起点'}{canvasResult.mesh?' · 预检 '+canvasResult.mesh.vertices.length+' 顶点 / '+canvasResult.mesh.faces.length+' 面':''}</span><button className={btn} disabled={!canvasSteps.length} onClick={()=>{setKnifeStart(canvasSteps.at(-1)!.from);setCanvasSteps(old=>old.slice(0,-1));setKnifeError('')}}>撤回画布末段</button><button className={btn} disabled={!canvasResult.mesh||knifeBlocked} onClick={applyCanvasKnife}>执行画布刀切</button><button className={btn} onClick={cancelCanvasKnife}>取消画布刀切</button><span>左键吸附 · 右键旋转 · Enter 执行 · Esc 取消</span>{(knifeError||canvasResult.error)&&<span role="alert" className="text-amber-300">{knifeError||canvasResult.error}</span>}</>}
      </div>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={canvasKnife?canvasResult.lines:knifeSegments} knifeDraft={canvasKnife&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={canvasKnife&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={canvasKnife?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+       {active && <TracePreview orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeActive?canvasResult.lines:knifeSegments} knifeDraft={knifeActive&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={knifeActive&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={knifeActive?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
