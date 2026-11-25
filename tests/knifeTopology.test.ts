@@ -7,7 +7,7 @@ const closed=(m:ReturnType<typeof createPrimitiveControlMesh>)=>{const s=validat
 test('continuous knife crosses two cube faces via exactly one shared edge vertex',()=>{
  const m=createPrimitiveControlMesh('box'),before=JSON.stringify(m);
  const steps:KnifeStep[]=[{face:0,from:{vertex:4},to:{edge:[5,6],fraction:.3}},{face:3,from:{edge:[6,5],fraction:.7},to:{vertex:1}}];
- const next=knifeCut(m,steps);assert.equal(next.vertices.length,9);assert.equal(next.faces.length,8);assert.deepEqual(next.vertices[8],[.5,-.2,.5]);closed(next);assert.equal(JSON.stringify(m),before);
+ const next=knifeCut(m,steps);assert.equal(next.vertices.length,9);assert.equal(next.faces.length,8);assert.ok(next.vertices[8].every((v,i)=>Math.abs(v-[.5,-.2,.5][i])<1e-9));closed(next);assert.equal(JSON.stringify(m),before);
  assert.throws(()=>knifeCut(m,[steps[0],{...steps[1],from:{edge:[6,5],fraction:.3}}]),/不一致/);
  assert.throws(()=>knifeCut(m,[steps[0],{...steps[1],from:{vertex:2}}]),/不连续/);
 });
