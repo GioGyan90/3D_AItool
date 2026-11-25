@@ -235,12 +235,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    validateControlTopology(next);
    triangulateFaces(next.vertices,next.faces);
    const oldCount=geometry.vertices.length;
-   remember();setGeometry(next);setDirty(true);setSelected(null);setSelectedFace(null);setSelectedFaces([]);
+   const removed=label==='相邻顶点合并完成'&&next.vertices.length===oldCount-1?selected:null;
+   remember();if(removed!==null)setEdited(old=>old.filter(i=>i!==removed).map(i=>i>removed?i-1:i));setGeometry(next);setDirty(true);setSelected(null);setSelectedFace(null);setSelectedFaces([]);
    setLoopInfo(label);setError('');
    setSourceMetadata(old=>{
      const m=old.meta;if(!m||typeof m!=='object')return old;
      const meta=m as Record<string,unknown>,tags=meta.tags;
      if(!Array.isArray(tags)||tags.length!==oldCount)return old;
+     if(removed!==null)return {...old,meta:{...meta,tags:tags.filter((_,i)=>i!==removed)}};
      return {...old,meta:{...meta,tags:[
        ...tags,...Array.from({length:Math.max(0,next.vertices.length-oldCount)},
          ()=>({source:label,depth:'拓扑编辑生成'}))
