@@ -1,0 +1,71 @@
+{
+  "source": "Original user stage 4 crop, visually read in Library, 1020x570. Full raw image unavailable for overlay.",
+  "frame": {
+    "front": {
+      "cx": 828,
+      "cy": 215.36351525423729,
+      "scale": 150.28248587570621
+    },
+    "side": {
+      "cx": 266,
+      "cy": 215.36351525423729,
+      "scale": 150.28248587570621
+    }
+  },
+  "targets": [
+    {
+      "id": 6,
+      "mirror": 23,
+      "side": [
+        115,
+        77
+      ],
+      "note": "rear upper ring visible junction; retain original X"
+    },
+    {
+      "id": 7,
+      "mirror": 24,
+      "front": [
+        679,
+        114
+      ],
+      "side": [
+        266,
+        114
+      ],
+      "note": "lateral ring junction, shared height compromise"
+    },
+    {
+      "id": 43,
+      "front": [
+        828,
+        268
+      ],
+      "side": [
+        459,
+        268
+      ],
+      "note": "nose root central profile"
+    },
+    {
+      "id": 60,
+      "mirror": 61,
+      "front": [
+        735,
+        44
+      ],
+      "side": [
+        266,
+        44
+      ],
+      "note": "missing upper silhouette corner, pair restored by knife; side X overlap inferred at middle plane"
+    }
+  ],
+  "topology": "Two continuous cuts: 6 -> edge 7/15 -> 8, mirror 23 -> edge 15/24 -> 25. Adds only one shared vertex per side and two faces per side. Do not advance stage 5.",
+  "expected": {
+    "vertices": 62,
+    "faces": 60,
+    "edges": 120,
+    "triangles": 120
+  }
+}
