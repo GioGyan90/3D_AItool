@@ -98,6 +98,52 @@ try{
  await d.getByRole('button',{name:'返回建模',exact:true}).click();
  await vertex.fill('4');assert.deepEqual(await coord(),expected);
  report.checks.push('Merge preserves survivor coordinates, lock refuses topology edit, non-neighbor absent, remapped reference marks and undo/redo');
+ // Verify real standalone UI against temporary imported polygons, not permanent presets.
+ await page.close();
+ const loadFixture=async(mesh)=>{
+   page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+   page.on('pageerror',e=>report.errors.push(String(e)));
+   await page.goto('http://127.0.0.1:3013/',{waitUntil:'domcontentloaded'});
+   await page.getByRole('button',{name:'顶点对照',exact:true}).click();
+   const d=page.getByRole('dialog',{name:'顶点参考对照'});
+   await d.getByLabel('导入顶点 JSON').setInputFiles({name:'temporary-knife-fixture.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(mesh))});
+   const count=async(v,f)=>d.getByText(new RegExp(v+' 顶点 / '+f+' 面')).first().waitFor();
+   await count(mesh.vertices.length,mesh.faces.length);
+   await d.getByRole('button',{name:'展开精确选择'}).click();
+   await d.getByLabel('控制面编号').fill('0');
+   await d.getByRole('button',{name:'布线',exact:true}).click();
+   const s=d.getByLabel('自由拓扑编辑');
+   const expand=async(name)=>{const item=s.locator('summary').filter({hasText:name});if(!(await item.locator('..').evaluate(el=>el.open)))await item.click()};
+   const knife=async(a,b)=>{await expand('自由刀切');await s.getByLabel('刀切起点',{exact:true}).selectOption(a);await s.getByLabel('刀切终点',{exact:true}).selectOption(b);await s.getByRole('button',{name:'加入切割路径'}).click()};
+   return {d,s,count,knife,expand};
+ };
+ const fixtureShot=async(d,name)=>{
+   await d.getByRole('button',{name:'显示 3D 预览',exact:true}).click();
+   const view=d.getByLabel('3D 旋转预览');
+   await view.locator('canvas').waitFor();
+   assert.ok(await view.locator('canvas').evaluate(c=>!!(c.getContext('webgl2')||c.getContext('webgl'))));
+   await page.waitForTimeout(400);
+   const path=out+'/'+name+'.png';await view.screenshot({path,animations:'disabled'});
+   const size=(await stat(path)).size;assert.ok(size>1500);
+   report.screenshots.push({name,path,size});
+ };
+ const triangle={vertices:[[0,0,0],[2,0,0],[0,2,0]],faces:[[0,1,2]]};
+ let f=await loadFixture(triangle);await f.knife('v:0','e:1:2');
+ await f.s.getByRole('button',{name:'应用自由刀切'}).click();await f.count(4,2);
+ await fixtureShot(f.d,'07-triangle');await page.close();
+ const pent={vertices:[[0,0,0],[2,0,0],[3,1,0],[1.5,2,0],[0,1,0]],faces:[[0,1,2,3,4]]};
+ f=await loadFixture(pent);await f.knife('v:0','v:2');await f.s.getByRole('button',{name:'应用自由刀切'}).click();await f.count(5,2);
+ await fixtureShot(f.d,'08-pentagon');await page.close();
+ const concave={vertices:[[0,0,0],[3,0,0],[3,3,0],[2,3,0],[2,1,0],[1,1,0],[1,3,0],[0,3,0]],faces:[[0,1,2,3,4,5,6,7]]};
+ f=await loadFixture(concave);await f.knife('v:3','v:6');assert.ok(await f.s.getByRole('button',{name:'应用自由刀切'}).isDisabled());await f.s.getByRole('alert').waitFor();await f.count(8,1);
+ await f.s.getByRole('button',{name:'清空路径'}).click();
+ await f.knife('v:0','v:4');await f.s.getByRole('button',{name:'应用自由刀切'}).click();await f.count(8,2);
+ await fixtureShot(f.d,'09-concave');await page.close();
+ const painted={vertices:[[0,0,0],[2,0,0],[2,2,0],[0,2,0]],faces:[[0,1,2],[0,2,3]],faceColors:['#aabbcc','#cc8844']};
+ f=await loadFixture(painted);await f.expand('共享边溶解');await f.s.getByLabel('溶解边').selectOption('2:0');
+ await f.s.getByRole('alert').filter({hasText:'颜色'}).waitFor();assert.ok(await f.s.getByRole('button',{name:'应用共享边溶解'}).isDisabled());await f.count(4,2);
+ await fixtureShot(f.d,'10-color-seam-protected');
+ report.checks.push('Standalone WebGL: triangle, convex pentagon, valid concave chord, exterior chord rejection, painted seam protection');
  assert.deepEqual(report.errors,[]);
  console.log('KNIFE_BROWSER_ACCEPTANCE_SUCCESS',JSON.stringify(report));
 }catch(e){report.errors.push(String(e));if(page)await page.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});throw e}

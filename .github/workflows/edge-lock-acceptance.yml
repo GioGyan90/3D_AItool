@@ -5,6 +5,12 @@ on:
     paths:
       - 'src/components/ReferenceTracing.tsx'
       - 'src/components/regionEditing.ts'
+      - 'src/components/KnifePanel.tsx'
+      - 'src/components/knifeTopology.ts'
+      - 'src/components/TracePreview.tsx'
+      - 'src/components/CalibrationWorkbench.tsx'
+      - 'src/components/referenceCalibration.ts'
+      - 'scripts/topology-knife-browser-qa.mjs'
       - 'scripts/topology-edge-lock-qa.mjs'
       - 'scripts/topology-profile-browser-qa.mjs'
       - '.github/workflows/edge-lock-acceptance.yml'
@@ -14,7 +20,7 @@ permissions:
 jobs:
   edge-lock-browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 9
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,6 +30,11 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test:topology
+      - name: Install CJK fonts for readable screenshots
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y fonts-noto-cjk
+          fc-cache -f
       - name: Install browser dependency
         run: npm install --no-save --no-package-lock playwright
       - name: Verify real UI region locking and edge sliding
