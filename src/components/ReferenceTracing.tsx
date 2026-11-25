@@ -10,6 +10,8 @@ import {ProfileCalibrationPanel} from './ProfileCalibrationPanel';
 import {assertRegionProtected,slideOnEdge} from './regionEditing';
 import {slideContinuousEdgeLoop} from './loopSlide';
 import {KnifePanel} from './KnifePanel';
+import {knifeCut,knifeCutMirroredX,mirroredKnifeSteps,type KnifePoint,type KnifeStep} from './knifeTopology';
+import {knifeChord,knifeLines,knifePointPosition,type KnifeHit} from './canvasKnife';
 import {triangulateFaces,triangulateFacesWithReport} from './traceGeometry';
 import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
@@ -114,6 +116,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
  const [knifeSegments,setKnifeSegments]=useState<V[]>([]);
+ const [canvasKnife,setCanvasKnife]=useState(false),[knifeSource,setKnifeSource]=useState<Geometry|null>(null),[knifeMirror,setKnifeMirror]=useState(false),[canvasSteps,setCanvasSteps]=useState<KnifeStep[]>([]),[knifeStart,setKnifeStart]=useState<KnifePoint|null>(null),[knifeHover,setKnifeHover]=useState<KnifeHit|null>(null),[knifeError,setKnifeError]=useState('');
  const [orthographic,setOrthographic]=useState(false);
  const [localFocus,setLocalFocus]=useState<V|undefined>();
  const [focusZoom,setFocusZoom]=useState(3);
@@ -222,6 +225,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
    if(locked.length){setError('区域锁定期间请先解锁再重做');return}
    setPast(p=>[...p,snapshot()]);restoreSnapshot(future[future.length-1]);setFuture(f=>f.slice(0,-1));};
  const historyKey=(e:React.KeyboardEvent<HTMLDivElement>)=>{
+   if(canvasKnife&&!(e.target as Element).closest('input,textarea,select,[contenteditable="true"]')){if(e.key==='Escape'){e.preventDefault();cancelCanvasKnife();return}if(e.key==='Enter'&&!(e.target as Element).closest('button')){e.preventDefault();applyCanvasKnife();return}}
    protectDraftKey(e);
    if(e.key==='Escape' && !(e.target as Element).closest('input,textarea,[contenteditable="true"]') && !faceDraft.length){
      if(selected!==null||selectedFace!==null){setSelected(null);clearFaces();e.preventDefault()}
@@ -355,6 +359,23 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
      setError(cause instanceof Error ? cause.message : String(cause));
    }
  };
+ const knifeBlocked=!!(locked.length||draftDirty||faceDraft.length||loading||symmetryAxes.length||calibrationMode);
+ const clearCanvasPath=()=>{setCanvasSteps([]);setKnifeStart(null);setKnifeHover(null);setKnifeError('')};
+ const cancelCanvasKnife=()=>{setCanvasKnife(false);setKnifeSource(null);clearCanvasPath()};
+ useEffect(()=>{setCanvasKnife(false);setCanvasSteps([]);setKnifeStart(null);setKnifeHover(null);setKnifeError('')},[geometry,active]);
+ useEffect(()=>{if(knifeBlocked||sceneEdit&&!projectSpatialView||!sceneEdit&&!preview){setCanvasKnife(false);setCanvasSteps([]);setKnifeStart(null);setKnifeHover(null);setKnifeError('')}},[knifeBlocked,sceneEdit,projectSpatialView,preview]);
+ const canvasResult=useMemo(()=>{if(!geometry||knifeSource!==geometry||!canvasSteps.length)return {mesh:null,error:'',lines:[] as V[]};try{const next=knifeMirror?knifeCutMirroredX(geometry,canvasSteps):knifeCut(geometry,canvasSteps);return {mesh:next,error:'',lines:knifeLines(geometry,knifeMirror?[...canvasSteps,...mirroredKnifeSteps(geometry,canvasSteps)]:canvasSteps)}}catch(e){return {mesh:null,error:String(e),lines:knifeLines(geometry,canvasSteps)}}},[geometry,canvasSteps,knifeMirror,knifeSource]);
+ const pickCanvasKnife=(hit:KnifeHit)=>{
+   if(!geometry||knifeBlocked)return;
+   if(!knifeStart){setKnifeStart(hit.point);setKnifeError('');return}
+   const step=knifeChord(geometry,knifeStart,hit);
+   if(!step){setKnifeError('请选择与上一切点同属一个控制面的另一边或顶点');return}
+   const next=[...canvasSteps,step];
+   try{knifeMirror?knifeCutMirroredX(geometry,next):knifeCut(geometry,next);setCanvasSteps(next);setKnifeStart(hit.point);setKnifeError('')}catch(e){setKnifeError(String(e))}
+ };
+ const applyCanvasKnife=()=>{if(!canvasResult.mesh||knifeBlocked)return;try{commitMesh(canvasResult.mesh,knifeMirror?'X 局部镜像刀切完成':'画布刀切完成');cancelCanvasKnife()}catch(e){setKnifeError(String(e))}};
+ const knifeActive=canvasKnife&&knifeSource===geometry&&!knifeBlocked;
+ const hoverStep=knifeActive&&geometry?knifeChord(geometry,knifeStart,knifeHover):null;
  const spatialPreview = geometry && (
    <div className={sceneEdit
      ? 'topo-stage'
@@ -362,10 +383,15 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        ? 'fixed inset-4 z-[205] flex flex-col rounded border border-neutral-600 bg-neutral-900 p-3 shadow-xl'
        : undefined}>
      <div className="topo-camera-bar" role="toolbar" aria-label="三维视图工具栏">
+     <div className="topo-knife-tools" aria-label="画布刀切工具">
+       <button className={btn} disabled={knifeBlocked||!geometry.faces.length} aria-pressed={canvasKnife} onClick={()=>{if(canvasKnife)cancelCanvasKnife();else{clearCanvasPath();setKnifeSource(geometry);setCanvasKnife(true);setShowCage(true);setToolPanel('topology')}}}>画布刀切</button>
+       {canvasKnife&&<><label><input type="checkbox" checked={knifeMirror} onChange={e=>{setKnifeMirror(e.target.checked);clearCanvasPath()}}/> X 局部镜像</label><span aria-live="polite">{canvasSteps.length} 段 · {knifeStart?'选择下一切点':'选择起点'}{canvasResult.mesh?' · 预检 '+canvasResult.mesh.vertices.length+' 顶点 / '+canvasResult.mesh.faces.length+' 面':''}</span><button className={btn} disabled={!canvasSteps.length} onClick={()=>{setKnifeStart(canvasSteps.at(-1)!.from);setCanvasSteps(old=>old.slice(0,-1));setKnifeError('')}}>撤回画布末段</button><button className={btn} disabled={!canvasResult.mesh||knifeBlocked} onClick={applyCanvasKnife}>执行画布刀切</button><button className={btn} onClick={cancelCanvasKnife}>取消画布刀切</button></>}
+     </div>
+
        {!sceneEdit && <button className={btn} onClick={()=>setPreviewLarge(value=>!value)} aria-pressed={previewLarge}>
          {previewLarge?'恢复小预览':'放大 3D 编辑'}</button>}
        <span className="topo-camera-label">观察角度</span>
-       {([['front','正面'],['back','背面'],['side','侧面'],['top','俯视'],['bottom','仰视'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
+       {([['front','正面'],['back','背面'],['side','侧面'],['left','左侧'],['top','俯视'],['bottom','仰视'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
          <button key={direction} className={btn} onClick={()=>{setPreviewDirection(direction);setCameraRevision(n=>n+1)}}
            aria-pressed={previewDirection===direction} title={`切换到${label}机位`}>{label}</button>
        ))}
@@ -381,7 +407,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        </div>
      </div>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeSegments} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+       {active && <TracePreview orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeActive?canvasResult.lines:knifeSegments} knifeDraft={knifeActive&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={knifeActive&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={knifeActive?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
@@ -389,8 +415,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
      </div>
      <div className="topo-stage-foot">
        <span>{showCage?'编辑布线':'成品预览'} · {selectedSummary}</span>
-       <span>拖动空白旋转 · Shift + 点击多选 · Esc 清空选择</span>
+       <span>{canvasKnife?"左键吸附 · 右键旋转 · Enter 执行 · Esc 取消":"拖动空白旋转 · Shift + 点击多选 · Esc 清空选择"}</span>
      </div>
+     {canvasKnife&&(knifeError||canvasResult.error)&&<p role="alert" className="topo-knife-error">{knifeError||canvasResult.error}</p>}
      {triangulationError && <p role="alert" className="text-amber-300">面暂不可三角化，预览仅显示点和线。{triangulationError}</p>}
    </div>
  );
@@ -535,7 +562,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割</button>
     </div>
     <p className="topo-helptext">局部切割仅影响选中的面，并自动修复相邻共享边。</p>
-    <KnifePanel onPreview={setKnifeSegments} mesh={geometry} selectedFace={selectedFace} selectedVertex={selected} locked={locked.length>0} disabled={draftDirty||faceDraft.length>0||loading||symmetryAxes.length>0} onApply={(next,label)=>operateMesh(()=>next,label)}/>
+    <KnifePanel onPreview={setKnifeSegments} mesh={geometry} selectedFace={selectedFace} selectedVertex={selected} locked={locked.length>0} disabled={canvasKnife||draftDirty||faceDraft.length>0||loading||symmetryAxes.length>0} onApply={(next,label)=>operateMesh(()=>next,label)}/>
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
     <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>

@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import {triangulateFaces} from './traceGeometry';
 import {buildPaintStickerGeometry} from '../studioProject';
 import type {ControlMesh} from '../types';
+import {CanvasKnifePicker} from './CanvasKnifePicker';
+import type {KnifeHit} from './canvasKnife';
 
 type V=[number,number,number];
 type Data=ControlMesh;
@@ -25,7 +27,7 @@ function ReferencePlane({plane}:{plane:SpatialReference}){
 }
 type Props={
   references?:SpatialReference[];
-  knifeSegments?:V[];
+  knifeSegments?:V[]; knifeDraft?:V[]; knifeSnap?:V; canvasKnife?:{onHover:(h:KnifeHit|null)=>void;onPick:(h:KnifeHit)=>void};
   optimizedTriangles?:boolean; vertexColors?:string[]; mirrorTriangles?:boolean; symmetricLight?:boolean;
   data:Data; direction:string; selected:number|null;
   selectedFace?:number|null; selectedFaces?:number[]; selectedEdge?:[number,number]|null;
@@ -126,7 +128,7 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
 function Camera({direction,bounds,orbit,revision,focus,focusZoom=1}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>,revision:number,focus?:V,focusZoom?:number}){
   const {camera,invalidate,size}=useThree();
   useEffect(()=>{
-    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4]};
+    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],left:[-4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4]};
     const dir=new THREE.Vector3(...p[direction]).normalize();
     const fov=40*Math.PI/180;
     const aspect=size.width/Math.max(size.height,1);
@@ -155,16 +157,19 @@ export function TracePreview(props:Props){
     <color attach="background" args={['#303030']}/>
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={props.symmetricLight ? .65:1.3}/><directionalLight position={[-3,4,5]} intensity={props.symmetricLight ? .65:0}/>
     {props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
-    <Shape {...props} orbit={orbit}/>
+    <Shape {...props} selected={props.canvasKnife?null:props.selected} orbit={orbit}/>
+    {props.canvasKnife&&<CanvasKnifePicker mesh={props.data} {...props.canvasKnife}/>}
     <KnifeOverlay segments={props.knifeSegments} radius={bounds.radius}/>
+    <KnifeOverlay segments={props.knifeDraft} radius={bounds.radius} color="#ffd56a" dashed/>
+    {props.knifeSnap&&<mesh position={props.knifeSnap} renderOrder={42} raycast={()=>null}><sphereGeometry args={[bounds.radius*.014,12,8]}/><meshBasicMaterial color="#ffe08b" toneMapped={false} transparent depthTest={false} depthWrite={false}/></mesh>}
     <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit} focus={props.focus} focusZoom={props.focusZoom}/>
-    <OrbitControls ref={orbit} makeDefault/>
+    <OrbitControls ref={orbit} makeDefault mouseButtons={props.canvasKnife?{LEFT:null as unknown as THREE.MOUSE,MIDDLE:THREE.MOUSE.PAN,RIGHT:THREE.MOUSE.ROTATE}:{LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN}}/>
   </Canvas>;
 }
 
 // Use world-space tubes rather than implementation-dependent WebGL line widths.
 // Draw after translucent face selection, with exact display color and no picking.
-function KnifeOverlay({segments,radius}:{segments?:V[];radius:number}){
+function KnifeOverlay({segments,radius,color='#36f59a',dashed=false}:{segments?:V[];radius:number;color?:string;dashed?:boolean}){
  const parts=useMemo(()=>{
    const result:{position:THREE.Vector3;rotation:THREE.Quaternion;length:number}[]=[];
    for(let i=0;i+1<(segments?.length??0);i+=2){
@@ -177,13 +182,13 @@ function KnifeOverlay({segments,radius}:{segments?:V[];radius:number}){
  if(!parts.length)return null;
  const width=Math.max(radius*.004,.00001);
  return <group renderOrder={40}>
-   {parts.map((p,i)=><mesh key={i} position={p.position} quaternion={p.rotation} renderOrder={40} raycast={()=>null}>
+   {parts.flatMap(p=>dashed?Array.from({length:8},(_,j)=>({...p,position:p.position.clone().add(new THREE.Vector3(0,((j+.5)/8-.5)*p.length,0).applyQuaternion(p.rotation)),length:p.length/16})): [p]).map((p,i)=><mesh key={i} position={p.position} quaternion={p.rotation} renderOrder={40} raycast={()=>null}>
      <cylinderGeometry args={[width,width,p.length,8]}/>
-     <meshBasicMaterial color="#36f59a" toneMapped={false} transparent depthTest={false} depthWrite={false}/>
+     <meshBasicMaterial color={color} toneMapped={false} transparent depthTest={false} depthWrite={false}/>
    </mesh>)}
    {segments!.map((p,i)=><mesh key={'point-'+i} position={p} renderOrder={41} raycast={()=>null}>
      <sphereGeometry args={[width*2.1,10,8]}/>
-     <meshBasicMaterial color="#36f59a" toneMapped={false} transparent depthTest={false} depthWrite={false}/>
+     <meshBasicMaterial color={color} toneMapped={false} transparent depthTest={false} depthWrite={false}/>
    </mesh>)}
  </group>;
 }
