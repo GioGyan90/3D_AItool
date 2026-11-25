@@ -14,12 +14,16 @@ export function KnifePanel({mesh,selectedFace,selectedVertex,locked,disabled,onA
  const [edge,setEdge]=useState(''),[angle,setAngle]=useState(5),[keep,setKeep]=useState('');
  const face=selectedFace===null?[]:mesh.faces[selectedFace]??[];
  useEffect(()=>{setSteps([]);setFrom(null);setTo(null);setEdge('');setKeep('')},[mesh]);
- useEffect(()=>{setFrom(null);setTo(null);setEdge('')},[selectedFace]);
+ useEffect(()=>{const last=steps.at(-1)?.to;const f=selectedFace===null?[]:mesh.faces[selectedFace]??[];
+ if(last&&'vertex' in last&&f.includes(last.vertex))setFrom(last);
+ else if(last&&'edge' in last){const [a,b]=last.edge;const i=f.findIndex((v,i)=>v===a&&f[(i+1)%f.length]===b||v===b&&f[(i+1)%f.length]===a);setFrom(i<0?null:{edge:[f[i],f[(i+1)%f.length]],fraction:f[i]===a?last.fraction:1-last.fraction});}
+ else setFrom(null);setTo(null);setEdge('')
+ },[selectedFace]);
  useEffect(()=>{setKeep('')},[selectedVertex]);
  const preview=useMemo(()=>{try{return steps.length?{mesh:knifeCut(mesh,steps),error:''}:null}catch(e){return {mesh:null,error:String(e)}}},[mesh,steps]);
  const segments=useMemo(()=>{
- const position=(p:KnifePoint):[number,number,number]=>{if('vertex' in p)return mesh.vertices[p.vertex];const [a,b]=p.edge;return mesh.vertices[a].map((v,i)=>v*(1-p.fraction)+mesh.vertices[b][i]*p.fraction) as [number,number,number]};
- return [...steps,...(selectedFace!==null&&from&&to?[{face:selectedFace,from,to}]:[])].flatMap(s=>[position(s.from),position(s.to)]).filter(Boolean);
+ const position=(p:KnifePoint):[number,number,number]=>{if('vertex' in p)return mesh.vertices[p.vertex];const [a,b]=p.edge;if(!mesh.vertices[a]||!mesh.vertices[b])return undefined as unknown as [number,number,number];return mesh.vertices[a].map((v,i)=>v*(1-p.fraction)+mesh.vertices[b][i]*p.fraction) as [number,number,number]};
+ return [...steps,...(selectedFace!==null&&from&&to?[{face:selectedFace,from,to}]:[])].flatMap(s=>{const a=position(s.from),b=position(s.to);return a&&b?[a,b]:[]});
  },[mesh,steps,selectedFace,from,to]);
  useEffect(()=>{onPreview(segments);return()=>onPreview([])},[segments,onPreview]);
  const blocked=locked||disabled;
@@ -29,7 +33,7 @@ export function KnifePanel({mesh,selectedFace,selectedVertex,locked,disabled,onA
  return <section aria-label="自由拓扑编辑" className="space-y-2">
  {blocked&&<p className="text-amber-300 text-xs">请先解除区域锁定、关闭对称编辑并完成当前坐标或面草稿。</p>}
  <details className="rounded border border-neutral-700 p-2 space-y-2"><summary>自由刀切 · 连续路径</summary>
- <p className="topo-helptext">绿色线段为三维路径预览，不写入模型。逐面选择切割起点和终点。相邻步骤共用端点（同一边反向时比例取互补值）。每个原始控制面最多切一次；可在已有顶点结束。</p>
+ <p className="topo-helptext">绿色线段为三维路径预览，不写入模型。逐面选择切割起点和终点。切换到相邻控制面时自动继承上一段终点，反向共享边自动转换比例。每个原始控制面最多切一次；可在已有顶点结束。</p>
  <p>当前控制面：{selectedFace===null?'未选中':'#'+selectedFace}</p>
  <Endpoint face={face} label="刀切起点" value={from} onChange={setFrom}/><Endpoint face={face} label="刀切终点" value={to} onChange={setTo}/>
  <button className={btn} disabled={blocked||selectedFace===null||!from||!to} onClick={()=>{if(selectedFace!==null&&from&&to){setSteps(old=>[...old,{face:selectedFace,from,to}]);setFrom(null);setTo(null)}}}>加入切割路径</button>
