@@ -80,7 +80,14 @@ export function mergeEdgeVertices(mesh:ControlMesh,remove:number,keep:number):Co
  const vertices=mesh.vertices.filter((_,i)=>i!==remove).map(v=>[...v] as V),faces:number[][]=[],colors:string[]=[];
  mesh.faces.forEach((f,i)=>{const mapped=f.map(id=>id===remove?keep:id),compact=mapped.filter((id,j)=>id!==mapped[(j+mapped.length-1)%mapped.length]);if(compact.length<3)return;if(new Set(compact).size!==compact.length)throw Error('合并导致非相邻重复顶点');const n=normal(mesh.vertices,f),m=normal(mesh.vertices,compact);if(n.dot(m)<=0)throw Error('合并导致控制面反转或退化');faces.push(compact.map(id=>id>remove?id-1:id));if(mesh.faceColors)colors.push(mesh.faceColors[i]);});
  const next=finish({vertices,faces,...(mesh.faceColors?{faceColors:colors}:{})});
- if(before.boundaryEdges===0&&validateControlTopology(next).boundaryEdges!==0)throw Error('合并会破坏封闭网格');
+ const after=validateControlTopology(next);
+ if(new Set(faces.map(f=>[...f].sort((a,b)=>a-b).join(':'))).size!==faces.length)throw Error('合并产生重复控制面');
+ if(mesh.vertices.length-before.edges+mesh.faces.length!==next.vertices.length-after.edges+next.faces.length)throw Error('合并改变网格拓扑类型');
+ // A manifold vertex link is a single cycle (interior) or path (boundary).
+ const links=vertices.map(()=>new Map<number,number[]>());
+ for(const f of faces)for(let i=0;i<f.length;i++){const id=f[i],a=f[(i+f.length-1)%f.length],b=f[(i+1)%f.length],link=links[id];link.set(a,[...(link.get(a)??[]),b]);link.set(b,[...(link.get(b)??[]),a]);}
+ for(const link of links){if(!link.size)continue;const degrees=[...link.values()].map(v=>v.length),ends=degrees.filter(d=>d===1).length;if(degrees.some(d=>d>2)||ends!==0&&ends!==2)throw Error('合并导致非流形顶点');const seen=new Set<number>(),queue=[[...link.keys()][0]];while(queue.length){const v=queue.pop()!;if(seen.has(v))continue;seen.add(v);queue.push(...(link.get(v)??[]))}if(seen.size!==link.size)throw Error('合并导致断开的顶点扇区');}
+ if(before.boundaryEdges===0&&after.boundaryEdges!==0)throw Error('合并会破坏封闭网格');
  if(!faces.length)throw Error('合并将删除全部控制面');
  return next;
 }
