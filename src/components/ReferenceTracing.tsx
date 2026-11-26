@@ -140,6 +140,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
  const [inspection,setInspection]=useState<(RegionInspection&{source:number[][]})|null>(null);
  const [inspectionIds,setInspectionIds]=useState('');
+ const [inspectionPanelOpen,setInspectionPanelOpen]=useState(false);
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
  const [advancedOpen,setAdvancedOpen]=useState(false);
  const [selectionExpanded,setSelectionExpanded]=useState(false);
@@ -410,14 +411,21 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
          <button className={btn} disabled={selected===null&&selectedFace===null} onClick={()=>{const p=selected!==null?geometry.vertices[selected]:undefined;const face=selectedFace!==null?geometry.faces[selectedFace]:undefined;if(p)setLocalFocus([...p] as V);else if(face)setLocalFocus([0,1,2].map(k=>face.reduce((n,i)=>n+geometry.vertices[i][k],0)/face.length) as V);setCameraRevision(n=>n+1)}}>聚焦选择</button>
          {localFocus&&<><label className="text-xs">局部放大 <input aria-label="三维局部放大" type="range" min="1" max="6" step=".5" value={focusZoom} onChange={e=>setFocusZoom(+e.target.value)}/></label><button className={btn} onClick={()=>{setLocalFocus(undefined);setCameraRevision(n=>n+1)}}>返回全局</button></>}
          <button className={btn} onClick={()=>setCameraRevision(n=>n+1)} title="返回当前预设机位">重置视角</button>
+         <button className={btn} aria-expanded={inspectionPanelOpen} onClick={()=>setInspectionPanelOpen(v=>!v)}>局部观察 / 区域隔离{activeInspection?' · '+activeInspection.faces.length+' 面':''}</button>
          <button className={btn} aria-pressed={!showCage} onClick={()=>setShowCage(v=>!v)}>{showCage?'成品预览':'显示布线'}</button>
          {showCage&&<label className="flex items-center gap-1 text-xs text-slate-300">
            <input aria-label="透视背面布线" type="checkbox" checked={xray} onChange={e=>setXray(e.target.checked)}/>X-Ray
          </label>}
        </div>
      </div>
-     <details className="border border-neutral-700 rounded p-2 text-xs" open={activeInspection?true:undefined}>
-       <summary className="cursor-pointer">局部观察 / 区域隔离{activeInspection?' · '+activeInspection.faces.length+' 面':''}</summary>
+
+     <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'relative min-h-0 w-full flex-1' : 'relative h-64 w-full'}>
+       {active && <TracePreview inspection={activeInspection} orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeActive?canvasResult.lines:knifeSegments} knifeDraft={knifeActive&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={knifeActive&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={knifeActive?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+  selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
+  onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
+  onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
+  onStartMove={remember}/>}
+     {inspectionPanelOpen&&<div className="topo-region-inspection-panel" role="region" aria-label="局部观察设置">
        <div className="flex flex-wrap items-center gap-2 mt-2">
         <label>控制面编号 <input aria-label="观察区域面编号" className="bg-neutral-800 p-1 w-28" value={inspectionIds} onChange={e=>setInspectionIds(e.target.value)} placeholder="留空使用选择"/></label>
         <button className={btn} disabled={draftDirty||faceDraft.length>0||canvasKnife||(!inspectionIds.trim()&&!selectedFaces.length&&selectedFace===null&&selected===null)} onClick={openInspection}>观察当前区域</button>
@@ -431,13 +439,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
           {activeInspection.folds&&<div className="w-full" aria-label="区域凹凸边报告">红：内凹折角 · 绿：外凸折角（绝对值 ≥5°；以外向绕序为前提，正常凹陷不等于缺陷）。{inspectionReport.slice(0,8).map(e=><span key={e.a+':'+e.b} className="inline-block mr-2">边 {e.a}–{e.b}：{e.degrees.toFixed(1)}°{e.boundary?'（边界）':''}</span>)}</div>}
         </>}
        </div>
-     </details>
-     <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview inspection={activeInspection} orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeActive?canvasResult.lines:knifeSegments} knifeDraft={knifeActive&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={knifeActive&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={knifeActive?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
-  selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
-  onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
-  onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
-  onStartMove={remember}/>}
+     </div>}
      </div>
      <div className="topo-stage-foot">
        <span>{showCage?'编辑布线':'成品预览'} · {selectedSummary}</span>
