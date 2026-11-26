@@ -1,0 +1,27 @@
+name: Stage 5M topology audit
+on:
+  push:
+    branches: [training/stage5-m-topology-audit]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:topology
+      - run: gh run download 45865666182 -n stage5-l-joint-refinement -D stage5-l-artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node --import tsx training/stage5-m-topology-audit.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stage5-m-topology-audit
+          path: artifacts/stage5-m
