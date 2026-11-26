@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPrimitiveControlMesh} from '../src/components/meshTopology';
 import {triangulateFaces} from '../src/components/traceGeometry';
-import {growRegion,regionVertices,partitionRegionTriangles,regionFolds,sectionPlane,sectionSegments,sectionProfile,defaultSection,readInspectionRegions} from '../src/components/regionInspection';
+import {growRegion,regionVertices,partitionRegionTriangles,regionFolds,sectionPlane,sectionSegments,sectionProfile,defaultSection,readInspectionRegions,regionDimensions,landmarkMeasurement,alignedSectionProfiles} from '../src/components/regionInspection';
 import type {ControlMesh} from '../src/types';
 test('isolation preserves source indices, winding, and complete original triangles',()=>{
  const mesh=createPrimitiveControlMesh('box'),snapshot=JSON.stringify(mesh),tri=triangulateFaces(mesh.vertices,mesh.faces);
@@ -34,4 +34,14 @@ test('named regions only restore on identical indexed topology',()=>{
  assert.deepEqual(readInspectionRegions(mesh,payload),[{name:'front',faces:[0,1]}]);
  assert.throws(()=>readInspectionRegions({...mesh,faces:mesh.faces.slice(1)},payload));
  assert.throws(()=>readInspectionRegions(mesh,{...payload,regions:[{name:'bad',faces:[99]}]}));
+});
+
+test('dimensions and paired section projections retain a single coordinate scale',()=>{
+ const mesh=createPrimitiveControlMesh('box'),ids=[0,1,2,3,4,5],dims=regionDimensions(mesh,ids)!;
+ assert.deepEqual(dims.ratios,[1,1,1]);assert.equal(landmarkMeasurement(mesh,0,0)?.distance,0);assert.equal(landmarkMeasurement(mesh,0,999),null);
+ const before:[number[],number[]][]=[[[0,0,0],[1,0,0]]],after:[number[],number[]][]=[[[0,0,0],[2,0,0]]];
+ const p=alignedSectionProfiles(after as [[number,number,number],[number,number,number]][],before as [[number,number,number],[number,number,number]][],[0,1,0]);
+ const distance=(line:number[][])=>Math.hypot(line[1][0]-line[0][0],line[1][1]-line[0][1]);
+ assert.ok(Math.abs(distance(p.now[0])-2*distance(p.before[0]))<1e-8);
+ assert.deepEqual(p.now[0][0],p.before[0][0]);
 });
