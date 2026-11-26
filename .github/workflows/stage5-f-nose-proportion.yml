@@ -1,0 +1,30 @@
+name: Stage 5F nose proportion calibration
+on:
+  push:
+    branches: [training/stage5-f-nose-proportion]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:topology
+      - run: npm install --no-save --no-package-lock playwright
+      - run: gh run download 45795794740 -n stage5-e-ear-root -D stage5-e-artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node --import tsx training/stage5-f-nose-proportion.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage5-f-nose-proportion
+          path: artifacts/stage5-f
