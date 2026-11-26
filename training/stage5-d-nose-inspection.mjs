@@ -27,5 +27,34 @@ try{
  for(const p of [.2,.35,.5,.65,.8]){await d.getByLabel('剖切位置').fill(String(p));await d.getByRole('img',{name:'局部截面轮廓'}).waitFor();await d.getByRole('img',{name:'局部截面轮廓'}).screenshot({path:folder+'/section-profile-'+p+'.png'});await shot('section-'+p)}
  await d.getByRole('button',{name:'矢状面',exact:true}).click();await d.getByRole('checkbox',{name:'隐藏截面一侧'}).check();await bar.getByRole('button',{name:'左低角度',exact:true}).click();await shot('sagittal-clipped');await page.screenshot({path:folder+'/section-ui.png',fullPage:true});
  await d.getByRole('button',{name:'退出区域观察'}).click();await toggle();await bar.getByRole('button',{name:'恢复小预览'}).click();
- const download=page.waitForEvent('download');await d.getByRole('button',{name:'保存顶点 JSON',exact:true}).click();await (await download).saveAs(folder+'/unchanged.json');const after=JSON.parse(await readFile(folder+'/unchanged.json','utf8'));assert.deepEqual(after.vertices,mesh.vertices);assert.deepEqual(after.faces,mesh.faces);assert.deepEqual(report.errors,[]);
+ const download=page.waitForEvent('download');await d.getByRole('button',{name:'保存顶点 JSON',exact:true}).click();await (await download).saveAs(folder+'/unchanged.json');const after=JSON.parse(await readFile(folder+'/unchanged.json','utf8'));assert.deepEqual(after.vertices,mesh.vertices);assert.deepEqual(after.faces,mesh.faces);
+ // Local shape correction only: no changes to control face connectivity or tip.
+ const changes=[[43,.055],[53,.070],[44,.045],[38,.020]];
+ const expected=mesh.vertices.map(v=>[...v]),mirrors=mesh.vertices.map(v=>mesh.vertices.findIndex(w=>Math.abs(v[0]+w[0])<1e-7&&Math.abs(v[1]-w[1])<1e-7&&Math.abs(v[2]-w[2])<1e-7));
+ await d.getByRole('button',{name:'展开精确选择'}).click();const vertex=d.getByLabel('选择顶点编号');
+ await vertex.fill('43');await d.getByRole('button',{name:'塑形',exact:true}).click();const sym=d.locator('summary').filter({hasText:'顶点对称设置'});if(!(await sym.locator('..').evaluate(el=>el.open)))await sym.click();
+ const symmetry=d.getByRole('checkbox',{name:'对称 X',exact:true});await symmetry.check();
+ for(const [id,delta] of changes){await vertex.fill(String(id));const z=mesh.vertices[id][2]+delta;const input=d.getByLabel('顶点 Z',{exact:true});await input.fill(String(z));await input.press('Enter');assert.ok(Math.abs(Number(await input.inputValue())-z)<1e-7);assert.ok(mirrors[id]>=0);expected[id][2]=z;expected[mirrors[id]][2]=z;}
+ await symmetry.uncheck();await vertex.fill('');await d.getByLabel('控制面编号').fill('');
+ const output=page.waitForEvent('download');await d.getByRole('button',{name:'保存顶点 JSON',exact:true}).click();await(await output).saveAs(folder+'/stage5-d-editor-export.json');
+ const corrected=JSON.parse(await readFile(folder+'/stage5-d-editor-export.json','utf8')),candidate={vertices:corrected.vertices,faces:corrected.faces};
+ assert.deepEqual(candidate.faces,mesh.faces);assert.equal(candidate.vertices.length,101);
+ for(let i=0;i<101;i++)assert.ok(candidate.vertices[i].every((v,k)=>Math.abs(v-expected[i][k])<1e-7),'unexpected coordinate '+i);
+ const sub=(a,b)=>a.map((x,i)=>x-b[i]),dot=(a,b)=>a.reduce((n,x,i)=>n+x*b[i],0),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ const hit=(p,q,a,b,c)=>{const d=sub(q,p),e=sub(b,a),g=sub(c,a),h=cross(d,g),det=dot(e,h);if(Math.abs(det)<1e-9)return false;const s=sub(p,a),u=dot(s,h)/det,r=cross(s,e),v=dot(d,r)/det,t=dot(g,r)/det;return Math.min(u,v,1-u-v,t,1-t)>1e-7};
+ const tris=candidate.faces.flatMap((f,fi)=>f.slice(1,-1).map((_,j)=>({fi,ids:[f[0],f[j+1],f[j+2]]})));
+ for(const t of tris){const [a,b,c]=t.ids.map(i=>candidate.vertices[i]);assert.ok(Math.hypot(...cross(sub(b,a),sub(c,a)))>1e-8)}
+ for(let i=0;i<tris.length;i++)for(let j=i+1;j<tris.length;j++){const a=tris[i],b=tris[j];if(a.fi===b.fi||a.ids.some(k=>b.ids.includes(k)))continue;const p=a.ids.map(k=>candidate.vertices[k]),q=b.ids.map(k=>candidate.vertices[k]);assert.ok(!p.some((v,k)=>hit(v,p[(k+1)%3],...q))&&!q.some((v,k)=>hit(v,q[(k+1)%3],...p)),'triangle crossing '+a.fi+'/'+b.fi)}
+ await writeFile(folder+'/stage5-d-nose.json',JSON.stringify(candidate,null,2));report.shapeChanges=changes;
+ // Same region and camera presets after the edit.
+ await bar.getByRole('button',{name:'放大 3D 编辑'}).click();await toggle();
+ await d.getByLabel('观察区域面编号').fill(ids.join(','));await d.getByRole('button',{name:'观察当前区域'}).click();await toggle();
+ for(const angle of ['正面','侧面','低角度','左低角度','3/4','左 3/4','俯视','仰视']){await bar.getByRole('button',{name:angle,exact:true}).click();await shot('corrected-ghost-'+angle.replace('/','-'))}
+ await toggle();await d.getByLabel('观察背景模式').selectOption('isolate');await d.getByRole('checkbox',{name:'凹凸边诊断'}).check();report.correctedFoldText=await d.getByLabel('区域凹凸边报告').innerText();await toggle();
+ for(const angle of ['低角度','左低角度','正面','侧面']){await bar.getByRole('button',{name:angle,exact:true}).click();await shot('corrected-isolated-fold-'+angle)}
+ await toggle();await d.getByRole('checkbox',{name:'凹凸边诊断'}).uncheck();await d.getByRole('checkbox',{name:'局部剖切分析'}).check();await bar.getByRole('button',{name:'俯视',exact:true}).click();
+ for(const p of [.2,.35,.5,.65,.8]){await d.getByLabel('剖切位置').fill(String(p));await d.getByRole('img',{name:'局部截面轮廓'}).screenshot({path:folder+'/corrected-section-profile-'+p+'.png'});await shot('corrected-section-'+p)}
+ await d.getByRole('button',{name:'退出区域观察'}).click();await toggle();await bar.getByRole('button',{name:'成品预览',exact:true}).click();
+ for(const angle of ['正面','侧面','低角度','左低角度','3/4','左 3/4','俯视','仰视']){await bar.getByRole('button',{name:angle,exact:true}).click();await shot('corrected-full-'+angle.replace('/','-'))}
+ assert.deepEqual(report.errors,[]);
 }catch(e){report.errors.push(String(e));if(page)await page.screenshot({path:folder+'/failure.png',fullPage:true}).catch(()=>{});throw e}finally{await writeFile(folder+'/report.json',JSON.stringify(report,null,2));await browser?.close();server.kill('SIGTERM')}
