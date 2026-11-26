@@ -8,7 +8,7 @@ import type {ControlMesh} from '../types';
 import {CanvasKnifePicker} from './CanvasKnifePicker';
 import type {KnifeHit} from './canvasKnife';
 
-import {partitionRegionTriangles,regionVertices,regionFolds,type RegionInspection} from './regionInspection';
+import {partitionRegionTriangles,regionVertices,regionFolds,sectionPlane,sectionSegments,type RegionInspection} from './regionInspection';
 
 type V=[number,number,number];
 type Data=ControlMesh;
@@ -138,11 +138,24 @@ function InspectionShape({data,inspection,showCage,optimizedTriangles,mirrorTria
   return {target:make(target),context:make(context),wire:line([...edge.values()].flatMap(([a,b])=>[...data.vertices[a],...data.vertices[b]])),concave:foldLine(-1),convex:foldLine(1)};
  },[data,inspection.faces,optimizedTriangles,mirrorTriangles]);
  useEffect(()=>()=>{Object.values(g).forEach(x=>x.dispose())},[g]);
+ const section=useMemo(()=>{
+  if(!inspection.section)return null;
+  const plane=sectionPlane(data,inspection.faces,inspection.section);if(!plane)return null;
+  const idx=Array.from(g.target.index?.array??[]);
+  const line=new THREE.BufferGeometry();line.setAttribute('position',new THREE.Float32BufferAttribute(sectionSegments(data.vertices,idx,plane.normal,plane.offset).flat(2),3));
+  const sign=inspection.section.reverse?-1:1;
+  const clip=new THREE.Plane(new THREE.Vector3(...plane.normal).multiplyScalar(sign),-plane.offset*sign);
+  return {line,clip};
+ },[data,inspection.faces,inspection.section,g.target]);
+ useEffect(()=>()=>section?.line.dispose(),[section]);
+ const clippingPlanes=section&&inspection.section?.clip?[section.clip]:[];
+
  return <>
-  <mesh geometry={g.target} raycast={()=>null}><meshStandardMaterial color={inspection.mode==='contrast'?'#d8ae72':'#b8b8b8'} flatShading side={THREE.DoubleSide}/></mesh>
-  {inspection.mode!=='isolate'&&<mesh geometry={g.context} raycast={()=>null} renderOrder={1}><meshStandardMaterial color={inspection.mode==='contrast'?'#456780':'#929ba4'} flatShading side={THREE.DoubleSide} transparent opacity={inspection.opacity} depthWrite={false}/></mesh>}
-  {showCage&&<lineSegments geometry={g.wire} raycast={()=>null} renderOrder={2}><lineBasicMaterial color="#ff942f" depthWrite={false}/></lineSegments>}
-  {inspection.folds&&<><lineSegments geometry={g.concave} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#ff4768" depthTest={false} depthWrite={false}/></lineSegments><lineSegments geometry={g.convex} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#53d8ae" depthTest={false} depthWrite={false}/></lineSegments></>}
+  <mesh geometry={g.target} raycast={()=>null}><meshStandardMaterial color={inspection.mode==='contrast'?'#d8ae72':'#b8b8b8'} clippingPlanes={clippingPlanes} flatShading side={THREE.DoubleSide}/></mesh>
+  {inspection.mode!=='isolate'&&<mesh geometry={g.context} raycast={()=>null} renderOrder={1}><meshStandardMaterial color={inspection.mode==='contrast'?'#456780':'#929ba4'} clippingPlanes={clippingPlanes} flatShading side={THREE.DoubleSide} transparent opacity={inspection.opacity} depthWrite={false}/></mesh>}
+  {showCage&&<lineSegments geometry={g.wire} raycast={()=>null} renderOrder={2}><lineBasicMaterial color="#ff942f" clippingPlanes={clippingPlanes} depthWrite={false}/></lineSegments>}
+  {section&&<lineSegments geometry={section.line} raycast={()=>null} renderOrder={5}><lineBasicMaterial color="#ffdf56" depthTest={false} depthWrite={false}/></lineSegments>}
+  {inspection.folds&&<><lineSegments geometry={g.concave} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#ff4768" clippingPlanes={clippingPlanes} depthTest={false} depthWrite={false}/></lineSegments><lineSegments geometry={g.convex} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#53d8ae" clippingPlanes={clippingPlanes} depthTest={false} depthWrite={false}/></lineSegments></>}
  </>;
 }
 
@@ -173,7 +186,7 @@ export function TracePreview(props:Props){
     const sphere=box.getBoundingSphere(new THREE.Sphere());
     return {center:sphere.center,radius:Math.max(sphere.radius,.05)};
   },[props.data.faces,props.inspection?.faces]);
-  return <Canvas key={props.orthographic?'ortho':'perspective'} orthographic={props.orthographic} camera={props.orthographic?{position:[3,1.2,4],near:.001,far:100000}:{position:[3,1.2,4],fov:40}} gl={{antialias:true}}
+  return <Canvas key={props.orthographic?'ortho':'perspective'} orthographic={props.orthographic} camera={props.orthographic?{position:[3,1.2,4],near:.001,far:100000}:{position:[3,1.2,4],fov:40}} gl={{antialias:true,localClippingEnabled:true}}
     raycaster={{params:{Points:{threshold:.045},Line:{threshold:.045}} as any}}>
     <color attach="background" args={['#303030']}/>
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={props.symmetricLight ? .65:1.3}/><directionalLight position={[-3,4,5]} intensity={props.symmetricLight ? .65:0}/>
