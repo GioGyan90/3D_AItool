@@ -1,0 +1,29 @@
+name: Stage 5D nose region inspection
+on:
+  push:
+    branches: [training/stage5-d-nose-inspection]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm install --no-save --no-package-lock playwright
+      - run: gh run download 45781507748 -n stage5-c-training -D stage5-c-artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node training/stage5-d-nose-inspection.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage5-d-nose-inspection
+          path: artifacts/stage5-d-nose
