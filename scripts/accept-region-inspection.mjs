@@ -18,7 +18,15 @@ try{
  const shot=async(name)=>{await page.waitForTimeout(400);const path=folder+'/'+name+'.png';await view.locator('canvas').screenshot({path});return readFile(path)};
  const ghost=await shot('ghost');const slider=d.getByLabel('观察背景透明度');await slider.fill('0.65');const ghostStrong=await shot('ghost-65');assert.ok(!ghost.equals(ghostStrong));await slider.fill('0.15');await d.getByLabel('观察背景模式').selectOption('isolate');const isolated=await shot('isolated');assert.ok(!ghost.equals(isolated));
  await d.getByLabel('观察背景模式').selectOption('contrast');const contrast=await shot('contrast');assert.ok(!contrast.equals(isolated));
- await d.getByRole('checkbox',{name:'凹凸边诊断'}).check();await d.getByLabel('区域凹凸边报告').waitFor();
+ await d.getByLabel('区域名称').fill('Front and right');await d.getByRole('button',{name:'保存命名区域'}).click();await d.getByRole('button',{name:'Front and right · 2 面'}).waitFor();
+ const regionDownload=page.waitForEvent('download');await d.getByRole('button',{name:'导出区域文件'}).click();const regionFile=await regionDownload;await regionFile.saveAs(folder+'/regions.json');
+ await d.getByRole('button',{name:'删除区域 Front and right'}).click();await d.getByLabel('导入区域文件').setInputFiles(folder+'/regions.json');await d.getByRole('button',{name:'Front and right · 2 面'}).click();
+ await d.getByRole('checkbox',{name:'局部剖切分析'}).check();await d.getByRole('img',{name:'局部截面轮廓'}).waitFor();await d.getByLabel('连续截面采样').waitFor();
+ const section=await shot('section');await d.getByRole('checkbox',{name:'隐藏截面一侧'}).check();const clipped=await shot('section-clipped');assert.ok(!section.equals(clipped));
+ await d.getByRole('checkbox',{name:'反向剖切'}).check();const reversed=await shot('section-reversed');assert.ok(!clipped.equals(reversed));
+ await d.getByLabel('剖切方位角').fill('45');await d.getByLabel('剖切仰角').fill('30');await d.getByLabel('剖切位置').fill('0.65');await shot('section-oblique');
+ await page.screenshot({path:folder+'/section-ui.png',fullPage:true});
+ await d.getByRole('checkbox',{name:'局部剖切分析'}).uncheck();await d.getByRole('checkbox',{name:'凹凸边诊断'}).check();await d.getByLabel('区域凹凸边报告').waitFor();
  await bar.getByRole('button',{name:'左低角度',exact:true}).click();const left=await shot('low-left');await bar.getByRole('button',{name:'低角度',exact:true}).click();const right=await shot('low-right');assert.ok(!left.equals(right));
  await d.getByRole('button',{name:'扩展一圈邻面'}).click();await bar.getByRole('button',{name:'局部观察 / 区域隔离 · 6 面',exact:true}).waitFor();
  await page.screenshot({path:folder+'/inspection-ui.png',fullPage:true});await d.getByRole('button',{name:'退出区域观察'}).click();await bar.getByRole('button',{name:'局部观察 / 区域隔离',exact:true}).click();await bar.getByRole('button',{name:'恢复小预览'}).click();
