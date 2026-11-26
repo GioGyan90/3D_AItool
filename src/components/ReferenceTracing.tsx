@@ -3,7 +3,7 @@ import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview,type SpatialReference} from './TracePreview';
-import {regionFaces,growRegion,regionFolds,readInspectionRegions,type NamedInspectionRegion,type RegionInspection,type InspectionMode} from './regionInspection';
+import {regionFaces,growRegion,regionFolds,renderedRegionDiagnostics,readInspectionRegions,type NamedInspectionRegion,type RegionInspection,type InspectionMode} from './regionInspection';
 import {SectionInspectionPanel} from './SectionInspectionPanel';
 import {RegionProportionPanel} from './RegionProportionPanel';
 import {SurfaceQualityPanel} from './SurfaceQualityPanel';
@@ -391,6 +391,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const hoverStep=knifeActive&&geometry?knifeChord(geometry,knifeStart,knifeHover):null;
  const activeInspection=inspection&&geometry&&inspection.source===geometry.faces?inspection:undefined;
  const inspectionReport=useMemo(()=>geometry&&activeInspection?regionFolds(geometry,activeInspection.faces):[],[geometry,activeInspection]);
+ const renderedInspection=useMemo(()=>{if(!geometry||!activeInspection?.normals)return null;try{return renderedRegionDiagnostics(geometry,triangulateFaces(geometry.vertices,geometry.faces,optimizedTriangles,mirrorTriangles),activeInspection.faces)}catch{return null}},[geometry,activeInspection,optimizedTriangles,mirrorTriangles]);
  const openInspection=()=>{if(!geometry)return;const raw=inspectionIds.trim();const ids=raw?raw.split(/[\\s,，]+/).map(Number):selectedFaces.length?selectedFaces:selectedFace!==null?[selectedFace]:selected!==null?geometry.faces.flatMap((f,i)=>f.includes(selected)?[i]:[]):[];
  const chosen=regionFaces(geometry,ids);if(!chosen.length||ids.some(i=>!Number.isInteger(i)||i<0||i>=geometry.faces.length)){setError('请选择有效控制面编号');return}
  cancelCanvasKnife();setInspection({source:geometry.faces,faces:chosen,mode:'ghost',opacity:.15,folds:false});setOrthographic(true);setSymmetricLight(true);setError('');setCameraRevision(n=>n+1)};
@@ -449,6 +450,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
           <label>其他结构 <select aria-label="观察背景模式" className="bg-neutral-800 p-1" value={activeInspection.mode} onChange={e=>setInspection({...activeInspection,mode:e.target.value as InspectionMode})}><option value="isolate">隐藏</option><option value="ghost">半透明</option><option value="contrast">分色</option></select></label>
           {activeInspection.mode!=='isolate'&&<label>背景透明度 {Math.round(activeInspection.opacity*100)}% <input aria-label="观察背景透明度" type="range" min=".03" max="1" step=".01" value={activeInspection.opacity} onChange={e=>setInspection({...activeInspection,opacity:+e.target.value})}/></label>}
           <label><input type="checkbox" checked={activeInspection.folds} onChange={e=>setInspection({...activeInspection,folds:e.target.checked})}/> 凹凸边诊断</label>
+          <label><input type="checkbox" checked={!!activeInspection.normals} onChange={e=>setInspection({...activeInspection,normals:e.target.checked})}/> 渲染三角法线</label>
+          {activeInspection.normals&&<div className="w-full text-xs" aria-label="渲染三角折角报告">{renderedInspection?<><p>蓝箭头：实际三角面法线；紫线：控制面内部折角 ≥5°（非必然错误）。</p><p>{renderedInspection.normals.length} 三角面；内部折角 {renderedInspection.folds.filter(e=>e.internal&&Math.abs(e.degrees)>=5).length} 条</p>{renderedInspection.folds.filter(e=>e.internal).slice(0,6).map(e=><span key={e.a+':'+e.b} className="inline-block mr-2">面 {e.faces[0]} · {e.a}–{e.b}：{e.degrees.toFixed(1)}°</span>)}</>:<p>无法取得有效渲染三角化。</p>}</div>}
           <button className={btn} onClick={()=>{setInspection(null);setCameraRevision(n=>n+1)}}>退出区域观察</button>
           <span aria-live="polite">观察模式只读；原网格不变。</span>
           <RegionProportionPanel mesh={geometry} faces={activeInspection.faces} baseline={inspectionBaseline??undefined} onCapture={()=>setInspectionBaseline({...geometry,vertices:geometry.vertices.map(v=>[...v] as V)})} onClear={()=>setInspectionBaseline(null)}/>
