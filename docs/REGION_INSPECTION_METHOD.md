@@ -1,0 +1,13 @@
+# Non-destructive local inspection and shape validation
+
+## Workflow
+1. Select a control-face patch, not a separate object. Use Shift multi-select or explicit face IDs; optionally grow by shared-edge adjacency. Inspect the boundary as well as the patch interior.
+2. Compare isolate, ghost (adjustable background opacity), and contrast modes. Switch between solid and control cage. The display partition preserves the exact original triangulation, vertex IDs and winding; never detach or duplicate shared boundary vertices.
+3. Auto-frame the target in orthographic projection. Inspect front, both profiles, top, bottom, both obliques and both low obliques under symmetric light. Free orbit between presets to inspect grazing angles.
+4. Enable signed crease diagnostics. Negative = concave, positive = convex for consistently outward-wound control faces. Review boundary edges too. A fold is an observation, not an automatic error. Concavity at eye sockets and nostril transitions may be intended; a convex ridge that caves inward needs closer inspection. Mirrored coordinates and mirrored folds do not establish reference fidelity.
+5. For a suspected local defect, record face and edge IDs, expected cross-section (convex/concave), measured fold angle and actual screenshot. Examine multiple neighboring cross-sections and compare with the reference. For a non-planar polygon, control-face Newell normals are only an aggregate estimate; check rendered triangles and profile separately.
+6. Exit inspection, protect accepted regions, correct the smallest necessary vertex set symmetrically when appropriate, and repeat the same views and measurements. Do not add topology until shape-only adjustments have been evaluated.
+7. Before publication, verify exported vertices/faces remain unchanged by view-only operations; after a real edit run geometry and browser regressions and review full-model solid/cage screenshots.
+
+## Limitations
+The first version supports face-index selection, shared-edge growth, and three display modes. It does not yet persist named anatomical regions, provide clipping planes, measure per-section curvature, or infer desired fold signs from a reference. Model names/organ labels belong to training data, not permanent tool presets. If topology changes, active inspection is invalidated to prevent reuse of stale face IDs.
