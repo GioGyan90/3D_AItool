@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPrimitiveControlMesh} from '../src/components/meshTopology';
 import {triangulateFaces} from '../src/components/traceGeometry';
-import {growRegion,regionVertices,partitionRegionTriangles,regionFolds,sectionPlane,sectionSegments,sectionProfile,defaultSection,readInspectionRegions,regionDimensions,landmarkMeasurement,alignedSectionProfiles} from '../src/components/regionInspection';
+import {growRegion,regionVertices,partitionRegionTriangles,regionFolds,sectionPlane,sectionSegments,sectionProfile,defaultSection,readInspectionRegions,regionDimensions,landmarkMeasurement,alignedSectionProfiles,renderedRegionDiagnostics} from '../src/components/regionInspection';
 import type {ControlMesh} from '../src/types';
 test('isolation preserves source indices, winding, and complete original triangles',()=>{
  const mesh=createPrimitiveControlMesh('box'),snapshot=JSON.stringify(mesh),tri=triangulateFaces(mesh.vertices,mesh.faces);
@@ -44,4 +44,12 @@ test('dimensions and paired section projections retain a single coordinate scale
  const distance=(line:number[][])=>Math.hypot(line[1][0]-line[0][0],line[1][1]-line[0][1]);
  assert.ok(Math.abs(distance(p.now[0])-2*distance(p.before[0]))<1e-8);
  assert.deepEqual(p.now[0][0],p.before[0][0]);
+});
+
+test('nonplanar quad exposes rendered internal fold while planar quad does not',()=>{
+ const mesh:ControlMesh={vertices:[[0,0,0],[1,0,0],[1,1,.5],[0,1,0]],faces:[[0,1,2,3]]};
+ const t=[0,1,2,0,2,3],d=renderedRegionDiagnostics(mesh,t,[0]);
+ assert.equal(d.normals.length,2);assert.equal(d.folds.length,1);assert.equal(d.folds[0].internal,true);assert.ok(Math.abs(d.folds[0].degrees)>20);
+ mesh.vertices[2][2]=0;assert.ok(Math.abs(renderedRegionDiagnostics(mesh,t,[0]).folds[0].degrees)<1e-8);
+ assert.equal(renderedRegionDiagnostics(mesh,t,[]).normals.length,0);
 });

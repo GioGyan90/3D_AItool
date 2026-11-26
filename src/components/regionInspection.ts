@@ -1,7 +1,7 @@
 import type {ControlMesh} from '../types';
 type V=[number,number,number];
 export type InspectionMode='isolate'|'ghost'|'contrast';
-export type RegionInspection={faces:number[];mode:InspectionMode;opacity:number;folds:boolean;section?:SectionSettings};
+export type RegionInspection={faces:number[];mode:InspectionMode;opacity:number;folds:boolean;normals?:boolean;section?:SectionSettings};
 const key=(a:number,b:number)=>a<b?a+':'+b:b+':'+a;
 const sub=(a:V,b:V):V=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const cross=(a:V,b:V):V=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
@@ -86,4 +86,30 @@ export function alignedSectionProfiles(current:[V,V][],baseline:[V,V][],normal:V
  const scale=Math.min(270/Math.max(.001,xmax-xmin),100/Math.max(.001,ymax-ymin));
  const project=([x,y]:[number,number]):[number,number]=>[150+(x-(xmin+xmax)/2)*scale,60-(y-(ymin+ymax)/2)*scale];
  return {now:now.map(p=>p.map(project)),before:before.map(p=>p.map(project)),scale};
+}
+
+/** Per-rendered-triangle diagnostics. Unlike aggregate polygon normals,
+ * these reveal nonplanarity at internal triangulation diagonals. */
+export function renderedRegionDiagnostics(mesh:ControlMesh,indices:number[],ids:number[]){
+ const selected=new Set(regionFaces(mesh,ids)),triangles:{face:number;ids:[number,number,number];center:V;normal:V}[]=[];
+ let offset=0;
+ for(const [face,f] of mesh.faces.entries()){
+  for(let j=0;j<f.length-2;j++){
+   const t=indices.slice(offset,offset+3) as [number,number,number];offset+=3;
+   if(t.length!==3||t.some(i=>!mesh.vertices[i]))throw Error('渲染三角索引不完整');
+   const [a,b,c]=t.map(i=>mesh.vertices[i]),normal=unit(cross(sub(b,a),sub(c,a)));if(!normal)continue;
+   triangles.push({face,ids:t,center:[(a[0]+b[0]+c[0])/3,(a[1]+b[1]+c[1])/3,(a[2]+b[2]+c[2])/3],normal});
+  }
+ }
+ if(offset!==indices.length)throw Error('渲染三角面数量不一致');
+ const edges=new Map<string,{i:number;a:number;b:number}[]>();
+ triangles.forEach((t,i)=>t.ids.forEach((a,j)=>{const b=t.ids[(j+1)%3],k=key(a,b);edges.set(k,[...(edges.get(k)??[]),{i,a,b}])}));
+ const folds:{a:number;b:number;faces:[number,number];degrees:number;internal:boolean}[]=[];
+ for(const pair of edges.values()){
+  if(pair.length!==2)continue;
+  const [l,r]=pair,L=triangles[l.i],R=triangles[r.i];if(!selected.has(L.face)&&!selected.has(R.face)||l.a!==r.b||l.b!==r.a)continue;
+  const e=unit(sub(mesh.vertices[l.b],mesh.vertices[l.a]));if(!e)continue;
+  folds.push({a:l.a,b:l.b,faces:[L.face,R.face],degrees:Math.atan2(dot(e,cross(L.normal,R.normal)),dot(L.normal,R.normal))*180/Math.PI,internal:L.face===R.face});
+ }
+ return {normals:triangles.filter(t=>selected.has(t.face)),folds:folds.sort((a,b)=>Math.abs(b.degrees)-Math.abs(a.degrees))};
 }

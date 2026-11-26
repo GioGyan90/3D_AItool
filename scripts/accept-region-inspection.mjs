@@ -26,7 +26,7 @@ try{
  await d.getByRole('checkbox',{name:'反向剖切'}).check();const reversed=await shot('section-reversed');assert.ok(!clipped.equals(reversed));
  await d.getByLabel('剖切方位角').fill('45');await d.getByLabel('剖切仰角').fill('30');await d.getByLabel('剖切位置').fill('0.65');await shot('section-oblique');
  await page.screenshot({path:folder+'/section-ui.png',fullPage:true});
- await d.getByRole('checkbox',{name:'局部剖切分析'}).uncheck();await d.getByRole('checkbox',{name:'凹凸边诊断'}).check();await d.getByLabel('区域凹凸边报告').waitFor();
+ await d.getByRole('checkbox',{name:'局部剖切分析'}).uncheck();await d.getByRole('checkbox',{name:'凹凸边诊断'}).check();await d.getByRole('checkbox',{name:'渲染三角法线'}).check();await d.getByLabel('渲染三角折角报告').waitFor();const normalShot=await shot('rendered-normals');await d.getByRole('checkbox',{name:'渲染三角法线'}).uncheck();const noNormals=await shot('without-normals');assert.ok(!normalShot.equals(noNormals));await d.getByLabel('区域凹凸边报告').waitFor();
  await bar.getByRole('button',{name:'左低角度',exact:true}).click();const left=await shot('low-left');await bar.getByRole('button',{name:'低角度',exact:true}).click();const right=await shot('low-right');assert.ok(!left.equals(right));
  await d.getByRole('button',{name:'扩展一圈邻面'}).click();await bar.getByRole('button',{name:'局部观察 / 区域隔离 · 6 面',exact:true}).waitFor();
  await page.screenshot({path:folder+'/inspection-ui.png',fullPage:true});await d.getByRole('button',{name:'退出区域观察'}).click();await bar.getByRole('button',{name:'局部观察 / 区域隔离',exact:true}).click();await bar.getByRole('button',{name:'恢复小预览'}).click();

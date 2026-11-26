@@ -8,7 +8,7 @@ import type {ControlMesh} from '../types';
 import {CanvasKnifePicker} from './CanvasKnifePicker';
 import type {KnifeHit} from './canvasKnife';
 
-import {partitionRegionTriangles,regionVertices,regionFolds,sectionPlane,sectionSegments,type RegionInspection} from './regionInspection';
+import {partitionRegionTriangles,regionVertices,regionFolds,sectionPlane,sectionSegments,renderedRegionDiagnostics,type RegionInspection} from './regionInspection';
 
 type V=[number,number,number];
 type Data=ControlMesh;
@@ -131,11 +131,16 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
 function InspectionShape({data,inspection,showCage,optimizedTriangles,mirrorTriangles}:{data:Data;inspection:RegionInspection;showCage?:boolean;optimizedTriangles?:boolean;mirrorTriangles?:boolean}){
  const g=useMemo(()=>{
   const pos=data.vertices.flat(),make=(idx:number[])=>{const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setIndex(idx);geo.computeVertexNormals();return geo};
-  let target:number[]=[],context:number[]=[];try{({target,context}=partitionRegionTriangles(data,triangulateFaces(data.vertices,data.faces,optimizedTriangles,mirrorTriangles),inspection.faces))}catch{}
+  let target:number[]=[],context:number[]=[],indices:number[]=[];try{indices=triangulateFaces(data.vertices,data.faces,optimizedTriangles,mirrorTriangles);({target,context}=partitionRegionTriangles(data,indices,inspection.faces))}catch{}
   const edge=new Map<string,[number,number]>();for(const i of inspection.faces){const f=data.faces[i];if(f)f.forEach((a,j)=>{const b=f[(j+1)%f.length];edge.set(keyOf(a,b),[a,b])})}
   const line=(p:number[])=>{const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));return geo};
   const folds=regionFolds(data,inspection.faces),foldLine=(sign:number)=>line(folds.filter(e=>sign*e.degrees>=5).flatMap(e=>[...data.vertices[e.a],...data.vertices[e.b]]));
-  return {target:make(target),context:make(context),wire:line([...edge.values()].flatMap(([a,b])=>[...data.vertices[a],...data.vertices[b]])),concave:foldLine(-1),convex:foldLine(1)};
+  const diag=indices.length?renderedRegionDiagnostics(data,indices,inspection.faces):{normals:[],folds:[]};
+  const box=new THREE.Box3();for(const i of regionVertices(data,inspection.faces))box.expandByPoint(new THREE.Vector3(...data.vertices[i]));
+  const length=Math.max(.015,box.getSize(new THREE.Vector3()).length()*.065);
+  const normals=line(diag.normals.flatMap(t=>{const a=new THREE.Vector3(...t.center),n=new THREE.Vector3(...t.normal),b=a.clone().addScaledVector(n,length),ref=Math.abs(n.y)>.9?new THREE.Vector3(1,0,0):new THREE.Vector3(0,1,0),side=new THREE.Vector3().crossVectors(n,ref).normalize().multiplyScalar(length*.15),tail=b.clone().addScaledVector(n,-length*.3);return [...a.toArray(),...b.toArray(),...b.toArray(),...tail.clone().add(side).toArray(),...b.toArray(),...tail.clone().sub(side).toArray()]}));
+  const internal=line(diag.folds.filter(e=>e.internal&&Math.abs(e.degrees)>=5).flatMap(e=>[...data.vertices[e.a],...data.vertices[e.b]]));
+  return {normals,internal,target:make(target),context:make(context),wire:line([...edge.values()].flatMap(([a,b])=>[...data.vertices[a],...data.vertices[b]])),concave:foldLine(-1),convex:foldLine(1)};
  },[data,inspection.faces,optimizedTriangles,mirrorTriangles]);
  useEffect(()=>()=>{Object.values(g).forEach(x=>x.dispose())},[g]);
  const section=useMemo(()=>{
@@ -155,6 +160,7 @@ function InspectionShape({data,inspection,showCage,optimizedTriangles,mirrorTria
   {inspection.mode!=='isolate'&&<mesh geometry={g.context} raycast={()=>null} renderOrder={1}><meshStandardMaterial color={inspection.mode==='contrast'?'#456780':'#929ba4'} clippingPlanes={clippingPlanes} flatShading side={THREE.DoubleSide} transparent opacity={inspection.opacity} depthWrite={false}/></mesh>}
   {showCage&&<lineSegments geometry={g.wire} raycast={()=>null} renderOrder={2}><lineBasicMaterial color="#ff942f" clippingPlanes={clippingPlanes} depthWrite={false}/></lineSegments>}
   {section&&<lineSegments geometry={section.line} raycast={()=>null} renderOrder={5}><lineBasicMaterial color="#ffdf56" depthTest={false} depthWrite={false}/></lineSegments>}
+  {inspection.normals&&<><lineSegments geometry={g.normals} raycast={()=>null} renderOrder={4}><lineBasicMaterial color="#58cfff" clippingPlanes={clippingPlanes} depthWrite={false} depthTest={false}/></lineSegments><lineSegments geometry={g.internal} raycast={()=>null} renderOrder={4}><lineBasicMaterial color="#d68cff" clippingPlanes={clippingPlanes} depthWrite={false} depthTest={false}/></lineSegments></>}
   {inspection.folds&&<><lineSegments geometry={g.concave} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#ff4768" clippingPlanes={clippingPlanes} depthTest={false} depthWrite={false}/></lineSegments><lineSegments geometry={g.convex} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#53d8ae" clippingPlanes={clippingPlanes} depthTest={false} depthWrite={false}/></lineSegments></>}
  </>;
 }
