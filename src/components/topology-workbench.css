@@ -362,3 +362,8 @@
 .topo-knife-tools {display:flex;align-items:center;gap:5px;white-space:nowrap;font-size:11px;padding-right:6px;border-right:1px solid #344454;}
 .topo-knife-tools label {display:flex;gap:4px;align-items:center;}
 .topo-knife-error {flex:none;padding:4px 9px;font-size:11px;color:#ffd28a;background:#3d2921;max-height:36px;overflow:auto;}
+
+/* Region inspection controls float above the viewport instead of shrinking it. */
+.topo-region-inspection-panel {position:absolute;left:8px;top:8px;z-index:5;width:min(420px,calc(100% - 16px));max-height:calc(100% - 16px);overflow:auto;padding:8px;border:1px solid #51677a;border-radius:8px;background:#121f2bf2;color:#e4eff8;font-size:12px;box-shadow:0 4px 12px #0005;}
+.topo-region-inspection-panel label {display:inline-flex;align-items:center;gap:4px;}
+.topo-region-inspection-panel .topo-button {white-space:normal;font-size:12px;}
