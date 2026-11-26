@@ -3,6 +3,7 @@ import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview,type SpatialReference} from './TracePreview';
+import {regionFaces,growRegion,regionFolds,type RegionInspection,type InspectionMode} from './regionInspection';
 import {SurfaceQualityPanel} from './SurfaceQualityPanel';
 import {CalibrationWorkbench} from './CalibrationWorkbench';
 import {createCalibrationSession,remapCalibrationSession,type CalibrationSession} from './referenceCalibration';
@@ -137,6 +138,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [toolPanel,setToolPanel]=useState<'topology'|'model'|'paint'|'inspect'|'reference'>(()=>sceneEdit?.mesh.faceColors?.length?'paint':'topology');
  const [paintColor,setPaintColor]=useState<string>(RUBIK_FACE_COLORS.right);
  const [selectedFaces,setSelectedFaces]=useState<number[]>([]);
+ const [inspection,setInspection]=useState<(RegionInspection&{source:number[][]})|null>(null);
+ const [inspectionIds,setInspectionIds]=useState('');
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
  const [advancedOpen,setAdvancedOpen]=useState(false);
  const [selectionExpanded,setSelectionExpanded]=useState(false);
@@ -378,6 +381,11 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const applyCanvasKnife=()=>{if(!canvasResult.mesh||knifeBlocked)return;try{commitMesh(canvasResult.mesh,knifeMirror?'X 局部镜像刀切完成':'画布刀切完成');cancelCanvasKnife()}catch(e){setKnifeError(String(e))}};
  const knifeActive=canvasKnife&&knifeSource===geometry&&!knifeBlocked;
  const hoverStep=knifeActive&&geometry?knifeChord(geometry,knifeStart,knifeHover):null;
+ const activeInspection=inspection&&geometry&&inspection.source===geometry.faces?inspection:undefined;
+ const inspectionReport=useMemo(()=>geometry&&activeInspection?regionFolds(geometry,activeInspection.faces):[],[geometry,activeInspection]);
+ const openInspection=()=>{if(!geometry)return;const raw=inspectionIds.trim();const ids=raw?raw.split(/[\\s,，]+/).map(Number):selectedFaces.length?selectedFaces:selectedFace!==null?[selectedFace]:selected!==null?geometry.faces.flatMap((f,i)=>f.includes(selected)?[i]:[]):[];
+ const chosen=regionFaces(geometry,ids);if(!chosen.length||ids.some(i=>!Number.isInteger(i)||i<0||i>=geometry.faces.length)){setError('请选择有效控制面编号');return}
+ cancelCanvasKnife();setInspection({source:geometry.faces,faces:chosen,mode:'ghost',opacity:.15,folds:false});setOrthographic(true);setSymmetricLight(true);setError('');setCameraRevision(n=>n+1)};
  const spatialPreview = geometry && (
    <div className={sceneEdit
      ? 'topo-stage'
@@ -386,14 +394,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        : undefined}>
      <div className="topo-camera-bar" role="toolbar" aria-label="三维视图工具栏">
      <div className="topo-knife-tools" aria-label="画布刀切工具">
-       <button className={btn} disabled={knifeBlocked||!geometry.faces.length} aria-pressed={canvasKnife} onClick={()=>{if(canvasKnife)cancelCanvasKnife();else{clearCanvasPath();setKnifeSource(geometry);setCanvasKnife(true);setShowCage(true);setToolPanel('topology')}}}>画布刀切</button>
+       <button className={btn} disabled={!!activeInspection||knifeBlocked||!geometry.faces.length} aria-pressed={canvasKnife} onClick={()=>{if(canvasKnife)cancelCanvasKnife();else{clearCanvasPath();setKnifeSource(geometry);setCanvasKnife(true);setShowCage(true);setToolPanel('topology')}}}>画布刀切</button>
        {canvasKnife&&<><label><input type="checkbox" checked={knifeMirror} onChange={e=>{setKnifeMirror(e.target.checked);clearCanvasPath()}}/> X 局部镜像</label><span aria-live="polite">{canvasSteps.length} 段 · {knifeStart?'选择下一切点':'选择起点'}{canvasResult.mesh?' · 预检 '+canvasResult.mesh.vertices.length+' 顶点 / '+canvasResult.mesh.faces.length+' 面':''}</span><button className={btn} disabled={!canvasSteps.length} onClick={()=>{setKnifeStart(canvasSteps.at(-1)!.from);setCanvasSteps(old=>old.slice(0,-1));setKnifeError('')}}>撤回画布末段</button><button className={btn} disabled={!canvasResult.mesh||knifeBlocked} onClick={applyCanvasKnife}>执行画布刀切</button><button className={btn} onClick={cancelCanvasKnife}>取消画布刀切</button></>}
      </div>
 
        {!sceneEdit && <button className={btn} onClick={()=>setPreviewLarge(value=>!value)} aria-pressed={previewLarge}>
          {previewLarge?'恢复小预览':'放大 3D 编辑'}</button>}
        <span className="topo-camera-label">观察角度</span>
-       {([['front','正面'],['back','背面'],['side','侧面'],['left','左侧'],['top','俯视'],['bottom','仰视'],['angle','3/4'],['low','低角度']] as const).map(([direction,label])=>(
+       {([['front','正面'],['back','背面'],['side','侧面'],['left','左侧'],['top','俯视'],['bottom','仰视'],['angle','3/4'],['low','低角度'],['angleLeft','左 3/4'],['lowLeft','左低角度']] as const).map(([direction,label])=>(
          <button key={direction} className={btn} onClick={()=>{setPreviewDirection(direction);setCameraRevision(n=>n+1)}}
            aria-pressed={previewDirection===direction} title={`切换到${label}机位`}>{label}</button>
        ))}
@@ -408,8 +416,24 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
          </label>}
        </div>
      </div>
+     <details className="border border-neutral-700 rounded p-2 text-xs" open={activeInspection?true:undefined}>
+       <summary className="cursor-pointer">局部观察 / 区域隔离{activeInspection?' · '+activeInspection.faces.length+' 面':''}</summary>
+       <div className="flex flex-wrap items-center gap-2 mt-2">
+        <label>控制面编号 <input aria-label="观察区域面编号" className="bg-neutral-800 p-1 w-28" value={inspectionIds} onChange={e=>setInspectionIds(e.target.value)} placeholder="留空使用选择"/></label>
+        <button className={btn} disabled={draftDirty||faceDraft.length>0||canvasKnife||(!inspectionIds.trim()&&!selectedFaces.length&&selectedFace===null&&selected===null)} onClick={openInspection}>观察当前区域</button>
+        {activeInspection&&<>
+          <button className={btn} onClick={()=>{setInspection({...activeInspection,faces:growRegion(geometry,activeInspection.faces)});setCameraRevision(n=>n+1)}}>扩展一圈邻面</button>
+          <label>其他结构 <select aria-label="观察背景模式" className="bg-neutral-800 p-1" value={activeInspection.mode} onChange={e=>setInspection({...activeInspection,mode:e.target.value as InspectionMode})}><option value="isolate">隐藏</option><option value="ghost">半透明</option><option value="contrast">分色</option></select></label>
+          {activeInspection.mode!=='isolate'&&<label>背景透明度 {Math.round(activeInspection.opacity*100)}% <input aria-label="观察背景透明度" type="range" min=".03" max="1" step=".01" value={activeInspection.opacity} onChange={e=>setInspection({...activeInspection,opacity:+e.target.value})}/></label>}
+          <label><input type="checkbox" checked={activeInspection.folds} onChange={e=>setInspection({...activeInspection,folds:e.target.checked})}/> 凹凸边诊断</label>
+          <button className={btn} onClick={()=>{setInspection(null);setCameraRevision(n=>n+1)}}>退出区域观察</button>
+          <span aria-live="polite">观察模式只读；原网格不变。</span>
+          {activeInspection.folds&&<div className="w-full" aria-label="区域凹凸边报告">红：内凹折角 · 绿：外凸折角（绝对值 ≥5°；以外向绕序为前提，正常凹陷不等于缺陷）。{inspectionReport.slice(0,8).map(e=><span key={e.a+':'+e.b} className="inline-block mr-2">边 {e.a}–{e.b}：{e.degrees.toFixed(1)}°{e.boundary?'（边界）':''}</span>)}</div>}
+        </>}
+       </div>
+     </details>
      <div ref={previewRegionRef} aria-label="3D 旋转预览" className={previewLarge || sceneEdit ? 'min-h-0 w-full flex-1' : 'h-64 w-full'}>
-       {active && <TracePreview orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeActive?canvasResult.lines:knifeSegments} knifeDraft={knifeActive&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={knifeActive&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={knifeActive?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
+       {active && <TracePreview inspection={activeInspection} orthographic={orthographic} focus={localFocus} focusZoom={localFocus?focusZoom:1} knifeSegments={knifeActive?canvasResult.lines:knifeSegments} knifeDraft={knifeActive&&hoverStep?knifeLines(geometry,[hoverStep]):undefined} knifeSnap={knifeActive&&(knifeHover||knifeStart)?knifePointPosition(geometry,knifeHover?.point??knifeStart!):undefined} canvasKnife={knifeActive?{onHover:setKnifeHover,onPick:pickCanvasKnife}:undefined} mirrorTriangles={mirrorTriangles} symmetricLight={symmetricLight} optimizedTriangles={optimizedTriangles} vertexColors={qualityColors} references={references} data={geometry} direction={previewDirection} selected={selected} selectedFace={selectedFace} selectedFaces={selectedFaces} xray={xray} showCage={showCage} cameraRevision={cameraRevision}
   selectedEdge={selectedLoopEdge as [number,number]|null} onSelect={i=>{setSelected(i);if(i!==null){setSelectionExpanded(true);setToolPanel('model');setShowCage(true)}}} onMove={update}
   onSelectFace={(fi,additive)=>chooseFace(fi,additive)}
   onSelectEdge={(fi,slot)=>{chooseFace(fi);setSelectedEdgeSlot(slot);setToolPanel('topology');setShowCage(true)}}
