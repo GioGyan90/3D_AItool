@@ -1,0 +1,23 @@
+name: Region inspection browser acceptance
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  region-inspection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:topology
+      - run: npm install --no-save --no-package-lock playwright
+      - run: node scripts/accept-region-inspection.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: region-inspection-webgl
+          path: artifacts/region-inspection

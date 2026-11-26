@@ -8,6 +8,8 @@ import type {ControlMesh} from '../types';
 import {CanvasKnifePicker} from './CanvasKnifePicker';
 import type {KnifeHit} from './canvasKnife';
 
+import {partitionRegionTriangles,regionVertices,regionFolds,sectionPlane,sectionSegments,type RegionInspection} from './regionInspection';
+
 type V=[number,number,number];
 type Data=ControlMesh;
 export type SpatialReference={id:string;name:string;url:string;aspect:number;position:V;rotation:V;width:number;opacity:number;visible:boolean;overlay:boolean};
@@ -27,6 +29,7 @@ function ReferencePlane({plane}:{plane:SpatialReference}){
 }
 type Props={
   references?:SpatialReference[];
+  inspection?:RegionInspection;
   knifeSegments?:V[]; knifeDraft?:V[]; knifeSnap?:V; canvasKnife?:{onHover:(h:KnifeHit|null)=>void;onPick:(h:KnifeHit)=>void};
   optimizedTriangles?:boolean; vertexColors?:string[]; mirrorTriangles?:boolean; symmetricLight?:boolean;
   data:Data; direction:string; selected:number|null;
@@ -125,10 +128,41 @@ function Shape({data,selected,selectedFace,selectedFaces,selectedEdge,onSelect,o
       onMouseUp={()=>{dragging.current=false;dragIndex.current=null;if(orbit.current)orbit.current.enabled=true}}/>}
   </>;
 }
+function InspectionShape({data,inspection,showCage,optimizedTriangles,mirrorTriangles}:{data:Data;inspection:RegionInspection;showCage?:boolean;optimizedTriangles?:boolean;mirrorTriangles?:boolean}){
+ const g=useMemo(()=>{
+  const pos=data.vertices.flat(),make=(idx:number[])=>{const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setIndex(idx);geo.computeVertexNormals();return geo};
+  let target:number[]=[],context:number[]=[];try{({target,context}=partitionRegionTriangles(data,triangulateFaces(data.vertices,data.faces,optimizedTriangles,mirrorTriangles),inspection.faces))}catch{}
+  const edge=new Map<string,[number,number]>();for(const i of inspection.faces){const f=data.faces[i];if(f)f.forEach((a,j)=>{const b=f[(j+1)%f.length];edge.set(keyOf(a,b),[a,b])})}
+  const line=(p:number[])=>{const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));return geo};
+  const folds=regionFolds(data,inspection.faces),foldLine=(sign:number)=>line(folds.filter(e=>sign*e.degrees>=5).flatMap(e=>[...data.vertices[e.a],...data.vertices[e.b]]));
+  return {target:make(target),context:make(context),wire:line([...edge.values()].flatMap(([a,b])=>[...data.vertices[a],...data.vertices[b]])),concave:foldLine(-1),convex:foldLine(1)};
+ },[data,inspection.faces,optimizedTriangles,mirrorTriangles]);
+ useEffect(()=>()=>{Object.values(g).forEach(x=>x.dispose())},[g]);
+ const section=useMemo(()=>{
+  if(!inspection.section)return null;
+  const plane=sectionPlane(data,inspection.faces,inspection.section);if(!plane)return null;
+  const idx=Array.from(g.target.index?.array??[]);
+  const line=new THREE.BufferGeometry();line.setAttribute('position',new THREE.Float32BufferAttribute(sectionSegments(data.vertices,idx,plane.normal,plane.offset).flat(2),3));
+  const sign=inspection.section.reverse?-1:1;
+  const clip=new THREE.Plane(new THREE.Vector3(...plane.normal).multiplyScalar(sign),-plane.offset*sign);
+  return {line,clip};
+ },[data,inspection.faces,inspection.section,g.target]);
+ useEffect(()=>()=>section?.line.dispose(),[section]);
+ const clippingPlanes=section&&inspection.section?.clip?[section.clip]:[];
+
+ return <>
+  <mesh geometry={g.target} raycast={()=>null}><meshStandardMaterial color={inspection.mode==='contrast'?'#d8ae72':'#b8b8b8'} clippingPlanes={clippingPlanes} flatShading side={THREE.DoubleSide}/></mesh>
+  {inspection.mode!=='isolate'&&<mesh geometry={g.context} raycast={()=>null} renderOrder={1}><meshStandardMaterial color={inspection.mode==='contrast'?'#456780':'#929ba4'} clippingPlanes={clippingPlanes} flatShading side={THREE.DoubleSide} transparent opacity={inspection.opacity} depthWrite={false}/></mesh>}
+  {showCage&&<lineSegments geometry={g.wire} raycast={()=>null} renderOrder={2}><lineBasicMaterial color="#ff942f" clippingPlanes={clippingPlanes} depthWrite={false}/></lineSegments>}
+  {section&&<lineSegments geometry={section.line} raycast={()=>null} renderOrder={5}><lineBasicMaterial color="#ffdf56" depthTest={false} depthWrite={false}/></lineSegments>}
+  {inspection.folds&&<><lineSegments geometry={g.concave} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#ff4768" clippingPlanes={clippingPlanes} depthTest={false} depthWrite={false}/></lineSegments><lineSegments geometry={g.convex} raycast={()=>null} renderOrder={3}><lineBasicMaterial color="#53d8ae" clippingPlanes={clippingPlanes} depthTest={false} depthWrite={false}/></lineSegments></>}
+ </>;
+}
+
 function Camera({direction,bounds,orbit,revision,focus,focusZoom=1}:{direction:string,bounds:{center:THREE.Vector3,radius:number},orbit:React.MutableRefObject<any>,revision:number,focus?:V,focusZoom?:number}){
   const {camera,invalidate,size}=useThree();
   useEffect(()=>{
-    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],left:[-4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4]};
+    const p:Record<string,V>={front:[0,0,4],back:[0,0,-4],side:[4,0,0],left:[-4,0,0],top:[0,4,.001],bottom:[0,-4,.001],angle:[3,1.2,4],low:[3,-2,4],lowLeft:[-3,-2,4],angleLeft:[-3,1.2,4]};
     const dir=new THREE.Vector3(...p[direction]).normalize();
     const fov=40*Math.PI/180;
     const aspect=size.width/Math.max(size.height,1);
@@ -147,23 +181,23 @@ function Camera({direction,bounds,orbit,revision,focus,focusZoom=1}:{direction:s
 export function TracePreview(props:Props){
   const orbit=useRef<any>(null);
   const bounds=useMemo(()=>{
-    const box=new THREE.Box3();props.data.vertices.forEach(v=>box.expandByPoint(new THREE.Vector3(...v)));
+    const box=new THREE.Box3();const vertices=props.inspection?regionVertices(props.data,props.inspection.faces).map(i=>props.data.vertices[i]):props.data.vertices;vertices.forEach(v=>box.expandByPoint(new THREE.Vector3(...v)));
     if(box.isEmpty())return {center:new THREE.Vector3(),radius:1};
     const sphere=box.getBoundingSphere(new THREE.Sphere());
     return {center:sphere.center,radius:Math.max(sphere.radius,.05)};
-  },[props.data.faces]);
-  return <Canvas key={props.orthographic?'ortho':'perspective'} orthographic={props.orthographic} camera={props.orthographic?{position:[3,1.2,4],near:.001,far:100000}:{position:[3,1.2,4],fov:40}} gl={{antialias:true}}
+  },[props.data.faces,props.inspection?.faces]);
+  return <Canvas key={props.orthographic?'ortho':'perspective'} orthographic={props.orthographic} camera={props.orthographic?{position:[3,1.2,4],near:.001,far:100000}:{position:[3,1.2,4],fov:40}} gl={{antialias:true,localClippingEnabled:true}}
     raycaster={{params:{Points:{threshold:.045},Line:{threshold:.045}} as any}}>
     <color attach="background" args={['#303030']}/>
     <ambientLight intensity={1.6}/><directionalLight position={[3,4,5]} intensity={props.symmetricLight ? .65:1.3}/><directionalLight position={[-3,4,5]} intensity={props.symmetricLight ? .65:0}/>
-    {props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
-    <Shape {...props} selected={props.canvasKnife?null:props.selected} orbit={orbit}/>
-    {props.canvasKnife&&<CanvasKnifePicker mesh={props.data} {...props.canvasKnife}/>}
-    <KnifeOverlay segments={props.knifeSegments} radius={bounds.radius}/>
-    <KnifeOverlay segments={props.knifeDraft} radius={bounds.radius} color="#ffd56a" dashed/>
-    {props.knifeSnap&&<mesh position={props.knifeSnap} renderOrder={42} raycast={()=>null}><sphereGeometry args={[bounds.radius*.014,12,8]}/><meshBasicMaterial color="#ffe08b" toneMapped={false} transparent depthTest={false} depthWrite={false}/></mesh>}
-    <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit} focus={props.focus} focusZoom={props.focusZoom}/>
-    <OrbitControls ref={orbit} makeDefault mouseButtons={props.canvasKnife?{LEFT:null as unknown as THREE.MOUSE,MIDDLE:THREE.MOUSE.PAN,RIGHT:THREE.MOUSE.ROTATE}:{LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN}}/>
+    {!props.inspection&&props.references?.map(plane=><ReferencePlane key={plane.id} plane={plane}/>)}
+    {props.inspection?<InspectionShape data={props.data} inspection={props.inspection} showCage={props.showCage} optimizedTriangles={props.optimizedTriangles} mirrorTriangles={props.mirrorTriangles}/>:<Shape {...props} selected={props.canvasKnife?null:props.selected} orbit={orbit}/>}
+    {!props.inspection&&props.canvasKnife&&<CanvasKnifePicker mesh={props.data} {...props.canvasKnife}/>}
+    <KnifeOverlay segments={props.inspection?undefined:props.knifeSegments} radius={bounds.radius}/>
+    <KnifeOverlay segments={props.inspection?undefined:props.knifeDraft} radius={bounds.radius} color="#ffd56a" dashed/>
+    {!props.inspection&&props.knifeSnap&&<mesh position={props.knifeSnap} renderOrder={42} raycast={()=>null}><sphereGeometry args={[bounds.radius*.014,12,8]}/><meshBasicMaterial color="#ffe08b" toneMapped={false} transparent depthTest={false} depthWrite={false}/></mesh>}
+    <Camera direction={props.direction} revision={props.cameraRevision??0} bounds={bounds} orbit={orbit} focus={props.inspection?undefined:props.focus} focusZoom={props.inspection?1:props.focusZoom}/>
+    <OrbitControls ref={orbit} makeDefault mouseButtons={!props.inspection&&props.canvasKnife?{LEFT:null as unknown as THREE.MOUSE,MIDDLE:THREE.MOUSE.PAN,RIGHT:THREE.MOUSE.ROTATE}:{LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN}}/>
   </Canvas>;
 }
 
