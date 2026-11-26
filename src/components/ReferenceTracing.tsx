@@ -17,7 +17,7 @@ import {createRubikControlMesh,RUBIK_FACE_COLORS} from './rubikPreset';
 import {buildEditableGeometry} from '../studioProject';
 import {findCoplanarFaceIds,findMatchingColorFaceIds,moveWithSymmetry,paintFaces} from './topologySelection';
 import type {SymmetryAxis} from './topologySelection';
-import {createPrimitiveControlMesh,insertQuadEdgeLoop,splitQuadLocally,insetControlFace,extrudeControlFace,mirrorControlMeshX,validateControlTopology} from './meshTopology';
+import {createPrimitiveControlMesh,insertQuadEdgeLoop,splitQuadLocally,insetControlFace,insetControlRegion,extrudeControlFace,mirrorControlMeshX,validateControlTopology} from './meshTopology';
 import type {ControlMesh} from '../types';
 
 type V=[number,number,number];
@@ -113,6 +113,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [future,setFuture]=useState<MeshHistory[]>([]);
  const dragRecorded=useRef(false);
  const [insetFraction,setInsetFraction]=useState(.25);
+ const [regionInsetIds,setRegionInsetIds]=useState('');
  const [xray,setXray]=useState(false);
  const [cameraRevision,setCameraRevision]=useState(0);
  const [knifeSegments,setKnifeSegments]=useState<V[]>([]);
@@ -290,6 +291,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const addInset=()=>{if(!geometry||selectedFace===null)return;
    operateMesh(()=>insetControlFace(geometry,selectedFace,insetFraction),'面内插完成：选中面周围形成独立四边面环。');
  };
+ const addRegionInset=()=>{if(!geometry)return;const raw=regionInsetIds.trim();const ids=raw?raw.split(/[\\s,，]+/).map(Number):selectedFaces;operateMesh(()=>insetControlRegion(geometry,ids,insetFraction),'区域内插完成：保留内部控制边并生成共享环线。');setRegionInsetIds('')};
  const addExtrude=()=>{if(!geometry||selectedFace===null)return;
    operateMesh(()=>extrudeControlFace(geometry,selectedFace,extrudeDistance),'面挤出完成：已生成顶面与侧壁。');
  };
@@ -566,7 +568,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
     <p className="topo-helptext">选顶点移动位置；选面进行内插或挤出。每步均可撤销。</p>
-    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。内插/挤出只对最后选中的主面操作；批量配色请切换配色页签。</p>}
+    {selectedFaces.length>1&&<p className="text-xs text-amber-300">已选择 {selectedFaces.length} 面。单面内插/挤出对最后选中的主面操作；区域内插支持多选；批量配色请切换配色页签。</p>}
     <details className="rounded-lg border border-neutral-700 p-2 text-xs">
       <summary className="cursor-pointer font-medium text-slate-200">区域锁定 · {locked.length} 点</summary>
       <div className="space-y-2 mt-2">
@@ -632,6 +634,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <input aria-label="面内插比例" className="w-full" type="range" min=".05" max=".85" step=".05" value={insetFraction} onChange={e=>setInsetFraction(Number(e.target.value))}/>
     </label>
     <button className={btn+' w-full'} disabled={selectedFace===null||faceDraft.length>0||draftDirty} onClick={addInset}>面内插 · Inset</button>
+    <label className="block text-xs">区域内插面编号（逗号分隔，留空使用多选）<input aria-label="区域内插面编号" className="w-full rounded bg-neutral-800 p-2" value={regionInsetIds} onChange={e=>setRegionInsetIds(e.target.value)}/></label><button className={btn+' w-full'} disabled={(!regionInsetIds.trim()&&selectedFaces.length<2)||draftDirty||faceDraft.length>0||locked.length>0} onClick={addRegionInset}>区域内插 · Region inset</button>
     <label className="block text-xs">法线挤出距离
       <input aria-label="挤出距离" type="number" step=".05" min="-100" max="100" className="mt-1 w-full rounded bg-neutral-800 p-2" value={extrudeDistance} onChange={e=>setExtrudeDistance(Number(e.target.value))}/>
     </label>
