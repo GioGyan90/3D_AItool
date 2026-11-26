@@ -1,0 +1,102 @@
+{
+  "source": "Recovered original fourth-stage reference crop 1020×570; manually read visible junctions, not direct pixel overlay.",
+  "frame": {
+    "front": {
+      "cx": 828,
+      "cy": 215.36351525423729,
+      "scale": 150.28248587570621
+    },
+    "side": {
+      "cx": 266,
+      "cy": 215.36351525423729,
+      "scale": 150.28248587570621
+    }
+  },
+  "targets": [
+    {
+      "id": 38,
+      "mirror": 41,
+      "front": [
+        792,
+        355
+      ],
+      "side": [
+        478,
+        355
+      ],
+      "note": "Outer nose base to cheek; shared height compromise between reference front y351 and side y360."
+    },
+    {
+      "id": 44,
+      "mirror": 52,
+      "front": [
+        796,
+        268
+      ],
+      "note": "Inner brow/cheek junction; preserve inferred depth."
+    },
+    {
+      "id": 45,
+      "mirror": 51,
+      "front": [
+        704,
+        262
+      ],
+      "side": [
+        434,
+        262
+      ],
+      "note": "Outer brow connection; depth approximate."
+    },
+    {
+      "id": 53,
+      "mirror": 54,
+      "front": [
+        815,
+        268
+      ],
+      "note": "Inner nasal strip root; preserve depth."
+    },
+    {
+      "id": 55,
+      "mirror": 56,
+      "front": [
+        812,
+        359
+      ],
+      "side": [
+        480,
+        359
+      ],
+      "note": "Nose base corner; reduce forward projection slightly."
+    },
+    {
+      "id": 58,
+      "mirror": 59,
+      "front": [
+        815,
+        347
+      ],
+      "note": "Nose tip shoulder height; preserve depth."
+    },
+    {
+      "id": 43,
+      "front": [
+        828,
+        268
+      ],
+      "side": [
+        466,
+        268
+      ],
+      "note": "Central root depth intermediate between G 459 and visible profile near 470; visual hypothesis, not exact measurement."
+    }
+  ],
+  "protected": "All other 49 vertices, including nose tip #57, base center #11, skull and jaw, and every face index",
+  "expected": {
+    "vertices": 62,
+    "faces": 60,
+    "edges": 120,
+    "triangles": 120
+  }
+}
