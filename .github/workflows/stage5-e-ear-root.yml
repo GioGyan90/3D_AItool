@@ -1,0 +1,29 @@
+name: Stage 5E ear-root and temple calibration
+on:
+  push:
+    branches: [training/stage5-e-ear-root]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm install --no-save --no-package-lock playwright
+      - run: gh run download 45790850022 -n stage5-d-nose-inspection -D stage5-d-artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node training/stage5-e-ear-root.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage5-e-ear-root
+          path: artifacts/stage5-e
