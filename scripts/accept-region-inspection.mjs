@@ -21,7 +21,7 @@ try{
  await d.getByLabel('区域名称').fill('Front and right');await d.getByRole('button',{name:'保存命名区域'}).click();await d.getByRole('button',{name:'Front and right · 2 面'}).waitFor();
  const regionDownload=page.waitForEvent('download');await d.getByRole('button',{name:'导出区域文件'}).click();const regionFile=await regionDownload;await regionFile.saveAs(folder+'/regions.json');
  await d.getByRole('button',{name:'删除区域 Front and right'}).click();await d.getByLabel('导入区域文件').setInputFiles(folder+'/regions.json');await d.getByRole('button',{name:'Front and right · 2 面'}).click();
- await d.getByRole('checkbox',{name:'局部剖切分析'}).check();await d.getByRole('img',{name:'局部截面轮廓'}).waitFor();await d.getByLabel('连续截面采样').waitFor();
+ await d.getByRole('button',{name:'保存修形前基线'}).click();await d.getByLabel('区域尺寸比例').waitFor();await d.getByLabel('测量顶点 A').fill('0');await d.getByLabel('测量顶点 B').fill('1');await d.getByLabel('标志点距离').waitFor();await d.getByRole('checkbox',{name:'局部剖切分析'}).check();await d.getByRole('img',{name:'局部截面轮廓'}).waitFor();assert.ok(await d.getByRole('img',{name:'局部截面轮廓'}).locator('line[stroke-dasharray]').count()>0);await d.getByLabel('连续截面采样').waitFor();
  const section=await shot('section');await d.getByRole('checkbox',{name:'隐藏截面一侧'}).check();const clipped=await shot('section-clipped');assert.ok(!section.equals(clipped));
  await d.getByRole('checkbox',{name:'反向剖切'}).check();const reversed=await shot('section-reversed');assert.ok(!clipped.equals(reversed));
  await d.getByLabel('剖切方位角').fill('45');await d.getByLabel('剖切仰角').fill('30');await d.getByLabel('剖切位置').fill('0.65');await shot('section-oblique');

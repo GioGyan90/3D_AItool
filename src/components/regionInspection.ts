@@ -68,3 +68,22 @@ export function readInspectionRegions(mesh:ControlMesh,value:unknown):NamedInspe
  for(const item of payload.regions){if(!item||typeof item.name!=='string'||!item.name.trim()||item.name.length>80||!Array.isArray(item.faces)||!item.faces.length||item.faces.some((i:unknown)=>typeof i!=='number'||!Number.isInteger(i)||i<0||i>=mesh.faces.length)||names.has(item.name))throw Error('区域文件包含无效或重复名称/面编号');names.add(item.name);out.push({name:item.name,faces:regionFaces(mesh,item.faces)})}
  return out;
 }
+
+export function regionDimensions(mesh:ControlMesh,ids:number[]){
+ const vertices=regionVertices(mesh,ids).map(i=>mesh.vertices[i]);if(!vertices.length)return null;
+ const bounds=(points:V[])=>[0,1,2].map(k=>Math.max(...points.map(p=>p[k]))-Math.min(...points.map(p=>p[k]))) as V;
+ const size=bounds(vertices),whole=bounds(mesh.vertices);
+ return {size,whole,ratios:size.map((n,k)=>whole[k]>1e-12?n/whole[k]:null)};
+}
+export function landmarkMeasurement(mesh:ControlMesh,a:number,b:number){
+ if(!Number.isInteger(a)||!Number.isInteger(b)||!mesh.vertices[a]||!mesh.vertices[b])return null;
+ const delta=sub(mesh.vertices[b],mesh.vertices[a]);return {delta,distance:Math.hypot(...delta)};
+}
+export function alignedSectionProfiles(current:[V,V][],baseline:[V,V][],normal:V){
+ const now=sectionProfile(current,normal),before=sectionProfile(baseline,normal),all=[...now,...before].flat();
+ if(!all.length)return {now:[],before:[],scale:1};
+ const xs=all.map(p=>p[0]),ys=all.map(p=>p[1]),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys);
+ const scale=Math.min(270/Math.max(.001,xmax-xmin),100/Math.max(.001,ymax-ymin));
+ const project=([x,y]:[number,number]):[number,number]=>[150+(x-(xmin+xmax)/2)*scale,60-(y-(ymin+ymax)/2)*scale];
+ return {now:now.map(p=>p.map(project)),before:before.map(p=>p.map(project)),scale};
+}

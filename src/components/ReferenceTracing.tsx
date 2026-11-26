@@ -5,6 +5,7 @@ import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview,type SpatialReference} from './TracePreview';
 import {regionFaces,growRegion,regionFolds,readInspectionRegions,type NamedInspectionRegion,type RegionInspection,type InspectionMode} from './regionInspection';
 import {SectionInspectionPanel} from './SectionInspectionPanel';
+import {RegionProportionPanel} from './RegionProportionPanel';
 import {SurfaceQualityPanel} from './SurfaceQualityPanel';
 import {CalibrationWorkbench} from './CalibrationWorkbench';
 import {createCalibrationSession,remapCalibrationSession,type CalibrationSession} from './referenceCalibration';
@@ -142,6 +143,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [inspection,setInspection]=useState<(RegionInspection&{source:number[][]})|null>(null);
  const [inspectionIds,setInspectionIds]=useState('');
  const [inspectionPanelOpen,setInspectionPanelOpen]=useState(false);
+ const [inspectionBaseline,setInspectionBaseline]=useState<Geometry|null>(null);
+ useEffect(()=>{setInspectionBaseline(null)},[geometry?.faces,geometry?.vertices.length]);
  const [regionName,setRegionName]=useState('');
  const [namedRegions,setNamedRegions]=useState<NamedInspectionRegion[]>([]);
  useEffect(()=>{setNamedRegions([]);setInspection(null);setInspectionIds('');},[geometry?.faces]);
@@ -448,7 +451,8 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
           <label><input type="checkbox" checked={activeInspection.folds} onChange={e=>setInspection({...activeInspection,folds:e.target.checked})}/> 凹凸边诊断</label>
           <button className={btn} onClick={()=>{setInspection(null);setCameraRevision(n=>n+1)}}>退出区域观察</button>
           <span aria-live="polite">观察模式只读；原网格不变。</span>
-          <SectionInspectionPanel mesh={geometry} inspection={activeInspection} optimized={optimizedTriangles} mirror={mirrorTriangles} onChange={section=>setInspection({...activeInspection,section})}/>
+          <RegionProportionPanel mesh={geometry} faces={activeInspection.faces} baseline={inspectionBaseline??undefined} onCapture={()=>setInspectionBaseline({...geometry,vertices:geometry.vertices.map(v=>[...v] as V)})} onClear={()=>setInspectionBaseline(null)}/>
+          <SectionInspectionPanel baseline={inspectionBaseline??undefined} mesh={geometry} inspection={activeInspection} optimized={optimizedTriangles} mirror={mirrorTriangles} onChange={section=>setInspection({...activeInspection,section})}/>
           {activeInspection.folds&&<div className="w-full" aria-label="区域凹凸边报告">红：内凹折角 · 绿：外凸折角（绝对值 ≥5°；以外向绕序为前提，正常凹陷不等于缺陷）。{inspectionReport.slice(0,8).map(e=><span key={e.a+':'+e.b} className="inline-block mr-2">边 {e.a}–{e.b}：{e.degrees.toFixed(1)}°{e.boundary?'（边界）':''}</span>)}</div>}
         </>}
        </div>
