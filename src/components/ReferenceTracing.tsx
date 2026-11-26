@@ -3,7 +3,8 @@ import './topology-workbench.css';
 import * as THREE from 'three';
 import {GLTFExporter} from 'three/examples/jsm/exporters/GLTFExporter.js';
 import {TracePreview,type SpatialReference} from './TracePreview';
-import {regionFaces,growRegion,regionFolds,type RegionInspection,type InspectionMode} from './regionInspection';
+import {regionFaces,growRegion,regionFolds,readInspectionRegions,type NamedInspectionRegion,type RegionInspection,type InspectionMode} from './regionInspection';
+import {SectionInspectionPanel} from './SectionInspectionPanel';
 import {SurfaceQualityPanel} from './SurfaceQualityPanel';
 import {CalibrationWorkbench} from './CalibrationWorkbench';
 import {createCalibrationSession,remapCalibrationSession,type CalibrationSession} from './referenceCalibration';
@@ -141,6 +142,9 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const [inspection,setInspection]=useState<(RegionInspection&{source:number[][]})|null>(null);
  const [inspectionIds,setInspectionIds]=useState('');
  const [inspectionPanelOpen,setInspectionPanelOpen]=useState(false);
+ const [regionName,setRegionName]=useState('');
+ const [namedRegions,setNamedRegions]=useState<NamedInspectionRegion[]>([]);
+ useEffect(()=>{setNamedRegions([]);setInspection(null);setInspectionIds('');},[geometry?.faces]);
  const [symmetryAxes,setSymmetryAxes]=useState<SymmetryAxis[]>([]);
  const [advancedOpen,setAdvancedOpen]=useState(false);
  const [selectionExpanded,setSelectionExpanded]=useState(false);
@@ -429,6 +433,14 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
        <div className="flex flex-wrap items-center gap-2 mt-2">
         <label>控制面编号 <input aria-label="观察区域面编号" className="bg-neutral-800 p-1 w-28" value={inspectionIds} onChange={e=>setInspectionIds(e.target.value)} placeholder="留空使用选择"/></label>
         <button className={btn} disabled={draftDirty||faceDraft.length>0||canvasKnife||(!inspectionIds.trim()&&!selectedFaces.length&&selectedFace===null&&selected===null)} onClick={openInspection}>观察当前区域</button>
+        <div className="w-full flex flex-wrap gap-2 items-center border-t border-neutral-600 pt-2">
+         <label>区域名称 <input aria-label="区域名称" className="bg-neutral-800 p-1 w-28" value={regionName} maxLength={80} onChange={e=>setRegionName(e.target.value)}/></label>
+         <button className={btn} disabled={!activeInspection||!regionName.trim()} onClick={()=>{if(!activeInspection)return;const name=regionName.trim();setNamedRegions(old=>[...old.filter(r=>r.name!==name),{name,faces:[...activeInspection.faces]}]);setRegionName('')}}>保存命名区域</button>
+         {namedRegions.map(r=><span key={r.name} className="inline-flex gap-1"><button className={btn} onClick={()=>{cancelCanvasKnife();setInspectionIds(r.faces.join(','));setInspection({source:geometry.faces,faces:r.faces,mode:'ghost',opacity:.15,folds:false});setOrthographic(true);setSymmetricLight(true);setCameraRevision(n=>n+1)}}>{r.name} · {r.faces.length} 面</button><button className={btn} aria-label={'删除区域 '+r.name} onClick={()=>setNamedRegions(old=>old.filter(x=>x.name!==r.name))}>×</button></span>)}
+         <button className={btn} disabled={!namedRegions.length} onClick={()=>download(new Blob([JSON.stringify({topology:JSON.stringify(geometry.faces),regions:namedRegions},null,2)],{type:'application/json'}),'inspection-regions.json')}>导出区域文件</button>
+         <label>导入区域文件 <input aria-label="导入区域文件" type="file" accept=".json,application/json" className="max-w-44" onChange={async e=>{const input=e.currentTarget,file=input.files?.[0];if(!file)return;const mesh=geometry;try{if(file.size>2000000)throw Error('区域文件过大');const value=JSON.parse(await file.text());if(mesh!==geometry)throw Error('模型已切换');setNamedRegions(readInspectionRegions(mesh,value));setError('')}catch(e){setError(String(e))}finally{input.value=''}}}/></label>
+         <span className="text-neutral-400">拓扑变化时清空选区；区域文件可跨会话恢复相同拓扑。</span>
+        </div>
         {activeInspection&&<>
           <button className={btn} onClick={()=>{setInspection({...activeInspection,faces:growRegion(geometry,activeInspection.faces)});setCameraRevision(n=>n+1)}}>扩展一圈邻面</button>
           <label>其他结构 <select aria-label="观察背景模式" className="bg-neutral-800 p-1" value={activeInspection.mode} onChange={e=>setInspection({...activeInspection,mode:e.target.value as InspectionMode})}><option value="isolate">隐藏</option><option value="ghost">半透明</option><option value="contrast">分色</option></select></label>
@@ -436,6 +448,7 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
           <label><input type="checkbox" checked={activeInspection.folds} onChange={e=>setInspection({...activeInspection,folds:e.target.checked})}/> 凹凸边诊断</label>
           <button className={btn} onClick={()=>{setInspection(null);setCameraRevision(n=>n+1)}}>退出区域观察</button>
           <span aria-live="polite">观察模式只读；原网格不变。</span>
+          <SectionInspectionPanel mesh={geometry} inspection={activeInspection} optimized={optimizedTriangles} mirror={mirrorTriangles} onChange={section=>setInspection({...activeInspection,section})}/>
           {activeInspection.folds&&<div className="w-full" aria-label="区域凹凸边报告">红：内凹折角 · 绿：外凸折角（绝对值 ≥5°；以外向绕序为前提，正常凹陷不等于缺陷）。{inspectionReport.slice(0,8).map(e=><span key={e.a+':'+e.b} className="inline-block mr-2">边 {e.a}–{e.b}：{e.degrees.toFixed(1)}°{e.boundary?'（边界）':''}</span>)}</div>}
         </>}
        </div>
