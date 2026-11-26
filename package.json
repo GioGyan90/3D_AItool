@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test:topology": "tsx --test tests/meshTopology.test.ts tests/knifeTopology.test.ts tests/regionInset.test.ts"
+    "test:topology": "tsx --test tests/meshTopology.test.ts tests/knifeTopology.test.ts tests/regionInset.test.ts tests/regionInspection.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.0",
