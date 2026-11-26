@@ -346,3 +346,30 @@ export function mirrorControlMeshX(mesh: ControlMesh, tolerance=1e-6): ControlMe
   const colors=mesh.faceColors && [...indices.map(i=>mesh.faceColors![i]),...indices.map(i=>mesh.faceColors![i])];
   return finishTopologyEdit(vertices,faces,colors);
 }
+
+// Inset a disk-shaped patch without flattening the internal fold or duplicating
+// its original boundary. First version supports patches without interior vertices.
+export function insetControlRegion(mesh:ControlMesh,faceIds:number[],fraction=.25):ControlMesh{
+ validateControlTopology(mesh);
+ if(!Number.isFinite(fraction)||fraction<=.01||fraction>=.95)throw Error('内插比例必须在 1%–95%');
+ const ids=[...new Set(faceIds)].sort((a,b)=>a-b);
+ if(ids.length<2||ids.length>64||ids.some(i=>!Number.isInteger(i)||!mesh.faces[i]))throw Error('请选择2–64个相邻控制面');
+ const edges=new Map<string,{a:number;b:number;owner:number}[]>();
+ const key=(a:number,b:number)=>a<b?a+':'+b:b+':'+a;
+ for(const id of ids){const f=mesh.faces[id];f.forEach((a,j)=>{const b=f[(j+1)%f.length],k=key(a,b);edges.set(k,[...(edges.get(k)??[]),{a,b,owner:id}])})}
+ const boundary=[...edges.values()].filter(v=>v.length===1).map(v=>v[0]);
+ const unique=[...new Set(ids.flatMap(i=>mesh.faces[i]))];
+ const byStart=new Map(boundary.map(e=>[e.a,e]));
+ if(boundary.length<3||boundary.length!==byStart.size||unique.length!==boundary.length)throw Error('区域必须为单一无内点的闭合边界');
+ const ring:number[]=[];let cur=Math.min(...byStart.keys());
+ while(!ring.includes(cur)){ring.push(cur);const e=byStart.get(cur);if(!e)throw Error('区域边界断开');cur=e.b}
+ if(cur!==ring[0]||ring.length!==boundary.length||unique.length-edges.size+ids.length!==1)throw Error('区域必须连续且无孔');
+ const center=[0,0,0];for(const id of ring)mesh.vertices[id].forEach((n,k)=>{center[k]+=n/ring.length});
+ const vertices=mesh.vertices.map(v=>vertex(...v));
+ const inner=new Map<number,number>();
+ for(const id of ring){inner.set(id,vertices.length);vertices.push(vertex(...mesh.vertices[id].map((x,k)=>x*(1-fraction)+center[k]*fraction) as V))}
+ const chosen=new Set(ids),faces=mesh.faces.map((f,i)=>chosen.has(i)?f.map(id=>inner.get(id)!):[...f]);
+ const colors=mesh.faceColors?[...mesh.faceColors]:undefined;
+ for(const id of ring){const edge=byStart.get(id)!;faces.push([edge.a,edge.b,inner.get(edge.b)!,inner.get(edge.a)!]);if(colors)colors.push(mesh.faceColors![edge.owner])}
+ return finishTopologyEdit(vertices,faces,colors);
+}
