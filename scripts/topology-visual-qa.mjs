@@ -3,7 +3,7 @@
 // then: node scripts/topology-visual-qa.mjs
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdir,writeFile,stat} from 'node:fs/promises';
+import {mkdir,writeFile,stat,readFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {chromium} from 'playwright';
 
@@ -477,6 +477,43 @@ try{
   await reference.getByRole('button',{name:'恢复新建前状态'}).click();
   await reference.getByText(/3 顶点 \/ 1 面/).waitFor();
   notes.checks.push('standalone new mesh, save and recover previous cage');
+  // Reconnect through the real UI on a generic two-quad fixture, not a built-in preset.
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.getByRole('button',{name:'顶点对照',exact:true}).click();
+  await reference.waitFor();
+  const hex={vertices:Array.from({length:6},(_,i)=>[Math.cos(i*Math.PI/3),Math.sin(i*Math.PI/3),0]),faces:[[0,1,2,3],[3,4,5,0]]};
+  await reference.getByLabel('导入顶点 JSON').setInputFiles({name:'qa-quad-patch.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(hex))});
+  await reference.getByText(/6 顶点 \/ 2 面/).waitFor({timeout:15000});
+  await reference.getByRole('button',{name:'显示 3D 预览'}).click();
+  const quadPreview=reference.getByLabel('3D 旋转预览');
+  await quadPreview.locator('canvas').waitFor();
+  await reference.getByRole('button',{name:'布线',exact:true}).click();
+  if(!await reference.getByLabel('控制面编号').isVisible())await reference.getByRole('button',{name:'展开精确选择'}).click();
+  await reference.getByLabel('控制面编号').fill('0');
+  await reference.getByLabel('布线起始边').selectOption('3');
+  await reference.getByText('局部边线重连 · 不增面',{exact:true}).click();
+  await quadPreview.screenshot({path:folder+'/quad-reconnect-before.png',animations:'disabled'});
+  await reference.getByRole('button',{name:'重连方向 1',exact:true}).click();
+  await reference.getByText(/局部边线重连完成/).waitFor();
+  await quadPreview.screenshot({path:folder+'/quad-reconnect-after.png',animations:'disabled'});
+  const exportQuad=async()=>{
+    const event=page.waitForEvent('download',{timeout:15000});
+    await reference.getByRole('button',{name:'保存顶点 JSON'}).click();
+    const d=await event;
+    return JSON.parse(await readFile(await d.path(),'utf8'));
+  };
+  const changed=await exportQuad();
+  assert.deepEqual(changed.vertices,hex.vertices);
+  assert.equal(changed.faces.length,2);
+  assert.ok(changed.faces.every(f=>f.length===4));
+  const shared=changed.faces[0].filter(v=>changed.faces[1].includes(v)).sort((a,b)=>a-b);
+  assert.notDeepEqual(shared,[0,3]);
+  await reference.getByRole('button',{name:'撤销',exact:true}).click();
+  assert.deepEqual((await exportQuad()).faces,hex.faces);
+  await reference.getByRole('button',{name:'重做',exact:true}).click();
+  assert.deepEqual((await exportQuad()).faces,changed.faces);
+  notes.checks.push('quad reconnect real UI export, immutable coordinates, undo/redo');
+  notes.shots.push({name:'quad-reconnect-before',path:folder+'/quad-reconnect-before.png'},{name:'quad-reconnect-after',path:folder+'/quad-reconnect-after.png'});
   assert.deepEqual(notes.errors,[],'Unhandled errors occurred in browser');
   console.log('Topology browser QA passed',JSON.stringify(notes));
 }catch(error){

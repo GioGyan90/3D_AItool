@@ -434,3 +434,46 @@ test('projection residual map ranks measured landmarks without treating missing 
  assert.equal(residualColor(5,5),'#65d995');assert.equal(residualColor(10,5),'#ffcc66');assert.equal(residualColor(11,5),'#ff6666');
  assert.equal(projectionResiduals(v,[],'front',c).count,0);
 });
+
+
+import {quadReconnectChoices,reconnectQuadEdge} from '../src/components/edgeReconnect';
+function hexPatch(offset=0){
+ const vertices=Array.from({length:6},(_,i)=>[offset+Math.cos(i*Math.PI/3),Math.sin(i*Math.PI/3),0] as [number,number,number]);
+ return {vertices,faces:[[0,1,2,3],[3,4,5,0]]};
+}
+test('quad reconnect rotates the shared edge and keeps six vertices, two faces and the outer boundary',()=>{
+ const mesh=hexPatch(),snapshot=JSON.stringify(mesh);
+ const options=quadReconnectChoices(mesh,[0,3]);
+ assert.equal(options.length,2);
+ for(const target of options){
+  const next=reconnectQuadEdge(mesh,[0,3],target);
+  assert.deepEqual(next.vertices,mesh.vertices);
+  assert.equal(next.faces.length,2);
+  assert.ok(next.faces.every(f=>f.length===4));
+  assert.deepEqual(validateControlTopology(next),validateControlTopology(mesh));
+  const shared=next.faces[0].filter(v=>next.faces[1].includes(v)).sort((a,b)=>a-b);
+  assert.deepEqual(shared,[...target].sort((a,b)=>a-b));
+  assert.equal(triangulateFaces(next.vertices,next.faces).length,12);
+ }
+ assert.equal(JSON.stringify(mesh),snapshot);
+});
+test('quad reconnect rejects boundaries, non-alternate edges, distinct material colors and invalid geometry',()=>{
+ const mesh=hexPatch();
+ assert.throws(()=>reconnectQuadEdge(mesh,[0,1],[1,4]),/相邻四边面/);
+ assert.throws(()=>reconnectQuadEdge(mesh,[0,3],[0,3]),/另一条对角线/);
+ assert.throws(()=>reconnectQuadEdge({...mesh,faceColors:['#000000','#ffffff']},[0,3],[1,4]),/颜色/);
+ const broken=hexPatch();broken.vertices[1]=[0,-2,0];
+ assert.throws(()=>reconnectQuadEdge(broken,[0,3],[1,4]));
+ assert.throws(()=>reconnectQuadEdge(mesh,[0,3],[1,4],true),/镜像区域|镜像顶点/);
+});
+test('mirrored reconnect is atomic, preserves all vertex coordinates and mirrored face winding',()=>{
+ const p=hexPatch(3);
+ const mesh={vertices:[...p.vertices,...p.vertices.map(([x,y,z])=>[-x,y,z] as [number,number,number])],faces:[...p.faces,...p.faces.map(f=>f.map(i=>i+6).reverse())]};
+ const next=reconnectQuadEdge(mesh,[0,3],[1,4],true);
+ assert.deepEqual(next.vertices,mesh.vertices);
+ assert.deepEqual(validateControlTopology(next),validateControlTopology(mesh));
+ const match=(a:number[],b:number[])=>a.some((_,k)=>a.every((v,i)=>v===b[(i+k)%b.length]));
+ for(const f of next.faces.slice(0,2))assert.ok(next.faces.slice(2).some(g=>match(f.map(i=>i+6).reverse(),g)));
+ const asymmetric={...mesh,vertices:mesh.vertices.map(p=>[...p] as [number,number,number])};asymmetric.vertices[7][2]=.01;
+ assert.throws(()=>reconnectQuadEdge(asymmetric,[0,3],[1,4],true),/镜像顶点/);
+});

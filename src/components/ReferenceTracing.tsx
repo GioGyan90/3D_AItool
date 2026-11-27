@@ -21,6 +21,7 @@ import {buildEditableGeometry} from '../studioProject';
 import {findCoplanarFaceIds,findMatchingColorFaceIds,moveWithSymmetry,paintFaces} from './topologySelection';
 import type {SymmetryAxis} from './topologySelection';
 import {createPrimitiveControlMesh,insertQuadEdgeLoop,splitQuadLocally,insetControlFace,insetControlRegion,extrudeControlFace,mirrorControlMeshX,validateControlTopology} from './meshTopology';
+import {quadReconnectChoices,reconnectQuadEdge} from './edgeReconnect';
 import type {ControlMesh} from '../types';
 
 type V=[number,number,number];
@@ -207,6 +208,12 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
  const clearFaces=()=>{setSelectedFace(null);setSelectedFaces([]);setLoopInfo('');setError('')};
  const selectedLoopFace=selectedFace===null?null:geometry?.faces[selectedFace];
  const selectedLoopEdge=selectedLoopFace?.length===4?[selectedLoopFace[selectedEdgeSlot],selectedLoopFace[(selectedEdgeSlot+1)%4]]:null;
+ const reconnectChoices=useMemo(()=>{
+   if(!geometry||selectedFace===null)return [];
+   const f=geometry.faces[selectedFace];
+   if(!f||f.length!==4)return [];
+   try{return quadReconnectChoices(geometry,[f[selectedEdgeSlot],f[(selectedEdgeSlot+1)%4]])}catch{return []}
+ },[geometry,selectedFace,selectedEdgeSlot]);
  const selectedSummary=selectedFaces.length>1?`已选 ${selectedFaces.length} 个控制面`:
    selectedFace!==null?`面 #${selectedFace}`:
    selected!==null?`顶点 #${selected}`:'未选择元素';
@@ -610,6 +617,17 @@ export function ReferenceTracing({onClose,active,sceneEdit}:ReferenceTracingProp
       <button className={btn} disabled={!selectedLoopFace||selectedLoopFace.length!==4||faceDraft.length>0||draftDirty} onClick={addLocalCut}>局部切割</button>
     </div>
     <p className="topo-helptext">局部切割仅影响选中的面，并自动修复相邻共享边。</p>
+    <details className="rounded-lg border border-neutral-700 p-2 text-xs">
+      <summary className="cursor-pointer font-medium text-slate-200">局部边线重连 · 不增面</summary>
+      <p className="topo-helptext mt-2">选择两个相邻四边面的共享边，替换为六点边界内的另一条连线。顶点位置不变；支持 X 对称成对修改及撤销。局部投影、绕序或颜色不安全时拒绝操作。</p>
+      {reconnectChoices.length===0?<p className="topo-empty-state">请选择同色的两个相邻四边面之间的共享边。</p>:
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          {reconnectChoices.map((target,i)=><button key={i} className={btn} aria-label={'重连方向 '+(i+1)} disabled={!geometry||!selectedLoopEdge||!!locked.length||canvasKnife||calibrationMode||draftDirty||faceDraft.length>0||loading||symmetryAxes.some(a=>a!=='x')} onClick={()=>{
+            if(geometry&&selectedLoopEdge)operateMesh(()=>reconnectQuadEdge(geometry,selectedLoopEdge as [number,number],target,symmetryAxes.includes('x')),'局部边线重连完成：保持顶点和面数。');
+          }}>连接 {target[0]} → {target[1]}</button>)}
+        </div>}
+      {symmetryAxes.some(a=>a!=='x')&&<p className="text-xs text-amber-300">边线重连仅支持 X 轴对称。</p>}
+    </details>
     <KnifePanel onPreview={setKnifeSegments} mesh={geometry} selectedFace={selectedFace} selectedVertex={selected} locked={locked.length>0} disabled={canvasKnife||draftDirty||faceDraft.length>0||loading||symmetryAxes.length>0} onApply={(next,label)=>operateMesh(()=>next,label)}/>
   </div>}
   {toolPanel==='model'&&<div className="space-y-3">
